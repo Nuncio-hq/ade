@@ -467,6 +467,10 @@ export const UserInputQuestion = Schema.Struct({
   multiSelect: Schema.optional(Schema.Boolean).pipe(
     Schema.withConstructorDefault(() => Option.some(false)),
   ),
+  // Provider opt-ins for richer answers (currently emitted by the Pi
+  // AskUserQuestion bridge). Absent flags render the classic option list.
+  allowCustomAnswer: Schema.optional(Schema.Boolean),
+  allowNotes: Schema.optional(Schema.Boolean),
 });
 export type UserInputQuestion = typeof UserInputQuestion.Type;
 

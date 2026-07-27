@@ -243,6 +243,7 @@ import {
   derivePendingUserInputProgress,
   hasCompletePendingUserInputAnswers,
   omitNullPendingUserInputAnswers,
+  setPendingUserInputChoiceNote,
   setPendingUserInputCustomAnswer,
   togglePendingUserInputOptionSelection,
   type PendingUserInputDraftAnswer,
@@ -7960,6 +7961,32 @@ export default function ChatView({
     [activePendingUserInput, activePendingUserInputKey],
   );
 
+  const onSetActivePendingUserInputChoiceNote = useCallback(
+    (questionId: string, optionLabel: string, note: string) => {
+      if (!activePendingUserInputKey) {
+        return;
+      }
+      const nextDraftAnswer = setPendingUserInputChoiceNote(
+        pendingUserInputAnswersByRequestIdRef.current[activePendingUserInputKey]?.[questionId],
+        optionLabel,
+        note,
+      );
+      const nextRequestAnswers = {
+        ...pendingUserInputAnswersByRequestIdRef.current[activePendingUserInputKey],
+        [questionId]: nextDraftAnswer,
+      };
+      pendingUserInputAnswersByRequestIdRef.current = {
+        ...pendingUserInputAnswersByRequestIdRef.current,
+        [activePendingUserInputKey]: nextRequestAnswers,
+      };
+      setPendingUserInputAnswersByRequestId((existing) => ({
+        ...existing,
+        [activePendingUserInputKey]: nextRequestAnswers,
+      }));
+    },
+    [activePendingUserInputKey],
+  );
+
   const onChangeActivePendingUserInputCustomAnswer = useCallback(
     (
       questionId: string,
@@ -10409,6 +10436,7 @@ export default function ChatView({
                     answers={activePendingDraftAnswers}
                     questionIndex={activePendingQuestionIndex}
                     onToggleOption={onToggleActivePendingUserInputOption}
+                    onSetChoiceNote={onSetActivePendingUserInputChoiceNote}
                     onAdvance={onAdvanceActivePendingUserInput}
                     onPrevious={onPreviousActivePendingUserInputQuestion}
                     onCancel={onCancelActivePendingUserInput}

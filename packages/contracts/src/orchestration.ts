@@ -258,8 +258,16 @@ export const ProviderApprovalDecision = Schema.Literals([
   "cancel",
 ]);
 export type ProviderApprovalDecision = typeof ProviderApprovalDecision.Type;
+// Structured answer form used when a question opts into per-choice notes
+// (UserInputQuestion.allowNotes). Providers that never set the flag only ever
+// see the plain string/string[] forms.
+export const ProviderUserInputStructuredAnswer = Schema.Struct({
+  selected: Schema.Union([Schema.String, Schema.Array(Schema.String)]),
+  choiceNotes: Schema.optional(Schema.Record(Schema.String, Schema.String)),
+});
+export type ProviderUserInputStructuredAnswer = typeof ProviderUserInputStructuredAnswer.Type;
 export const ProviderUserInputAnswer = Schema.NullOr(
-  Schema.Union([Schema.String, Schema.Array(Schema.String)]),
+  Schema.Union([Schema.String, Schema.Array(Schema.String), ProviderUserInputStructuredAnswer]),
 );
 export type ProviderUserInputAnswer = typeof ProviderUserInputAnswer.Type;
 export const ProviderUserInputAnswers = Schema.Record(Schema.String, ProviderUserInputAnswer);

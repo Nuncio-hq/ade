@@ -20,6 +20,7 @@ interface PendingUserInputPanelProps {
   answers: Record<string, PendingUserInputDraftAnswer>;
   questionIndex: number;
   onToggleOption: (questionId: string, optionLabel: string) => PendingUserInputDraftAnswer | null;
+  onSetChoiceNote?: (questionId: string, optionLabel: string, note: string) => void;
   onAdvance: (answerOverrides?: Record<string, PendingUserInputDraftAnswer>) => void;
   onPrevious: () => void;
   onCancel: () => void;
@@ -35,6 +36,7 @@ export function ComposerPendingUserInputPanel({
   answers,
   questionIndex,
   onToggleOption,
+  onSetChoiceNote,
   onAdvance,
   onPrevious,
   onCancel,
@@ -51,6 +53,7 @@ export function ComposerPendingUserInputPanel({
       answers={answers}
       questionIndex={questionIndex}
       onToggleOption={onToggleOption}
+      onSetChoiceNote={onSetChoiceNote}
       onAdvance={onAdvance}
       onPrevious={onPrevious}
       onCancel={onCancel}
@@ -64,6 +67,7 @@ function ComposerPendingUserInputCard({
   answers,
   questionIndex,
   onToggleOption,
+  onSetChoiceNote,
   onAdvance,
   onPrevious,
   onCancel,
@@ -73,6 +77,7 @@ function ComposerPendingUserInputCard({
   answers: Record<string, PendingUserInputDraftAnswer>;
   questionIndex: number;
   onToggleOption: (questionId: string, optionLabel: string) => PendingUserInputDraftAnswer | null;
+  onSetChoiceNote?: ((questionId: string, optionLabel: string, note: string) => void) | undefined;
   onAdvance: (answerOverrides?: Record<string, PendingUserInputDraftAnswer>) => void;
   onPrevious: () => void;
   onCancel: () => void;
@@ -100,7 +105,9 @@ function ComposerPendingUserInputCard({
 
   const handleOptionSelection = (questionId: string, optionLabel: string) => {
     const nextDraftAnswer = onToggleOption(questionId, optionLabel);
-    if (activeQuestion?.multiSelect) {
+    // Notes-enabled questions never auto-advance: the user may want to attach a
+    // note to the option they just picked before moving on.
+    if (activeQuestion?.multiSelect || activeQuestion?.allowNotes) {
       return;
     }
     if (autoAdvanceTimerRef.current !== null) {
@@ -193,23 +200,54 @@ function ComposerPendingUserInputCard({
           {activeQuestion.options.map((option, index) => {
             const isSelected = selectedOptionLabelSet.has(option.label);
             const shortcutKey = index < 9 ? index + 1 : null;
+            const showNoteInput = Boolean(
+              activeQuestion.allowNotes && isSelected && onSetChoiceNote,
+            );
             return (
-              <ComposerChoiceRow
-                key={`${activeQuestion.id}:${option.label}`}
-                shortcut={shortcutKey}
-                label={option.label}
-                description={option.description}
-                selected={isSelected}
-                disabled={isResponding}
-                onSelect={() => handleOptionSelection(activeQuestion.id, option.label)}
-                trailing={
-                  isSelected ? (
-                    <CheckIcon className="mt-0.5 size-3.5 shrink-0 text-[var(--color-text-foreground)]" />
-                  ) : null
-                }
-              />
+              <div key={`${activeQuestion.id}:${option.label}`}>
+                <ComposerChoiceRow
+                  shortcut={shortcutKey}
+                  label={option.label}
+                  description={option.description}
+                  selected={isSelected}
+                  disabled={isResponding}
+                  onSelect={() => handleOptionSelection(activeQuestion.id, option.label)}
+                  trailing={
+                    isSelected ? (
+                      <CheckIcon className="mt-0.5 size-3.5 shrink-0 text-[var(--color-text-foreground)]" />
+                    ) : null
+                  }
+                />
+                {showNoteInput ? (
+                  <input
+                    type="text"
+                    value={progress.activeDraft?.choiceNotes?.[option.label] ?? ""}
+                    disabled={isResponding}
+                    placeholder="Add a note for this choice (optional)"
+                    onChange={(event) =>
+                      onSetChoiceNote?.(activeQuestion.id, option.label, event.target.value)
+                    }
+                    className="mb-1 ml-7 mt-0.5 w-[calc(100%-1.75rem)] rounded-md border border-[var(--color-border-primary)] bg-transparent px-2 py-1 text-[12px] text-[var(--color-text-foreground)] placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-[var(--color-border-focus)]"
+                  />
+                ) : null}
+              </div>
             );
           })}
+          {activeQuestion.allowNotes ? (
+            <div className="flex justify-end pt-1.5">
+              <button
+                type="button"
+                disabled={isResponding || !progress.canAdvance}
+                onClick={() => onAdvance()}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-[12px] font-medium text-[var(--color-text-foreground)] transition-colors duration-150 hover:bg-[var(--color-background-button-secondary-hover)]",
+                  (isResponding || !progress.canAdvance) && "cursor-not-allowed opacity-40",
+                )}
+              >
+                {progress.isLastQuestion ? "Submit" : "Next"}
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="mt-2.5 flex justify-end">

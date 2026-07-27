@@ -94,6 +94,46 @@ type ExecuteContextLike = {
 	sessionManager?: { getSessionFile?: () => string | undefined };
 };
 
+// Synara's PiAdapter augments the extension UI bridge with a structured
+// AskUserQuestion entry point (`extension/ui/askUserQuestion`). Detecting it
+// routes the whole dialog through Synara's pending user-input panel instead of
+// the TUI dialog. Answers arrive keyed by question header in Synara's
+// ProviderUserInputAnswers shape.
+type SynaraAskUserQuestions = (
+	questions: Array<{
+		header: string;
+		question: string;
+		multiSelect?: boolean;
+		options: Array<{ label: string; description?: string }>;
+	}>,
+	opts?: { signal?: AbortSignal },
+) => Promise<Record<string, unknown>>;
+
+function synaraAskUserQuestions(ui: unknown): SynaraAskUserQuestions | undefined {
+	if (typeof ui !== "object" || ui === null) return undefined;
+	const candidate = (ui as Record<string, unknown>).askUserQuestions;
+	return typeof candidate === "function" ? (candidate as SynaraAskUserQuestions) : undefined;
+}
+
+// Normalize Synara answers (string | string[] | {selected, choiceNotes}) into
+// the RemoteAskAnswer shape so state reconstruction shares one code path.
+function synaraAnswersToRemoteShape(rawAnswers: Record<string, unknown>): RemoteAskAnswer {
+	const normalized: RemoteAskAnswer = {};
+	for (const [header, answer] of Object.entries(rawAnswers)) {
+		if (typeof answer === "string" || Array.isArray(answer)) {
+			normalized[header] = { selected: answer };
+			continue;
+		}
+		if (isRecord(answer) && "selected" in answer) {
+			normalized[header] = {
+				selected: answer.selected,
+				...(isRecord(answer.choiceNotes) ? { choiceNotes: answer.choiceNotes } : {}),
+			};
+		}
+	}
+	return normalized;
+}
+
 type RemoteDialogResult =
 	| { type: "answered"; states: SelectionState[] }
 	| { type: "dismissed"; reason: string }
@@ -854,6 +894,43 @@ export default function AskUserQuestion(pi: ExtensionAPI) {
 
 			if (signal?.aborted) {
 				return cancelledResult(questions, [], "AskUserQuestion was aborted.");
+			}
+
+			// Synara path: hand the whole question set to Synara's structured
+			// user-input flow and skip the TUI/Pocket Pi machinery entirely.
+			const synaraAsk = synaraAskUserQuestions((ctx as { ui?: unknown }).ui);
+			if (synaraAsk) {
+				try {
+					const rawAnswers = await synaraAsk(
+						questions.map((question) => ({
+							header: question.header,
+							question: question.question,
+							multiSelect: question.multiSelect === true,
+							options: question.options.map((option) => ({
+								label: option.label,
+								description: option.description,
+							})),
+						})),
+						signal ? { signal } : undefined,
+					);
+					if (!isRecord(rawAnswers) || Object.keys(rawAnswers).length === 0) {
+						return cancelledResult(
+							questions,
+							createInitialNavigationState(questions).states,
+							"Dismissed without an answer.",
+						);
+					}
+					return answeredResult(
+						questions,
+						remoteAnswerToStates(questions, synaraAnswersToRemoteShape(rawAnswers)),
+					);
+				} catch (err) {
+					return cancelledResult(
+						questions,
+						createInitialNavigationState(questions).states,
+						`Synara user-input request failed: ${errMsg(err)}`,
+					);
+				}
 			}
 
 			const remote = startRemoteDialog(questions, ctx, signal);

@@ -7,6 +7,7 @@ import {
   findFirstUnansweredPendingUserInputQuestionIndex,
   hasCompletePendingUserInputAnswers,
   resolvePendingUserInputAnswer,
+  setPendingUserInputChoiceNote,
   setPendingUserInputCustomAnswer,
   togglePendingUserInputOptionSelection,
 } from "./pendingUserInput";
@@ -272,5 +273,74 @@ describe("pending user input question progress", () => {
       isComplete: false,
       canAdvance: true,
     });
+  });
+});
+
+describe("choice notes (allowNotes questions)", () => {
+  const notesQuestion = {
+    id: "Approval",
+    header: "Approval",
+    question: "Ship it?",
+    allowNotes: true,
+    options: [
+      { label: "Yes", description: "Ship now" },
+      { label: "No", description: "Hold" },
+    ],
+  };
+
+  it("setPendingUserInputChoiceNote stores and clears notes by option label", () => {
+    let draft = setPendingUserInputChoiceNote(undefined, "Yes", "after smoke tests");
+    expect(draft.choiceNotes).toEqual({ Yes: "after smoke tests" });
+    draft = setPendingUserInputChoiceNote(draft, "Yes", "   ");
+    expect(draft.choiceNotes).toBeUndefined();
+  });
+
+  it("togglePendingUserInputOptionSelection preserves existing notes", () => {
+    const withNote = setPendingUserInputChoiceNote(undefined, "Yes", "with caveats");
+    const toggled = togglePendingUserInputOptionSelection(notesQuestion, withNote, "Yes");
+    expect(toggled.selectedOptionLabels).toEqual(["Yes"]);
+    expect(toggled.choiceNotes).toEqual({ Yes: "with caveats" });
+  });
+
+  it("buildPendingUserInputAnswers emits structured answers only for noted selections", () => {
+    const draft = togglePendingUserInputOptionSelection(
+      notesQuestion,
+      setPendingUserInputChoiceNote(undefined, "Yes", "with caveats"),
+      "Yes",
+    );
+    expect(buildPendingUserInputAnswers([notesQuestion], { Approval: draft })).toEqual({
+      Approval: { selected: "Yes", choiceNotes: { Yes: "with caveats" } },
+    });
+
+    // Note attached to an unselected option is dropped.
+    const noteOnUnselected = togglePendingUserInputOptionSelection(
+      notesQuestion,
+      setPendingUserInputChoiceNote(undefined, "No", "not yet"),
+      "Yes",
+    );
+    expect(buildPendingUserInputAnswers([notesQuestion], { Approval: noteOnUnselected })).toEqual({
+      Approval: "Yes",
+    });
+  });
+
+  it("plain questions keep emitting plain string answers", () => {
+    const plainQuestion = { ...notesQuestion, allowNotes: undefined };
+    const draft = togglePendingUserInputOptionSelection(
+      plainQuestion,
+      setPendingUserInputChoiceNote(undefined, "Yes", "ignored"),
+      "Yes",
+    );
+    expect(buildPendingUserInputAnswers([plainQuestion], { Approval: draft })).toEqual({
+      Approval: "Yes",
+    });
+  });
+
+  it("hasCompletePendingUserInputAnswers accepts structured answers", () => {
+    expect(
+      hasCompletePendingUserInputAnswers({
+        Approval: { selected: "Yes", choiceNotes: { Yes: "note" } },
+      }),
+    ).toBe(true);
+    expect(hasCompletePendingUserInputAnswers({ Approval: { selected: "" } })).toBe(false);
   });
 });

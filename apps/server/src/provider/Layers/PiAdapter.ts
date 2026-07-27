@@ -1359,7 +1359,7 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
       context: PiSessionContext,
       input: {
         readonly method: string;
-        readonly question: UserInputQuestion;
+        readonly questions: ReadonlyArray<UserInputQuestion>;
         readonly opts?: Parameters<ExtensionUIContext["select"]>[2];
         readonly rawPayload?: Record<string, unknown>;
       },
@@ -1413,11 +1413,11 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
           ...makeEventBase(context),
           type: "user-input.requested",
           requestId: runtimeRequestId,
-          payload: { questions: [input.question] },
+          payload: { questions: input.questions },
           raw: {
             source: "pi.sdk.event",
             method: input.method,
-            payload: input.rawPayload ?? { requestId, question: input.question },
+            payload: input.rawPayload ?? { requestId, questions: input.questions },
           },
         } satisfies ProviderRuntimeEvent);
       });
@@ -1461,6 +1461,46 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
         } satisfies ProviderRuntimeEvent);
       };
 
+      // Structured AskUserQuestion entry point for harness extensions. Not part
+      // of pi's ExtensionUIContext: extensions feature-detect it (`"askUserQuestions"
+      // in ctx.ui`) to choose the Synara path over the TUI dialog. Questions map
+      // 1:1 onto the canonical UserInputQuestion contract (multiSelect, notes,
+      // custom answers) and answers come back in ProviderUserInputAnswers form.
+      const askUserQuestions = async (
+        rawQuestions: ReadonlyArray<{
+          readonly header: string;
+          readonly question: string;
+          readonly multiSelect?: boolean;
+          readonly options: ReadonlyArray<{
+            readonly label: string;
+            readonly description?: string;
+          }>;
+        }>,
+        opts?: Parameters<ExtensionUIContext["select"]>[2],
+      ): Promise<ProviderUserInputAnswers> => {
+        const questions: Array<UserInputQuestion> = rawQuestions.map((question, index) => {
+          const header = trimToUndefined(question.header) ?? `Question ${index + 1}`;
+          return {
+            id: header,
+            header,
+            question: trimToUndefined(question.question) ?? header,
+            multiSelect: question.multiSelect === true,
+            allowCustomAnswer: true,
+            allowNotes: true,
+            options: question.options.map((option, optionIndex) => {
+              const label = trimToUndefined(option.label) ?? `Option ${optionIndex + 1}`;
+              return { label, description: trimToUndefined(option.description) ?? label };
+            }),
+          };
+        });
+        return requestPiExtensionUserInput(context, {
+          method: "extension/ui/askUserQuestion",
+          opts,
+          questions,
+          rawPayload: { questions: rawQuestions },
+        });
+      };
+
       const uiContext: ExtensionUIContext = {
         async select(title, options, opts) {
           const questionId = "selection";
@@ -1468,12 +1508,14 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
           const answers = await requestPiExtensionUserInput(context, {
             method: "extension/ui/select",
             opts,
-            question: {
-              id: questionId,
-              header: trimToUndefined(title) ?? "Pi plugin",
-              question: trimToUndefined(title) ?? "Choose an option.",
-              options: optionMappings.map((mapping) => mapping.option),
-            },
+            questions: [
+              {
+                id: questionId,
+                header: trimToUndefined(title) ?? "Pi plugin",
+                question: trimToUndefined(title) ?? "Choose an option.",
+                options: optionMappings.map((mapping) => mapping.option),
+              },
+            ],
             rawPayload: { title, options },
           });
           const answer = firstPiUserInputAnswer(answers, questionId);
@@ -1484,13 +1526,15 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
           const answers = await requestPiExtensionUserInput(context, {
             method: "extension/ui/confirm",
             opts,
-            question: {
-              id: questionId,
-              header: trimToUndefined(title) ?? "Pi plugin",
-              question:
-                trimToUndefined(message) ?? trimToUndefined(title) ?? "Confirm this action?",
-              options: [makePiUserInputOption("Yes"), makePiUserInputOption("No")],
-            },
+            questions: [
+              {
+                id: questionId,
+                header: trimToUndefined(title) ?? "Pi plugin",
+                question:
+                  trimToUndefined(message) ?? trimToUndefined(title) ?? "Confirm this action?",
+                options: [makePiUserInputOption("Yes"), makePiUserInputOption("No")],
+              },
+            ],
             rawPayload: { title, message },
           });
           return firstPiUserInputAnswer(answers, questionId) === "Yes";
@@ -1500,13 +1544,15 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
           const answers = await requestPiExtensionUserInput(context, {
             method: "extension/ui/input",
             opts,
-            question: {
-              id: questionId,
-              header: trimToUndefined(title) ?? "Pi plugin",
-              question:
-                trimToUndefined(placeholder) ?? trimToUndefined(title) ?? "Type a response.",
-              options: [],
-            },
+            questions: [
+              {
+                id: questionId,
+                header: trimToUndefined(title) ?? "Pi plugin",
+                question:
+                  trimToUndefined(placeholder) ?? trimToUndefined(title) ?? "Type a response.",
+                options: [],
+              },
+            ],
             rawPayload: { title, placeholder },
           });
           return firstPiUserInputAnswer(answers, questionId);
@@ -1605,7 +1651,7 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
         },
         setToolsExpanded() {},
       };
-      return uiContext;
+      return Object.assign(uiContext, { askUserQuestions });
     };
 
     const completePromptRejection = (context: PiSessionContext, turnId: TurnId, cause: unknown) => {

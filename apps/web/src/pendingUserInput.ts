@@ -8,6 +8,8 @@ import type { ProviderUserInputAnswers, UserInputQuestion } from "@synara/contra
 export interface PendingUserInputDraftAnswer {
   selectedOptionLabels?: string[];
   customAnswer?: string;
+  // Optional per-choice notes keyed by option label (questions with allowNotes).
+  choiceNotes?: Record<string, string>;
 }
 
 export interface PendingUserInputProgress {
@@ -76,7 +78,41 @@ export function setPendingUserInputCustomAnswer(
   return {
     customAnswer,
     ...(selectedOptionLabels && selectedOptionLabels.length > 0 ? { selectedOptionLabels } : {}),
+    ...(draft?.choiceNotes ? { choiceNotes: draft.choiceNotes } : {}),
   };
+}
+
+export function setPendingUserInputChoiceNote(
+  draft: PendingUserInputDraftAnswer | undefined,
+  optionLabel: string,
+  note: string,
+): PendingUserInputDraftAnswer {
+  const nextNotes = { ...draft?.choiceNotes };
+  if (note.trim().length > 0) {
+    nextNotes[optionLabel] = note;
+  } else {
+    delete nextNotes[optionLabel];
+  }
+  const { choiceNotes: _dropped, ...rest } = draft ?? {};
+  return {
+    ...rest,
+    customAnswer: draft?.customAnswer ?? "",
+    ...(Object.keys(nextNotes).length > 0 ? { choiceNotes: nextNotes } : {}),
+  };
+}
+
+// Notes attached to option labels that are actually selected (stale notes for
+// deselected options are dropped at submit time, mirroring the TUI extension).
+function selectedChoiceNotes(
+  draft: PendingUserInputDraftAnswer | undefined,
+  selected: string | string[],
+): Record<string, string> | undefined {
+  if (!draft?.choiceNotes) return undefined;
+  const selectedLabels = new Set(Array.isArray(selected) ? selected : [selected]);
+  const entries = Object.entries(draft.choiceNotes).filter(
+    ([label, note]) => selectedLabels.has(label) && note.trim().length > 0,
+  );
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 }
 
 // Toggle selections in-place so multi-select prompts can keep the same draft state shape.
@@ -85,6 +121,7 @@ export function togglePendingUserInputOptionSelection(
   draft: PendingUserInputDraftAnswer | undefined,
   optionLabel: string,
 ): PendingUserInputDraftAnswer {
+  const preservedNotes = draft?.choiceNotes ? { choiceNotes: draft.choiceNotes } : {};
   if (question.multiSelect) {
     const selectedOptionLabels = normalizeSelectedOptionLabels(draft?.selectedOptionLabels);
     const nextSelectedOptionLabels = selectedOptionLabels.includes(optionLabel)
@@ -96,27 +133,31 @@ export function togglePendingUserInputOptionSelection(
       ...(nextSelectedOptionLabels.length > 0
         ? { selectedOptionLabels: nextSelectedOptionLabels }
         : {}),
+      ...preservedNotes,
     };
   }
 
   return {
     customAnswer: "",
     selectedOptionLabels: [optionLabel],
+    ...preservedNotes,
   };
 }
 
 export function buildPendingUserInputAnswers(
   questions: ReadonlyArray<UserInputQuestion>,
   draftAnswers: Record<string, PendingUserInputDraftAnswer>,
-): Record<string, string | string[]> | null {
-  const answers: Record<string, string | string[]> = {};
+): ProviderUserInputAnswers | null {
+  const answers: Record<string, ProviderUserInputAnswers[string]> = {};
 
   for (const question of questions) {
-    const answer = resolvePendingUserInputAnswer(question, draftAnswers[question.id]);
+    const draft = draftAnswers[question.id];
+    const answer = resolvePendingUserInputAnswer(question, draft);
     if (!answer) {
       return null;
     }
-    answers[question.id] = answer;
+    const choiceNotes = question.allowNotes ? selectedChoiceNotes(draft, answer) : undefined;
+    answers[question.id] = choiceNotes ? { selected: answer, choiceNotes } : answer;
   }
 
   return answers;
@@ -128,16 +169,24 @@ export function hasCompletePendingUserInputAnswers(answers: ProviderUserInputAns
     return false;
   }
 
+  const hasValue = (value: string | ReadonlyArray<string>): boolean => {
+    if (typeof value === "string") {
+      return value.trim().length > 0;
+    }
+    return value.some((entry) => typeof entry === "string" && entry.trim().length > 0);
+  };
+
   return entries.every(([, answer]) => {
+    if (answer === null || answer === undefined) {
+      return false;
+    }
     if (typeof answer === "string") {
-      return answer.trim().length > 0;
+      return hasValue(answer);
     }
-
-    if (Array.isArray(answer)) {
-      return answer.some((entry) => typeof entry === "string" && entry.trim().length > 0);
+    if ("selected" in answer && !Array.isArray(answer)) {
+      return hasValue(answer.selected);
     }
-
-    return false;
+    return hasValue(answer as ReadonlyArray<string>);
   });
 }
 
