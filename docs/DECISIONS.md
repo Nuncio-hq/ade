@@ -35,3 +35,15 @@
   wired into task completion. Why: a prior project (Nuncio) failed because agents
   never updated docs on direction changes; cheap append + small STATE file makes
   updates actually happen.
+
+- **2026-07-27 — Trunk-based branching, no component branches.** Rejected long-lived
+  harness/mobile/app/dev branches in favor of short-lived area-prefixed branches
+  (`harness/*`, `app/*`, `mobile/*`, `sync/upstream-*`) off `main`, release by tag.
+  Why: directory layout already isolates areas; component branches would split
+  extension+bridge changes that must land together; each long-lived branch multiplies
+  upstream-merge sync points; solo dev + dogfooding needs no staging branch.
+
+- **2026-07-27 — Mobile philosophy: your machine as cloud, agents.** The phone is a
+  remote client to the Mac-hosted ADE server (WebSocket contract in
+  `packages/contracts`); agents and the Pi runtime never run on the phone.
+  Delivery path (PWA vs straight-to-native) not yet decided.

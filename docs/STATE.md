@@ -21,6 +21,13 @@ All Synara providers are kept working.
 
 ## In force
 
+- Branching: trunk-based on `main`; short-lived branches `harness/*`, `app/*`,
+  `mobile/*`, `sync/upstream-<date>`. No long-lived dev branch; release = tag on main,
+  gated by dogfooding the dev instance. See AGENTS.md §Branching.
+- Mobile: end goal is "your machine as cloud, agents" — phone is a remote
+  client to the Mac-hosted server, never a Pi runtime. Near-term: use REMOTE.md
+  (Tailscale + auth token) to reach the web UI from the phone. Native-vs-PWA path
+  undecided.
 - Upstream = `Emanuele-web04/synara`, remote `upstream`; merge early, cherry-pick later.
 - Origin remote: **not set yet** (user will add private repo).
 - Extensions dev is project-local first (`.pi/extensions` symlink → `harness/extensions`);

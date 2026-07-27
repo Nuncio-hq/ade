@@ -31,11 +31,29 @@ The original Synara agent docs are preserved verbatim in this repo and remain au
 
 Ignore the "Model Selection" section in those files: it reflects the upstream author's personal pricing deals and tooling, not this project's. Where the upstream docs and this file conflict, this file wins.
 
+## Branching
+
+Trunk-based. `main` is the only long-lived branch and must always be green (`bun fmt`, `bun lint`, `bun typecheck` pass). There is NO long-lived `dev`, `harness`, `app`, or `mobile` branch — do not create them.
+
+All work happens on short-lived branches cut from `main`, merged back when green, deleted after merge. Name them by area prefix:
+
+- `harness/<feature>` — Pi extensions and harness work (e.g. `harness/permission-gate`)
+- `app/<feature>` — Synara-side work: server, web, desktop, bridge (e.g. `app/bridge-custom-widgets`)
+- `mobile/<feature>` — mobile client work (e.g. `mobile/spike-expo-shell`)
+- `sync/upstream-<YYYY-MM-DD>` — upstream merges: merge `upstream/main` here, resolve conflicts (keep our `AGENTS.md`/`CLAUDE.md`; refresh `SYNARA-*.md` from upstream), verify, then merge to `main`
+
+Rules:
+
+- Cross-cutting changes (extension + bridge) stay in ONE branch — never split them by area.
+- Aim for days, not weeks. If a branch lives long, merge `main` into it frequently.
+- Releases are tags on `main` (`v0.x.y`) → `bun run build:desktop`. The gate before tagging is dogfooding via the dev instance, not a staging branch.
+- Direct small commits to `main` are fine (solo project); use branches when work is multi-step or risky.
+
 ## Upstream Workflow
 
 - `upstream` remote points to the original Synara repo. We selectively pull improvements; we do not track it as a hard dependency.
 - To inspect upstream: `git fetch upstream && git log --oneline main..upstream/main`.
-- Early on, prefer `git merge upstream/main`. Once diverged, prefer `git cherry-pick` of specific commits (especially anything touching `PiAdapter`, `piTurnFailure`, or `@earendil-works/pi-*` version bumps).
+- Early on, prefer `git merge upstream/main` (via a `sync/upstream-<date>` branch). Once diverged, prefer `git cherry-pick` of specific commits (especially anything touching `PiAdapter`, `piTurnFailure`, or `@earendil-works/pi-*` version bumps).
 - Never push to `upstream`.
 
 ## Repo Layout & Boundaries
