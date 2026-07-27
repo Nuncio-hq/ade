@@ -23,6 +23,7 @@ import {
   makePiRuntimeEventBase,
   makePiUserInputOptions,
   PLAIN_PI_EXTENSION_THEME,
+  toolDetailText,
 } from "./PiAdapter";
 
 describe("Pi native Synara gateway tools", () => {
@@ -471,5 +472,20 @@ describe("Pi extension UI helpers", () => {
     expect(PLAIN_PI_EXTENSION_THEME.fg("accent", "ready")).toBe("ready");
     expect(PLAIN_PI_EXTENSION_THEME.bold("done")).toBe("done");
     expect(PLAIN_PI_EXTENSION_THEME.getThinkingBorderColor("medium")("thinking")).toBe("thinking");
+  });
+});
+
+describe("toolDetailText", () => {
+  it("trims trailing newlines so runtime events pass journal schema encoding", () => {
+    // Contract detail is TrimmedNonEmptyString; shell output ends with \n.
+    expect(toolDetailText("hello world\n")).toBe("hello world");
+    expect(toolDetailText({ output: "line1\nline2\n" })).toBe("line1\nline2");
+    expect(toolDetailText({ content: [{ type: "text", text: "  padded  " }] })).toBe("padded");
+  });
+
+  it("drops whitespace-only results instead of emitting an invalid detail", () => {
+    expect(toolDetailText("\n")).toBeUndefined();
+    expect(toolDetailText({ output: "   " })).toBeUndefined();
+    expect(toolDetailText(undefined)).toBeUndefined();
   });
 });

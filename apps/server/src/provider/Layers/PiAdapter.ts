@@ -847,6 +847,14 @@ function firstStringValue(
   return undefined;
 }
 
+// Contract `detail` fields require trimmed non-empty strings; raw tool output
+// almost always ends with a newline and previously failed durable journal
+// encoding (ProviderRuntimeEvent.append), quarantining the event. Exported for
+// regression tests.
+export function toolDetailText(result: unknown): string | undefined {
+  return trimToUndefined(textFromToolResult(result));
+}
+
 function textFromToolResult(result: unknown): string | undefined {
   if (typeof result === "string") {
     return result;
@@ -963,7 +971,7 @@ function toolItemType(toolName: string): PiTrackedToolCall["itemType"] {
 }
 
 function toolTitle(toolName: string, args: unknown): string {
-  const command = toolName === "bash" ? toolCommand(args) : undefined;
+  const command = toolName === "bash" ? trimToUndefined(toolCommand(args)) : undefined;
   if (command) return command;
   const filePath = toolPath(args);
   if (
@@ -1863,7 +1871,7 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
         case "tool_execution_update": {
           const tracked = context.activeToolItems.get(event.toolCallId);
           if (!tracked) return;
-          const detail = textFromToolResult(event.partialResult);
+          const detail = toolDetailText(event.partialResult);
           recordItem(context, {
             type: "tool_call",
             status: "updated",
@@ -1900,7 +1908,7 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
             itemType: toolItemType(event.toolName),
           };
           context.activeToolItems.delete(event.toolCallId);
-          const detail = textFromToolResult(event.result);
+          const detail = toolDetailText(event.result);
           recordItem(context, {
             type: "tool_call",
             status: event.isError ? "failed" : "completed",
