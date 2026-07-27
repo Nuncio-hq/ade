@@ -62,7 +62,7 @@ export function ComposerChoiceRow({
       disabled={disabled}
       onClick={onSelect}
       className={cn(
-        "group flex w-full items-start gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors duration-150",
+        "group flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors duration-150",
         selected ? "bg-[var(--color-background-button-secondary)]" : ROW_TONE_CLASS_NAME[tone],
         disabled && "cursor-not-allowed opacity-50",
       )}

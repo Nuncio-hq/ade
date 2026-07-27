@@ -214,7 +214,7 @@ function ComposerPendingUserInputCard({
                   onSelect={() => handleOptionSelection(activeQuestion.id, option.label)}
                   trailing={
                     isSelected ? (
-                      <CheckIcon className="mt-0.5 size-3.5 shrink-0 text-[var(--color-text-foreground)]" />
+                      <CheckIcon className="size-3.5 shrink-0 text-[var(--color-text-foreground)]" />
                     ) : null
                   }
                 />
