@@ -35,14 +35,14 @@ describe("trustedOrigins", () => {
     ).toBe(true);
     expect(
       isTrustedAppOrigin({
-        origin: "synara://app",
+        origin: "nuncioade://app",
         requestOrigin: "http://127.0.0.1:58090",
         config,
       }),
     ).toBe(true);
     expect(
       isTrustedAppOrigin({
-        origin: "synara-canary://app",
+        origin: "nuncioade-canary://app",
         requestOrigin: "http://127.0.0.1:58090",
         config,
       }),
@@ -113,8 +113,8 @@ describe("trustedOrigins", () => {
   });
 
   it("normalizes desktop origins with trailing slashes", () => {
-    expect(normalizeCorsOrigin("synara://app/")).toBe("synara://app");
-    expect(normalizeCorsOrigin("synara-canary://app/")).toBe("synara-canary://app");
+    expect(normalizeCorsOrigin("nuncioade://app/")).toBe("nuncioade://app");
+    expect(normalizeCorsOrigin("nuncioade-canary://app/")).toBe("nuncioade-canary://app");
   });
 
   it("rejects present but untrusted request origins for websocket-style gates", () => {
