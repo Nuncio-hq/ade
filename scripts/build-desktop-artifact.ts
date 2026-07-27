@@ -726,7 +726,7 @@ const createBuildConfig = Effect.fn("createBuildConfig")(function* (
   const buildConfig: Record<string, unknown> = {
     appId: SYNARA_PRODUCTION_BUNDLE_ID,
     productName,
-    artifactName: "Synara-${version}-${arch}.${ext}",
+    artifactName: "NuncioADE-${version}-${arch}.${ext}",
     directories: {
       buildResources: "apps/desktop/resources",
     },
