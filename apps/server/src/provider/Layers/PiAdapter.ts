@@ -321,6 +321,16 @@ const loadPiCodingAgentModule: () => Promise<PiCodingAgentModule> = lazyModule(
   () => import("@earendil-works/pi-coding-agent"),
 );
 
+/**
+ * Pi may keep working after `agent_end` (auto-retry, compaction retry, queued
+ * follow-up); only `agent_settled` proves the run is over. The outcome of the
+ * last `agent_end` is held here so the settle handler can report it.
+ */
+interface PiTurnOutcome {
+  readonly errorMessage: string | undefined;
+  readonly stats: ReturnType<PiAgentSession["getSessionStats"]>;
+}
+
 interface PiSessionContext {
   harnessPolicyDelivered?: boolean;
   readonly gatewayControlAvailable: boolean;
@@ -332,10 +342,15 @@ interface PiSessionContext {
   session: ProviderSession;
   turns: PiStoredTurn[];
   activeTurnId: TurnId | undefined;
+  /** Cached `turns` entry for `activeTurnId`, so per-delta recording skips a linear scan. */
+  activeTurn: PiStoredTurn | undefined;
   activeAssistantItemId: RuntimeItemId | undefined;
   activeReasoningItemId: RuntimeItemId | undefined;
   activeToolItems: Map<string, PiTrackedToolCall>;
   pendingUserInputs: Map<ApprovalRequestId, PiPendingUserInput>;
+  pendingTurnOutcome: PiTurnOutcome | undefined;
+  turnWatchdog: ReturnType<typeof setTimeout> | undefined;
+  turnActivityAt: number;
   stopped: boolean;
   lastKnownTokenUsage: ThreadTokenUsageSnapshot | undefined;
   unsubscribe: (() => void) | undefined;
@@ -368,6 +383,21 @@ interface PiStoredTurn {
   readonly items: unknown[];
   leafId?: string | null;
 }
+
+/** Trailing streamed item that consecutive deltas of the same kind append into. */
+interface PiStreamDeltaItem {
+  readonly type: "assistant_message" | "reasoning";
+  delta: string;
+}
+
+/**
+ * A turn with no session activity for this long is treated as wedged. Pi ends a
+ * turn via `agent_settled`; if that never arrives, `activeTurnId` would stay set
+ * and every later prompt would be rejected with "a turn is already active", so
+ * the turn is failed explicitly instead. Generous enough for xhigh reasoning and
+ * long-running bash.
+ */
+const PI_TURN_INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
 
 interface PiTrackedToolCall {
   readonly toolCallId: string;
@@ -1662,6 +1692,100 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
       return Object.assign(uiContext, { askUserQuestions });
     };
 
+    const clearTurnWatchdog = (context: PiSessionContext) => {
+      if (context.turnWatchdog !== undefined) {
+        clearTimeout(context.turnWatchdog);
+        context.turnWatchdog = undefined;
+      }
+    };
+
+    /** Reset every turn-scoped stream/tool state after a turn stops being active. */
+    const resetActiveTurnState = (context: PiSessionContext) => {
+      clearTurnWatchdog(context);
+      context.activeTurnId = undefined;
+      context.activeTurn = undefined;
+      context.activeAssistantItemId = undefined;
+      context.activeReasoningItemId = undefined;
+      context.activeToolItems.clear();
+      context.pendingTurnOutcome = undefined;
+    };
+
+    /**
+     * Close the streaming items opened by the current turn. Ids are cleared so a
+     * following auto-retry opens fresh items instead of appending to the partial
+     * response Pi already discarded.
+     */
+    const closeActiveStreamItems = (
+      context: PiSessionContext,
+      status: "completed" | "failed",
+      raw: ProviderRuntimeEvent["raw"],
+    ) => {
+      if (context.activeAssistantItemId) {
+        offerRuntimeEvent({
+          ...makeEventBase(context),
+          itemId: context.activeAssistantItemId,
+          type: "item.completed",
+          payload: { itemType: "assistant_message", status, title: "Assistant" },
+          ...(raw ? { raw } : {}),
+        } satisfies ProviderRuntimeEvent);
+        context.activeAssistantItemId = undefined;
+      }
+      if (context.activeReasoningItemId) {
+        offerRuntimeEvent({
+          ...makeEventBase(context),
+          itemId: context.activeReasoningItemId,
+          type: "item.completed",
+          payload: { itemType: "reasoning", status, title: "Reasoning" },
+          ...(raw ? { raw } : {}),
+        } satisfies ProviderRuntimeEvent);
+        context.activeReasoningItemId = undefined;
+      }
+    };
+
+    const failStalledTurn = (context: PiSessionContext, idleMs: number) => {
+      const minutes = Math.round(idleMs / 60_000);
+      const message = `Pi turn produced no activity for ${String(minutes)} minutes and was ended so the thread can accept new prompts.`;
+      const raw = {
+        source: "pi.sdk.event",
+        method: "turn/watchdog",
+        payload: { idleMs },
+      } satisfies ProviderRuntimeEvent["raw"];
+      offerRuntimeError(context, { message, method: "turn/watchdog" });
+      closeActiveStreamItems(context, "failed", raw);
+      const completionBase = makeEventBase(context);
+      resetActiveTurnState(context);
+      context.session = makeSessionSnapshot(context);
+      offerRuntimeEvent({
+        ...completionBase,
+        type: "turn.completed",
+        payload: { state: "failed", stopReason: "error", errorMessage: message },
+        raw,
+      } satisfies ProviderRuntimeEvent);
+    };
+
+    const armTurnWatchdog = (
+      context: PiSessionContext,
+      delayMs: number = PI_TURN_INACTIVITY_TIMEOUT_MS,
+    ) => {
+      clearTurnWatchdog(context);
+      if (!context.activeTurnId || context.stopped) return;
+      const turnId = context.activeTurnId;
+      const timer = setTimeout(() => {
+        context.turnWatchdog = undefined;
+        if (context.stopped || context.activeTurnId !== turnId) return;
+        // Session events only stamp `turnActivityAt`; re-arm for the remaining
+        // window so the hot path never churns a timer per streamed token.
+        const idleMs = Date.now() - context.turnActivityAt;
+        if (idleMs < PI_TURN_INACTIVITY_TIMEOUT_MS) {
+          armTurnWatchdog(context, PI_TURN_INACTIVITY_TIMEOUT_MS - idleMs);
+          return;
+        }
+        failStalledTurn(context, idleMs);
+      }, delayMs);
+      timer.unref?.();
+      context.turnWatchdog = timer;
+    };
+
     const completePromptRejection = (context: PiSessionContext, turnId: TurnId, cause: unknown) => {
       if (context.activeTurnId !== turnId) {
         return;
@@ -1673,10 +1797,7 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
       if (failure.state === "failed") {
         offerRuntimeError(context, { message, method: "prompt", cause });
       }
-      context.activeTurnId = undefined;
-      context.activeAssistantItemId = undefined;
-      context.activeReasoningItemId = undefined;
-      context.activeToolItems.clear();
+      resetActiveTurnState(context);
       context.session = makeSessionSnapshot(context);
       offerRuntimeEvent({
         ...completionBase,
@@ -1690,11 +1811,39 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
       } satisfies ProviderRuntimeEvent);
     };
 
-    const recordItem = (context: PiSessionContext, item: unknown) => {
+    const activeTurnFor = (context: PiSessionContext): PiStoredTurn | undefined => {
+      if (context.activeTurn && context.activeTurn.id === context.activeTurnId) {
+        return context.activeTurn;
+      }
       const turn = context.activeTurnId
         ? context.turns.find((candidate) => candidate.id === context.activeTurnId)
         : context.turns.at(-1);
-      turn?.items.push(item);
+      context.activeTurn = turn;
+      return turn;
+    };
+
+    const recordItem = (context: PiSessionContext, item: unknown) => {
+      activeTurnFor(context)?.items.push(item);
+    };
+
+    /**
+     * Deltas arrive one per streamed token. Appending into the trailing item of
+     * the same kind keeps `turns` proportional to the response length instead of
+     * allocating one object per token for the lifetime of the thread.
+     */
+    const recordStreamDelta = (
+      context: PiSessionContext,
+      type: PiStreamDeltaItem["type"],
+      delta: string,
+    ) => {
+      const turn = activeTurnFor(context);
+      if (!turn) return;
+      const last = turn.items.at(-1) as PiStreamDeltaItem | undefined;
+      if (last && last.type === type && typeof last.delta === "string") {
+        last.delta += delta;
+        return;
+      }
+      turn.items.push({ type, delta } satisfies PiStreamDeltaItem);
     };
 
     const requireSession = Effect.fn("PiAdapter.requireSession")(function* (threadId: ThreadId) {
@@ -1749,6 +1898,15 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
     ) => {
       if (event.message.role !== "assistant") return;
       const update = event.assistantMessageEvent;
+      // `event.message` carries the whole assistant message accumulated so far,
+      // so echoing the full event per delta would make raw payload size grow with
+      // the response and cost O(n^2) serialization across a turn. Only the delta
+      // itself is diagnostic here.
+      const raw = {
+        source: "pi.sdk.event",
+        messageType: event.type,
+        payload: update,
+      } satisfies ProviderRuntimeEvent["raw"];
       if (update.type === "text_delta") {
         if (!context.activeAssistantItemId) {
           context.activeAssistantItemId = RuntimeItemId.makeUnsafe(
@@ -1759,10 +1917,10 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
             itemId: context.activeAssistantItemId,
             type: "item.started",
             payload: { itemType: "assistant_message", status: "inProgress", title: "Assistant" },
-            raw: { source: "pi.sdk.event", messageType: event.type, payload: event },
+            raw,
           } satisfies ProviderRuntimeEvent);
         }
-        recordItem(context, { type: "assistant_message", delta: update.delta });
+        recordStreamDelta(context, "assistant_message", update.delta);
         offerRuntimeEvent({
           ...makeEventBase(context),
           itemId: context.activeAssistantItemId,
@@ -1772,7 +1930,7 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
             delta: update.delta,
             contentIndex: update.contentIndex,
           },
-          raw: { source: "pi.sdk.event", messageType: event.type, payload: event },
+          raw,
         } satisfies ProviderRuntimeEvent);
         return;
       }
@@ -1786,10 +1944,10 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
             itemId: context.activeReasoningItemId,
             type: "item.started",
             payload: { itemType: "reasoning", status: "inProgress", title: "Reasoning" },
-            raw: { source: "pi.sdk.event", messageType: event.type, payload: event },
+            raw,
           } satisfies ProviderRuntimeEvent);
         }
-        recordItem(context, { type: "reasoning", delta: update.delta });
+        recordStreamDelta(context, "reasoning", update.delta);
         offerRuntimeEvent({
           ...makeEventBase(context),
           itemId: context.activeReasoningItemId,
@@ -1799,12 +1957,15 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
             delta: update.delta,
             contentIndex: update.contentIndex,
           },
-          raw: { source: "pi.sdk.event", messageType: event.type, payload: event },
+          raw,
         } satisfies ProviderRuntimeEvent);
       }
     };
 
     const handleSessionEvent = (context: PiSessionContext, event: AgentSessionEvent) => {
+      // Cheap liveness stamp read by the turn watchdog; avoids re-arming a timer
+      // for every streamed token.
+      context.turnActivityAt = Date.now();
       switch (event.type) {
         case "agent_start":
           offerRuntimeEvent({
@@ -1939,6 +2100,8 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
           return;
         }
         case "compaction_start": {
+          // Activity projection keys compaction by eventId and deliberately skips
+          // `item.started`, so each compaction event stands alone as a log line.
           const itemId = RuntimeItemId.makeUnsafe(`pi-compaction-${crypto.randomUUID()}`);
           offerRuntimeEvent({
             ...makeEventBase(context),
@@ -1947,7 +2110,7 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
             payload: {
               itemType: "context_compaction",
               status: "inProgress",
-              title: "Compacting context",
+              title: piCompactionTitle(event.reason),
             },
             raw: { source: "pi.sdk.event", messageType: event.type, payload: event },
           } satisfies ProviderRuntimeEvent);
@@ -1955,17 +2118,43 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
         }
         case "compaction_end": {
           const itemId = RuntimeItemId.makeUnsafe(`pi-compaction-${crypto.randomUUID()}`);
+          const detail = trimToUndefined(event.errorMessage);
+          const raw = {
+            source: "pi.sdk.event",
+            messageType: event.type,
+            payload: event,
+          } satisfies ProviderRuntimeEvent["raw"];
+          // A compaction that will be retried is not a terminal failure; keep it
+          // in progress so the transcript does not report a dead compaction.
+          if (event.willRetry) {
+            offerRuntimeEvent({
+              ...makeEventBase(context),
+              itemId,
+              type: "item.updated",
+              payload: {
+                itemType: "context_compaction",
+                status: "inProgress",
+                title: "Retrying context compaction",
+                ...(detail ? { detail } : {}),
+                data: event,
+              },
+              raw,
+            } satisfies ProviderRuntimeEvent);
+            return;
+          }
+          const failed = event.aborted || detail !== undefined;
           offerRuntimeEvent({
             ...makeEventBase(context),
             itemId,
             type: "item.completed",
             payload: {
               itemType: "context_compaction",
-              status: event.aborted ? "failed" : "completed",
-              title: "Context compacted",
+              status: failed ? "failed" : "completed",
+              title: failed ? "Context compaction failed" : "Context compacted",
+              ...(detail ? { detail } : {}),
               data: event,
             },
-            raw: { source: "pi.sdk.event", messageType: event.type, payload: event },
+            raw,
           } satisfies ProviderRuntimeEvent);
           return;
         }

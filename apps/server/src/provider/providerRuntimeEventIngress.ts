@@ -8,12 +8,27 @@ export function isTerminalProviderRuntimeEvent(event: ProviderRuntimeEvent): boo
   return event.type === "turn.completed" || event.type === "session.exited";
 }
 
+/**
+ * Sizing an event requires serializing it. Admission serializes twice for the
+ * same object: once to decide whether the raw payload needs compacting, then
+ * again as the ingress `sizeOf`. Memoizing per event object removes the second
+ * pass. Keyed weakly so retained sizes cannot outlive the events themselves.
+ */
+const providerRuntimeEventByteCache = new WeakMap<ProviderRuntimeEvent, number>();
+
 export function providerRuntimeEventBytes(event: ProviderRuntimeEvent): number {
-  try {
-    return Buffer.byteLength(JSON.stringify(event), "utf8");
-  } catch {
-    return PROVIDER_RUNTIME_CALLBACK_BUFFER_MAX_BYTES + 1;
+  const cached = providerRuntimeEventByteCache.get(event);
+  if (cached !== undefined) {
+    return cached;
   }
+  let bytes: number;
+  try {
+    bytes = Buffer.byteLength(JSON.stringify(event), "utf8");
+  } catch {
+    bytes = PROVIDER_RUNTIME_CALLBACK_BUFFER_MAX_BYTES + 1;
+  }
+  providerRuntimeEventByteCache.set(event, bytes);
+  return bytes;
 }
 
 /**
