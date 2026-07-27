@@ -53,7 +53,8 @@ interactive/ACP). Weekly limit — spend on what Devin is uniquely good at.
 - Frontier models (`claude-opus-5-*`, `claude-5-fable-*`, `gpt-5-6-sol-*`)
   available; avoid `-fast`/`-priority` variants.
 - **Devin Cloud handoff** — the unique capability: async end-to-end sessions with
-  a **fusion** mode (Fable brainstorms/plans, a cheaper model executes) and
+  **Fusion** mode (official name, in Preview; "best balance of capability, speed,
+  and cost" — Fable brainstorms/plans, a cheaper model executes) and
   **recordings/screenshots after implementation**. Use for tasks where visual
   proof of the result matters. (This record-and-screenshot idea is on our own
   roadmap for pi.)
