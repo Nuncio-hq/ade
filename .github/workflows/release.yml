@@ -121,10 +121,8 @@ jobs:
           required_assets=(
             latest-mac.yml
             latest.yml
-            latest-linux.yml
             "${UPDATE_CHANNEL}-mac.yml"
             "${UPDATE_CHANNEL}.yml"
-            "${UPDATE_CHANNEL}-linux.yml"
           )
           for required_asset in "${required_assets[@]}"; do
             if ! grep -Fxq "$required_asset" <<< "$bridge_assets"; then
@@ -160,6 +158,9 @@ jobs:
     timeout-minutes: 30
     strategy:
       fail-fast: false
+      # NuncioADE: macOS only for now. The user runs macOS arm64; x64 kept for
+      # the updater manifest merge. Linux/Windows lanes removed (no Azure
+      # Trusted Signing available) — restore from upstream release.yml if needed.
       matrix:
         include:
           - label: macOS arm64
@@ -171,16 +172,6 @@ jobs:
             runner: macos-15-intel
             platform: mac
             target: dmg
-            arch: x64
-          - label: Linux x64
-            runner: ubuntu-24.04
-            platform: linux
-            target: AppImage
-            arch: x64
-          - label: Windows x64
-            runner: windows-2022
-            platform: win
-            target: nsis
             arch: x64
     steps:
       - name: Checkout
@@ -533,7 +524,7 @@ jobs:
         with:
           tag_name: ${{ needs.preflight.outputs.tag }}
           target_commitish: ${{ needs.preflight.outputs.ref }}
-          name: Synara v${{ needs.preflight.outputs.version }}
+          name: NuncioADE v${{ needs.preflight.outputs.version }}
           generate_release_notes: true
           prerelease: ${{ needs.preflight.outputs.is_prerelease }}
           make_latest: ${{ needs.preflight.outputs.make_latest }}
