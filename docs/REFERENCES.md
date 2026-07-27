@@ -15,6 +15,16 @@
 
 - **OpenCode** (sst/opencode) — study the client/server split and large-codebase structure only. Do NOT copy its harness UX; user used it long-term and dislikes it as a harness.
 
+## Engineering kit (subscribed)
+
+- **AgentKit** (https://agentkit.best/ — user subscription) — the skills/hooks/subagents
+  kit installed in the user's Claude Code config (`~/.claude/skills/ak-*`, ~98 skills;
+  local state in `~/.agentkit/`). Near-perfect engineering-kit design: study its
+  skill structure, routing (`ak-agentkit` router), hooks, and subagent triggers as
+  the model for our own harness extensions. **Engineering skills only for now —
+  marketing parts are explicitly deferred.** Install key: `~/.nuncio/agentkit.key`
+  (chmod 600, NEVER commit or upload to git).
+
 ## Harness (open source)
 
 - **Codex CLI** (openai/codex) — OpenAI's harness; protocol/app-server design.

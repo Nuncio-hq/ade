@@ -66,3 +66,14 @@
 
 - **2026-07-27 — Current scope frozen: Pi harness, extension UI when needed, mobile.**
   All other UI/UX and features are inherited from Synara upstream rather than built.
+
+- **2026-07-27 — Upstream sync targets releases, not HEAD.** We merge Synara
+  release tags (e.g. v0.6.2) via `sync/upstream-<version>` branches; never track
+  upstream HEAD commits. Why: HEAD is unstable and dilutes history; releases are
+  upstream's own tested checkpoints. (Supersedes the earlier "merge upstream/main
+  early" habit from the bootstrap phase.)
+
+- **2026-07-27 — AgentKit adopted as engineering-kit reference.** User's paid kit
+  (agentkit.best; `ak-*` skills in Claude Code config). Study its skills/hooks/
+  subagents design for our harness; engineering parts only — marketing parts
+  deferred. Install key stored at `~/.nuncio/agentkit.key` (never in git).

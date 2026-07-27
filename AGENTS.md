@@ -57,7 +57,7 @@ All work happens on short-lived branches cut from `main`, merged back when green
 - `harness/<feature>` — Pi extensions and harness work (e.g. `harness/permission-gate`)
 - `app/<feature>` — Synara-side work: server, web, desktop, bridge (e.g. `app/bridge-custom-widgets`)
 - `mobile/<feature>` — mobile client work (e.g. `mobile/spike-expo-shell`)
-- `sync/upstream-<YYYY-MM-DD>` — upstream merges: merge `upstream/main` here, resolve conflicts (keep our `AGENTS.md`/`CLAUDE.md`; refresh `SYNARA-*.md` from upstream), verify, then merge to `main`
+- `sync/upstream-<version>` — upstream merges: merge the chosen upstream **release tag** here (never upstream HEAD; see Upstream Workflow), resolve conflicts (keep our `AGENTS.md`/`CLAUDE.md`; refresh `SYNARA-*.md` from upstream), verify, then merge to `main`
 
 Rules:
 
@@ -69,8 +69,9 @@ Rules:
 ## Upstream Workflow
 
 - `upstream` remote points to the original Synara repo. We selectively pull improvements; we do not track it as a hard dependency.
-- To inspect upstream: `git fetch upstream && git log --oneline main..upstream/main`.
-- Early on, prefer `git merge upstream/main` (via a `sync/upstream-<date>` branch). Once diverged, prefer `git cherry-pick` of specific commits (especially anything touching `PiAdapter`, `piTurnFailure`, or `@earendil-works/pi-*` version bumps).
+- **Merge released versions only, never upstream HEAD.** Sync targets are upstream release tags (check `gh api repos/Emanuele-web04/synara/releases`): `git fetch upstream --tags`, then merge the chosen `vX.Y.Z` tag via a `sync/upstream-<version>` branch. Why: HEAD commits are unstable/diluted; releases are the tested checkpoints.
+- To inspect what a release brings: `git log --oneline main..vX.Y.Z`.
+- Once diverged, prefer `git cherry-pick` of specific commits from a release (especially anything touching `PiAdapter`, `piTurnFailure`, or `@earendil-works/pi-*` version bumps).
 - Never push to `upstream`.
 
 ## Repo Layout & Boundaries
