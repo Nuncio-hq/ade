@@ -27,6 +27,7 @@ This file is the LAW layer: how we work, boundaries, conventions. It changes rar
 
 - `docs/STATE.md` — **current direction**: active milestone, what is done/in progress, decisions currently in force, what is deprecated. Read this at the start of every session before doing direction-related work. Keep it under ~50 lines; push detail to DECISIONS.md.
 - `docs/DECISIONS.md` — **append-only log**: one entry per decision (date + decision + why). Never edit or delete old entries. If a decision is reversed, append a new entry that supersedes it.
+- `docs/REFERENCES.md` — **curated reference projects** (design taste, harnesses, mobile). Consult when designing a similar feature; note the per-entry caveats (e.g. OpenCode: architecture yes, harness UX no). Propose additions to the user — don't add silently.
 
 Update triggers — when any of these happen, updating the docs is PART OF THE TASK, not optional:
 
