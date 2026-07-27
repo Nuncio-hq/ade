@@ -77,3 +77,15 @@
   (agentkit.best; `ak-*` skills in Claude Code config). Study its skills/hooks/
   subagents design for our harness; engineering parts only — marketing parts
   deferred. Install key stored at `~/.nuncio/agentkit.key` (never in git).
+
+- **2026-07-27 — Community CI disabled; core CI kept.** pr-size, pr-vouch,
+  issue-labels moved to `.github/workflows-disabled/` (they serve public repos;
+  pr-vouch could block our own PRs). `ci.yml` (quality gate + migration lineage —
+  our upstream-sync verifier) and `release.yml` stay. macOS signing is possible
+  later via the user's App Store API keys (`~/Desktop/Oscar/appstoreapi/`:
+  Developer ID p12 + App Store Connect API key); Azure Trusted Signing (Windows)
+  is not available — Windows builds stay unsigned or skipped.
+
+- **2026-07-27 — openusage CLI is the quota source of truth.** Agents check
+  subscription quotas (`openusage`, JSON output: claude/codex/cursor/devin/grok)
+  before heavy delegation. Documented in DELEGATION.md.

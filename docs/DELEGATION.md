@@ -59,6 +59,22 @@ interactive/ACP). Weekly limit — spend on what Devin is uniquely good at.
   proof of the result matters. (This record-and-screenshot idea is on our own
   roadmap for pi.)
 
+## Checking quota before delegating
+
+`openusage` CLI (installed at `/usr/local/bin/openusage`) reports live quota for
+every subscription as JSON (5-min shared cache; `--force` to refresh; single
+provider: `openusage claude`):
+
+- `claude` — Max 20x: `session` (5h window), `weekly`, and `fable` (separate Fable weekly pool)
+- `codex` — Pro 20x: `weekly`, `sparkWeekly`, rate-limit resets
+- `cursor` — Ultra: `autoUsage` vs `apiUsage` — the two pools in section 3
+- `devin` — `weekly` + extra-usage balance (USD)
+- `grok` — free tier weekly
+
+Use it when planning heavy delegation (parallel threads, long Devin sessions) or
+when a provider starts erroring — check utilization/reset times and route to a
+pool with headroom instead of hammering an exhausted one.
+
 ## Ground rules
 
 - Prompts to spawned agents must be self-contained: goal, context, files in
