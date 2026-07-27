@@ -5,10 +5,12 @@
 
 ## Direction
 
-ADE = Synara fork, Pi-first. The custom Pi harness is built **via extensions only**
-(`harness/extensions/`), no fork of pi's source. Synara code (`apps/`, `packages/`)
-is touched only to close `ExtensionUIContext` bridge gaps that extensions need.
-All Synara providers are kept working.
+NuncioADE (repo `Nuncio-hq/ade`, private) = Synara fork, Pi-first. Current scope:
+(1) Pi harness **via extensions only** (`harness/extensions/`), no fork of pi's source;
+(2) UI for Pi extensions when the bridge needs it; (3) mobile (native, no PWA).
+Everything else — UI/UX, general features — is inherited from Synara upstream.
+Synara code (`apps/`, `packages/`) is touched only to close `ExtensionUIContext`
+bridge gaps. All Synara providers are kept working.
 
 ## Milestones
 
@@ -25,11 +27,13 @@ All Synara providers are kept working.
   `mobile/*`, `sync/upstream-<date>`. No long-lived dev branch; release = tag on main,
   gated by dogfooding the dev instance. See AGENTS.md §Branching.
 - Mobile: end goal is "your machine as cloud, agents" — phone is a remote
-  client to the Mac-hosted server, never a Pi runtime. Near-term: use REMOTE.md
-  (Tailscale + auth token) to reach the web UI from the phone. Native-vs-PWA path
-  undecided.
+  client to the Mac-hosted server, never a Pi runtime. **Native app (Expo/RN),
+  PWA skipped.** Near-term: use REMOTE.md (Tailscale + auth token) to reach the
+  web UI from the phone and collect real mobile requirements.
+- Naming: inherited code stays `@synara/*` / `SYNARA_*`; new code is `@nuncio/*` /
+  `NUNCIO_` / `ade_` tools. See AGENTS.md §Naming Convention.
 - Upstream = `Emanuele-web04/synara`, remote `upstream`; merge early, cherry-pick later.
-- Origin remote: **not set yet** (user will add private repo).
+- Origin = `https://github.com/Nuncio-hq/ade` (private), `main` pushed and tracking.
 - Extensions dev is project-local first (`.pi/extensions` symlink → `harness/extensions`);
   promote to `~/.pi/agent/extensions/` (global) only when stable.
 - Pi TUI is the bisect tool, not the primary dev target; ADE is the primary target.

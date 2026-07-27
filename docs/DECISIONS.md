@@ -47,3 +47,22 @@
   remote client to the Mac-hosted ADE server (WebSocket contract in
   `packages/contracts`); agents and the Pi runtime never run on the phone.
   Delivery path (PWA vs straight-to-native) not yet decided.
+
+- **2026-07-27 — Mobile goes straight to native (Expo/RN); PWA skipped.** Why: push
+  notifications are the #1 mobile feature and iOS PWA push is second-class; user
+  doesn't want to maintain an intermediate layer; frontend contracts already exist
+  in `packages/contracts`. Web-via-Tailscale (REMOTE.md) remains the zero-code
+  stopgap and requirements-gathering tool.
+
+- **2026-07-27 — Project named NuncioADE; repo `Nuncio-hq/ade` (private) is origin.**
+  Created and pushed 2026-07-27. Branding lives at repo/docs level only.
+
+- **2026-07-27 — No rename of inherited Synara identifiers.** `@synara/*` packages,
+  `SYNARA_*` env vars, app branding stay as-is unless we ever fully rebuild UI/UX
+  (may be never). New-and-ours code uses `@nuncio/*` scope, `NUNCIO_` env prefix,
+  `ade_`/`/ade-*` extension tools/commands from the first commit. Why: narrow delta
+  keeps upstream merges cheap; namespacing new code from day one avoids a future
+  refactor.
+
+- **2026-07-27 — Current scope frozen: Pi harness, extension UI when needed, mobile.**
+  All other UI/UX and features are inherited from Synara upstream rather than built.

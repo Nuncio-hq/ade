@@ -2,7 +2,22 @@
 
 ## Project Identity
 
-ADE is a personal agentic development environment, forked from [Synara](https://github.com/Emanuele-web04/synara) (itself a fork of T3Code). It inherits Synara's full architecture and keeps every provider working, but its product direction is **Pi-first**: the Pi provider (`@earendil-works/pi-*` SDK) is the primary, deeply-integrated runtime and gets new investment first. Nothing from Synara is removed.
+**NuncioADE** (repo `Nuncio-hq/ade`, private) is a personal agentic development environment, forked from [Synara](https://github.com/Emanuele-web04/synara) (itself a fork of T3Code). It inherits Synara's full architecture and keeps every provider working, but its product direction is **Pi-first**: the Pi provider (`@earendil-works/pi-*` SDK) is the primary, deeply-integrated runtime and gets new investment first. Nothing from Synara is removed. UI/UX and general features are inherited from upstream; our own investment goes to the Pi harness, extension UI where needed, and mobile.
+
+## Naming Convention (inherited vs ours)
+
+Inherited Synara code keeps its Synara identity — do NOT rename. Renaming happens only if we ever decide to fully rebuild UI/UX (may be never):
+
+- Keep: `@synara/*` package names, `SYNARA_*` env vars, app title/branding in `apps/` and `packages/`.
+- Modifying files in Synara ground (e.g. the PiAdapter bridge) is still Synara world — no renames there.
+
+Anything NEW and ours gets our namespace from the first commit — never `synara`:
+
+- New workspace packages (e.g. mobile, harness-as-package): scope `@nuncio/*`.
+- New env vars / config keys we introduce: prefix `NUNCIO_`.
+- Pi extension tools/commands: prefix `ade_` tools, `/ade-*` commands.
+
+This avoids a future refactor: our code never needs renaming, inherited code never causes merge conflicts.
 
 This is an early WIP. Sweeping changes that improve long-term maintainability are encouraged.
 
