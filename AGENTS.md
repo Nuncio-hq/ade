@@ -6,6 +6,22 @@ ADE is a personal agentic development environment, forked from [Synara](https://
 
 This is an early WIP. Sweeping changes that improve long-term maintainability are encouraged.
 
+## Living Docs (read first, keep true)
+
+This file is the LAW layer: how we work, boundaries, conventions. It changes rarely. Current state and history live elsewhere:
+
+- `docs/STATE.md` — **current direction**: active milestone, what is done/in progress, decisions currently in force, what is deprecated. Read this at the start of every session before doing direction-related work. Keep it under ~50 lines; push detail to DECISIONS.md.
+- `docs/DECISIONS.md` — **append-only log**: one entry per decision (date + decision + why). Never edit or delete old entries. If a decision is reversed, append a new entry that supersedes it.
+
+Update triggers — when any of these happen, updating the docs is PART OF THE TASK, not optional:
+
+- Product direction changes or a milestone starts/completes → update `docs/STATE.md` + append to `docs/DECISIONS.md`.
+- A component, provider, dependency, or workflow is added, removed, or deprecated → update `docs/STATE.md` (and the relevant section here if it states otherwise).
+- An architectural or tooling decision is made (even verbally with the user) → append to `docs/DECISIONS.md`.
+- Anything in this file or STATE.md becomes factually wrong because of your change → fix it in the same task.
+
+Deprecated things must be listed in `docs/STATE.md` under "Deprecated / do not revive" — this prevents future agents from accidentally resurrecting dead code or abandoned directions.
+
 ## Upstream Docs (read these too)
 
 The original Synara agent docs are preserved verbatim in this repo and remain authoritative for everything not covered here (Codex app-server, UI conventions, transcript performance guardrails, dev instance isolation details):
@@ -55,6 +71,7 @@ Boundary rules:
 - All of `bun fmt`, `bun lint`, and `bun typecheck` must pass before considering tasks completed.
 - Treat them as heavyweight workspace checks: bundle into one final verification pass per task; avoid rerunning the full set during iteration.
 - NEVER run `bun test`. Always use `bun run test` (runs Vitest).
+- Before finishing any task, ask: *did this change make `docs/STATE.md` or `AGENTS.md` stale?* If yes, updating them is part of the task (see Living Docs). A task that changes direction, components, or workflow without updating the docs is NOT done.
 
 ## Core Priorities
 
