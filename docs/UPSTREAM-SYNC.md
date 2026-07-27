@@ -17,7 +17,7 @@
 ```sh
 cd <repo root>
 git fetch upstream --tags --quiet
-gh api repos/Emanuele-web04/synara/releases --jq '.[0] | {tag: .tag_name, date: .published_at, notes: .body}' 
+gh api repos/Emanuele-web04/synara/releases --jq '.[0] | {tag: .tag_name, date: .published_at, notes: .body}'
 git tag --merged main | grep '^v'          # releases already contained in main
 ```
 
@@ -33,13 +33,13 @@ git merge vX.Y.Z --no-edit
 
 ## 3) Resolve conflicts — rules by file class
 
-| File(s) | Resolution |
-| --- | --- |
-| `AGENTS.md`, `CLAUDE.md` | **Always keep ours** (`git checkout --ours`). Then refresh the upstream copies: `git show vX.Y.Z:AGENTS.md > SYNARA-AGENTS.md` and `git show vX.Y.Z:CLAUDE.md > SYNARA-CLAUDE.md`. |
-| `harness/**`, `docs/STATE.md`, `docs/DECISIONS.md`, `docs/REFERENCES.md`, `docs/DELEGATION.md`, this file | Ours only — upstream never has them. A conflict here means something is wrong; stop and investigate. |
-| `apps/**`, `packages/**` we never touched | **Take theirs** (`git checkout --theirs`). |
-| `apps/**`, `packages/**` we modified (bridge changes — check `git log main --oneline -- <file>` for our commits) | Real merge: keep upstream's restructuring AND re-apply our bridge change. Read both sides; do not blind-pick. Our bridge changes are small and noted in their commit messages. |
-| `bun.lock`, `package.json` deps | Take theirs, then re-apply any of our own additions (grep for `@nuncio/` and packages upstream lacks), then `bun install` to regenerate the lock. |
+| File(s)                                                                                                          | Resolution                                                                                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AGENTS.md`, `CLAUDE.md`                                                                                         | **Always keep ours** (`git checkout --ours`). Then refresh the upstream copies: `git show vX.Y.Z:AGENTS.md > SYNARA-AGENTS.md` and `git show vX.Y.Z:CLAUDE.md > SYNARA-CLAUDE.md`. |
+| `harness/**`, `docs/STATE.md`, `docs/DECISIONS.md`, `docs/REFERENCES.md`, `docs/DELEGATION.md`, this file        | Ours only — upstream never has them. A conflict here means something is wrong; stop and investigate.                                                                               |
+| `apps/**`, `packages/**` we never touched                                                                        | **Take theirs** (`git checkout --theirs`).                                                                                                                                         |
+| `apps/**`, `packages/**` we modified (bridge changes — check `git log main --oneline -- <file>` for our commits) | Real merge: keep upstream's restructuring AND re-apply our bridge change. Read both sides; do not blind-pick. Our bridge changes are small and noted in their commit messages.     |
+| `bun.lock`, `package.json` deps                                                                                  | Take theirs, then re-apply any of our own additions (grep for `@nuncio/` and packages upstream lacks), then `bun install` to regenerate the lock.                                  |
 
 After resolving: `git commit` (keep the merge commit; do not squash).
 

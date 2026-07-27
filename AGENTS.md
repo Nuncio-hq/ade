@@ -108,7 +108,7 @@ Boundary rules:
 - All of `bun fmt`, `bun lint`, and `bun typecheck` must pass before considering tasks completed.
 - Treat them as heavyweight workspace checks: bundle into one final verification pass per task; avoid rerunning the full set during iteration.
 - NEVER run `bun test`. Always use `bun run test` (runs Vitest).
-- Before finishing any task, ask: *did this change make `docs/STATE.md` or `AGENTS.md` stale?* If yes, updating them is part of the task (see Living Docs). A task that changes direction, components, or workflow without updating the docs is NOT done.
+- Before finishing any task, ask: _did this change make `docs/STATE.md` or `AGENTS.md` stale?_ If yes, updating them is part of the task (see Living Docs). A task that changes direction, components, or workflow without updating the docs is NOT done.
 
 ## Core Priorities
 

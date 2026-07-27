@@ -7,14 +7,14 @@
 
 ## Summary table
 
-| Work | First choice | Alternative |
-| --- | --- | --- |
-| Backend implementation | Codex `gpt-5.6-sol` (fast priority OK) | Cursor API pool Opus |
-| Code review | Codex `gpt-5.6-sol` | Claude Fable 5 (see safeguards caveat) |
-| Dev + UI design | Claude Opus 5 (Claude Max) | Cursor API pool Opus/Fable |
-| Ordinary/mechanical tasks | Cursor Auto pool: Grok 4.5 high + fast | Devin SWE-1.7 (free promo) |
-| Review/planning (2nd opinion) | Claude Fable 5 | Opus 5 |
-| Async end-to-end task with visual proof | Devin Cloud handoff (fusion) | — |
+| Work                                    | First choice                           | Alternative                            |
+| --------------------------------------- | -------------------------------------- | -------------------------------------- |
+| Backend implementation                  | Codex `gpt-5.6-sol` (fast priority OK) | Cursor API pool Opus                   |
+| Code review                             | Codex `gpt-5.6-sol`                    | Claude Fable 5 (see safeguards caveat) |
+| Dev + UI design                         | Claude Opus 5 (Claude Max)             | Cursor API pool Opus/Fable             |
+| Ordinary/mechanical tasks               | Cursor Auto pool: Grok 4.5 high + fast | Devin SWE-1.7 (free promo)             |
+| Review/planning (2nd opinion)           | Claude Fable 5                         | Opus 5                                 |
+| Async end-to-end task with visual proof | Devin Cloud handoff (fusion)           | —                                      |
 
 ## 1) Claude Max (`claudeAgent` provider)
 
@@ -37,7 +37,7 @@ The Claude Code harness on the user's Claude Max subscription.
 ## 3) Cursor (`cursor` provider, Ultra plan) — TWO quota pools
 
 - **Auto pool** (cheap): only **`grok-4.5`** is worth using — `reasoningEffort:
-  "high"` + fast mode. Use for ordinary tasks. Don't bother with other Auto-pool models.
+"high"` + fast mode. Use for ordinary tasks. Don't bother with other Auto-pool models.
 - **API Usage pool** (expensive): use **`claude-fable-5`** and **`claude-opus-5`**
   only, and **never fast mode** there (fast burns API quota for no quality gain).
   Point of this pool: frontier models inside Cursor's harness — the user's #1 harness.

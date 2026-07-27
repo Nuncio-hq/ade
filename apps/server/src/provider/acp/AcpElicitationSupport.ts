@@ -93,8 +93,21 @@ export function elicitationQuestionsFromRequest(
   }));
 }
 
+// ACP elicitation questions never set allowNotes, but normalize the structured
+// answer form anyway so a mixed panel submission cannot break coercion.
+function plainAnswerValue(
+  value: NonNullable<ProviderUserInputAnswers[string]>,
+): string | ReadonlyArray<string> {
+  if (typeof value === "string" || Array.isArray(value)) {
+    return value as string | ReadonlyArray<string>;
+  }
+  return (value as { readonly selected: string | ReadonlyArray<string> }).selected;
+}
+
 function firstAnswerValue(value: ProviderUserInputAnswers[string] | undefined): string | undefined {
-  return typeof value === "string" ? value : value?.[0];
+  if (value === null || value === undefined) return undefined;
+  const plain = plainAnswerValue(value);
+  return typeof plain === "string" ? plain : plain[0];
 }
 
 function coerceElicitationAnswer(
@@ -105,7 +118,8 @@ function coerceElicitationAnswer(
     return undefined;
   }
   if (property.type === "array") {
-    return typeof answer === "string" ? [answer] : [...answer];
+    const plain = plainAnswerValue(answer);
+    return typeof plain === "string" ? [plain] : [...plain];
   }
   const value = firstAnswerValue(answer);
   if (value === undefined) {
