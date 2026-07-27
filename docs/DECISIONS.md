@@ -99,3 +99,27 @@
   contract gains optional `allowCustomAnswer`/`allowNotes` and a structured
   `{selected, choiceNotes}` answer form — notes UI renders only for questions
   that opt in, so Claude/Grok behavior is unchanged.
+
+- **2026-07-27 — Shared ~/.pi/agent; extensions promoted by symlink.** No separate
+  ADE agent dir: auth.json token rotation makes copies diverge dangerously, and
+  Synara settings already expose `providers.pi.agentDir` as the escape hatch if a
+  global extension ever misbehaves. `harness/install.sh` symlinks graduated
+  extensions into `~/.pi/agent/extensions/`; dev stays project-local.
+
+- **2026-07-27 — Two-instance model: stable app + dev instance.** Daily driver is
+  the built NuncioADE.app (no hot reload under your feet); `.ade-dev` (ports
+  58090/8891) is the test bench. They share only the git repo and ~/.pi/agent —
+  app state dirs are separate.
+
+- **2026-07-27 — NuncioADE branding shipped; migrated off Synara.app.** User-facing
+  values only (display name NuncioADE, bundle com.nuncio.ade, scheme nuncioade://,
+  home ~/.nuncioade, artifact NuncioADE-*.dmg); identifier names keep SYNARA_ per
+  the no-rename decision. brand:check exempts lineage docs. Synara DB snapshotted
+  into NuncioADE via sqlite .backup (attachments, signing key, keybindings, codex
+  overlay copied; environment-id kept distinct). Lesson recorded: never replace
+  the DB while the app is running.
+
+- **2026-07-27 — First Pi bug fixed in Synara ground: trimmed tool detail.**
+  Newline-terminated tool output violated TrimmedNonEmptyString at durable journal
+  encode; events quarantined and durable tool records dropped. toolDetailText()
+  trims + drops whitespace-only. Candidate to offer upstream.

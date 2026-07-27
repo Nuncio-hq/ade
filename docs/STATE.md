@@ -22,7 +22,9 @@ bridge gaps. All Synara providers are kept working.
   Next: Devin provider extension (research OMP's devin-agent impl first).
 - [~] **M2 Bridge gaps** — first bridge extension landed: `extension/ui/askUserQuestion`
   in PiAdapter + `allowNotes`/`allowCustomAnswer` on UserInputQuestion + notes UI.
-- [ ] **M3 Daily driver** — `bun run build:desktop`, use ADE daily; branding last
+- [~] **M3 Daily driver** — STARTED: NuncioADE.app branded, built, installed;
+      DB migrated from Synara (sqlite .backup snapshot); user works in NuncioADE.
+      Remaining: signed builds + no-script auto-update via GitHub releases.
 
 ## In force
 
@@ -52,6 +54,10 @@ bridge gaps. All Synara providers are kept working.
 - 36 web tests fail on main (upstream-inherited; zustand persist vs missing
   localStorage in test env: splitViewStore, pinned\*Store, workflowRunUiStore,
   chatHotPath.compiler). Not ours; recheck after next release sync.
+- Installed NuncioADE.app lags main until rebuilt: harness extensions hot-load
+  via /reload, but `apps/`/`packages/` changes need an app rebuild + reinstall.
+- NEVER swap state.sqlite while the app runs (learned: disk I/O errors, app
+  self-recovered). Quit app, `sqlite3 <src> ".backup <dst>"`, remove -shm/-wal.
 
 ## Reference material
 
