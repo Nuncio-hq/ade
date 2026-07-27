@@ -1,19 +1,60 @@
 # AGENTS.md
 
+## Project Identity
+
+ADE is a personal agentic development environment, forked from [Synara](https://github.com/Emanuele-web04/synara) (itself a fork of T3Code). It inherits Synara's full architecture and keeps every provider working, but its product direction is **Pi-first**: the Pi provider (`@earendil-works/pi-*` SDK) is the primary, deeply-integrated runtime and gets new investment first. Nothing from Synara is removed.
+
+This is an early WIP. Sweeping changes that improve long-term maintainability are encouraged.
+
+## Upstream Docs (read these too)
+
+The original Synara agent docs are preserved verbatim in this repo and remain authoritative for everything not covered here (Codex app-server, UI conventions, transcript performance guardrails, dev instance isolation details):
+
+- `SYNARA-AGENTS.md` — original upstream `AGENTS.md`
+- `SYNARA-CLAUDE.md` — original upstream `CLAUDE.md`
+
+Ignore the "Model Selection" section in those files: it reflects the upstream author's personal pricing deals and tooling, not this project's. Where the upstream docs and this file conflict, this file wins.
+
+## Upstream Workflow
+
+- `upstream` remote points to the original Synara repo. We selectively pull improvements; we do not track it as a hard dependency.
+- To inspect upstream: `git fetch upstream && git log --oneline main..upstream/main`.
+- Early on, prefer `git merge upstream/main`. Once diverged, prefer `git cherry-pick` of specific commits (especially anything touching `PiAdapter`, `piTurnFailure`, or `@earendil-works/pi-*` version bumps).
+- Never push to `upstream`.
+
+## Repo Layout & Boundaries
+
+```
+Nuncio/
+├── ade/                      # this repo = the product (Synara fork)
+│   ├── apps/{server,web,desktop} # inherited from Synara — modify minimally
+│   ├── packages/                 # inherited from Synara — modify minimally
+│   └── harness/                  # ★ ours — Pi harness, does not exist upstream
+│       ├── extensions/           #   Pi extensions (the core deliverable)
+│       ├── skills/ prompts/      #   optional Pi resources
+│       └── README.md             #   docs per extension
+├── playground/               # disposable guinea-pig repo for agent testing (not in git)
+└── claude-oauth-pi/          # reference only: pi tarballs + docs, oh-my-pi (OMP) source
+```
+
+Boundary rules:
+
+- **`harness/`** is our own ground: change freely, never conflicts with upstream merges. Extensions are wired into Pi by symlinking into `~/.pi/agent/extensions/` (real use) or a project's `.pi/extensions/` (dev/testing).
+- **`apps/` + `packages/`** are Synara ground: only touch them when a harness extension needs it — primarily extending the `ExtensionUIContext` bridge in `apps/server/src/provider/Layers/PiAdapter.ts` (Synara ignores TUI-only widgets and editor hooks) plus matching web UI. Keep each change small and note it in the commit message to ease upstream conflict resolution.
+- An extension that depends on a bridge change must land in the same commit/PR as that bridge change.
+- **`claude-oauth-pi/pkg-src`** holds reference material: `@earendil-works/pi-coding-agent` tarballs (with `docs/` and `examples/extensions|hooks`) and the OMP fork (`oh-my-pi`), a heavily upgraded pi worth studying. Port OMP ideas as extensions when possible; skip features that required forking pi's source.
+
+## Dev Workflow (dev → product)
+
+1. **Dev loop**: run an isolated ADE instance (see Local Dev Instance Isolation), edit extensions in `harness/extensions/`, hot-reload via the Pi reload command in-app, test against `playground/`.
+2. **Bisect**: if an extension misbehaves in ADE, run the same extension in the `pi` TUI. TUI-works/ADE-fails ⇒ bridge gap in Synara code; both-fail ⇒ extension bug. Watch for version skew between the `pi` CLI and `@earendil-works/pi-*` pinned in `apps/server/package.json`.
+3. **Ship**: `bun run build:desktop` → install and use ADE as the daily driver; feedback loops back into `harness/`.
+
 ## Task Completion Requirements
 
-- Do not run `bun fmt`, `bun lint`, or `bun typecheck` unless the user explicitly asks for them in the current conversation.
 - All of `bun fmt`, `bun lint`, and `bun typecheck` must pass before considering tasks completed.
-- Treat `bun fmt`, `bun lint`, and `bun typecheck` as heavyweight workspace checks: bundle them into one final verification pass per task whenever possible, and avoid rerunning the full set repeatedly during iteration.
-- If a user asks for a small follow-up right after a recent full verification pass, prefer no rerun or the smallest reasonable re-check unless the user explicitly asks for full validation again.
-- If the user asks to focus on code only, do not run `bun fmt`, `bun lint`, or `bun typecheck` automatically. In that mode, make the code changes first and only run verification if the user explicitly asks for it.
+- Treat them as heavyweight workspace checks: bundle into one final verification pass per task; avoid rerunning the full set during iteration.
 - NEVER run `bun test`. Always use `bun run test` (runs Vitest).
-
-## Project Snapshot
-
-Synara is a minimal web GUI for using coding agents like Codex and Claude.
-
-This repository is a VERY EARLY WIP. Proposing sweeping changes that improve long-term maintainability is encouraged.
 
 ## Core Priorities
 
@@ -23,104 +64,30 @@ This repository is a VERY EARLY WIP. Proposing sweeping changes that improve lon
 
 If a tradeoff is required, choose correctness and robustness over short-term convenience.
 
-## Model Selection
+## Pi Focus
 
-Rankings, higher = better. Cost reflects what I actually pay (OpenAI is near-free for me due to a deal), not list price. Intelligence is how hard a problem you can hand the model unsupervised. Taste covers UI/UX, code quality, API design, and copy.
-
-| model       | cost | intelligence | taste |
-| ----------- | ---- | ------------ | ----- |
-| gpt-5.6-sol | 9    | 8            | 5     |
-| sonnet-5    | 5    | 5            | 7     |
-| opus-4.8    | 4    | 7            | 8     |
-| fable-5     | 2    | 9            | 9     |
-
-How to apply:
-
-- These are defaults, not limits. You have standing permission to override them: if a cheaper model's output doesn't meet the bar, rerun or redo the work with a smarter model without asking. Judge the output, not the price tag. Escalating costs less than shipping mediocre work.
-- Cost is a tie-breaker only; when axes conflict for anything that ships, intelligence > taste > cost.
-- Don't let cost prevent you from using the right model for the job. Instead, take advantage of cheaper options to get more information and try things before moving the work to a more expensive option.
-- Bulk/mechanical work (clear-spec implementation, data analysis, migrations): gpt-5.6-sol — it's effectively free.
-- Anything user-facing (UI, copy, API design) needs taste ≥ 7.
-- Reviews of plans/implementations: fable-5 or opus-4.8, optionally gpt-5.6-sol as an extra independent perspective.
-- Never use Haiku.
-- Mechanics: gpt-5.6-sol is only reachable through the Codex CLI — `codex exec` / `codex review` (my `~/.codex/config.toml` defaults to gpt-5.6-sol). Use the codex-implementation, codex-review, and codex-computer-use skills; for work they don't cover (investigation, data analysis), run `codex exec -s read-only` directly with a self-contained prompt.
-- Claude models (sonnet-5, opus-4.8, fable-5) run via the Agent/Workflow model parameter.
-
-Using gpt-5.5 inside workflows and subagents (the model parameter only takes Claude models, so use a wrapper):
-
-- Spawn a thin Claude wrapper agent with `model: 'sonnet', effort: 'low'` whose prompt instructs it to write a self-contained codex prompt, run `codex exec` via Bash, and return the report (use `schema` on the wrapper to get structured output back).
-- Always label these agents with a `gpt-5.6-sol:` prefix, e.g. `{label: 'gpt-5.6-sol:review-auth'}` — the workflow UI shows the wrapper's Claude model, so the label is the only indication the real worker is gpt-5.6-sol.
-- Codex runs can exceed Bash's 10-minute timeout: pass an explicit timeout, or run in the background and poll for the report file.
-- Parallel gpt-5.6-sol implementation agents must use `isolation: 'worktree'` so codex edits don't collide in the shared checkout.
-- Workflow token budgets only count Claude tokens; codex work is free and invisible to `budget.spent()`.
-
-## Long-running Codex Work
-
-gpt-5.6-sol is exceptionally capable on long-running tasks. Give it substantial, multi-step work when it is the right model for the job; do not split work up merely because it is large.
-
-- The quality of the result depends on the prompt. Provide a detailed, self-contained brief: goal, relevant context, constraints, files or systems in scope, expected deliverables, and how to verify completion.
-- State important decisions and non-negotiable requirements explicitly. Do not assume the model will infer project-specific conventions or the desired tradeoffs from a short prompt.
-- For long tasks, ask it to inspect the current state first, execute the work end to end, and report the changes, verification, and any remaining risks.
-- If the work can safely run in parallel, keep each task's ownership and worktree boundaries explicit so agents do not overlap.
-
-## Transcript Performance Guardrails
-
-- Treat transcript auto-scroll as a live-output feature, not a generic "working" feature. Buffering, reconnecting, pending approvals, and tool-only activity must not be wired as if assistant text is actively streaming.
-- When wiring scroll-follow logic, count real transcript messages only. Tool/work rows must not retrigger the same "new content arrived" auto-stick path.
-- Prefer the simpler fork-style transcript path for the common case. Small and medium transcripts should avoid virtualization churn unless there is a clear measured need.
-- If virtualization is used, never couple `rowVirtualizer.measure()` directly to another bottom-stick or height-follow cycle. Height-follow for live output should stay one-way to avoid measure/scroll feedback loops.
-- Preserve these behaviors with focused transcript tests when changing chat scrolling, timeline measurement, or sidebar-driven transcript updates.
-
-## Maintainability
-
-Long term maintainability is a core priority. If you add new functionality, first check if there is shared logic that can be extracted to a separate module. Duplicate logic across multiple files is a code smell and should be avoided. Don't be afraid to change existing code. Don't take shortcuts by just adding local logic to solve a problem.
-
-## UI Conventions
-
-### Open/close (toggle) animations — single source
-
-Any UI element with an open/close toggle (expand/collapse, show/hide, disclosure) MUST reuse the shared disclosure motion in `apps/web/src/lib/disclosureMotion.ts`. Never write bespoke height/opacity transitions or one-off `@keyframes` for a toggle — use the same logic and the same functions everywhere so every toggle feels identical (220ms `ease-out`, with `motion-reduce` fallbacks).
-
-- Shell + content (used by open/close project, sidebar sections, composer suggestions): `disclosureShellClassName(open)` on the grid shell, `DISCLOSURE_INNER_CLASS` on the inner wrapper, `disclosureContentClassName(open)` on the content — or the ready-made `DisclosureRegion` component (`apps/web/src/components/ui/DisclosureRegion.tsx`).
-- Base UI `<Collapsible>` panels: wrap with `CollapsiblePanel` (`apps/web/src/components/ui/collapsible.tsx`), which applies `DISCLOSURE_COLLAPSIBLE_PANEL_CLASS`.
-- Rotating chevron affordance: `DisclosureChevron` / `disclosureChevronClassName(open)`.
-
-Reference usage: opening/closing a project and the sidebar sections in `apps/web/src/components/Sidebar.tsx`. If you find a toggle that animates differently, migrate it to this module rather than duplicating logic.
+- Pi is the only provider integrated via direct SDK (no CLI/ACP wrapper). Key files:
+  - `apps/server/src/provider/Layers/PiAdapter.ts` — main adapter over `@earendil-works/pi-coding-agent` (`SessionManager`, `ModelRegistry`, `createAgentSessionRuntime`).
+  - `apps/server/src/provider/Services/PiAdapter.ts` — service tag/contract.
+  - `apps/server/src/provider/piTurnFailure.ts` — Pi turn failure classification.
+- Pi is intentionally an unopinionated harness: do not add permission or plan-mode semantics on top of it.
+- Pi has no static default model (`getDefaultModel("pi")` returns `null`); models come dynamically from Pi's `ModelRegistry`.
+- When touching provider-generic code, verify Pi paths first; other providers second. All providers must keep working — Pi-first does not mean Pi-only.
 
 ## Package Roles
 
-- `apps/server`: Node.js WebSocket server. Wraps Codex app-server (JSON-RPC over stdio), serves the React web app, and manages provider sessions.
-- `apps/web`: React/Vite UI. Owns session UX, conversation/event rendering, and client-side state. Connects to the server via WebSocket.
-- `packages/contracts`: Shared effect/Schema schemas and TypeScript contracts for provider events, WebSocket protocol, and model/session types. Keep this package schema-only — no runtime logic.
-- `packages/shared`: Shared runtime utilities consumed by both server and web. Uses explicit subpath exports (e.g. `@synara/shared/git`) — no barrel index.
+- `apps/server`: Bun/Node WebSocket server. Manages provider sessions, orchestration, SQLite persistence, serves the web app.
+- `apps/web`: React/Vite UI. Session UX, conversation/event rendering, client-side state. Connects via WebSocket.
+- `apps/desktop`: Electron wrapper.
+- `packages/contracts`: Effect Schema contracts for provider events, WS protocol, model/session types. Schema-only — no runtime logic.
+- `packages/shared`: Shared runtime utilities for server and web. Explicit subpath exports (e.g. `@synara/shared/git`) — no barrel index.
+
+## Maintainability
+
+If you add new functionality, first check whether shared logic can be extracted into a module. Duplicate logic across files is a code smell. Don't be afraid to change existing code; don't take shortcuts by adding local logic to solve a shared problem.
 
 ## Local Dev Instance Isolation
 
-- Never start the default `bun run dev` while another Synara instance is running unless the user explicitly wants shared ports/state.
-- Use an isolated home dir and non-default ports when running alongside the user's own Synara instance, for example: `env -u SYNARA_AUTH_TOKEN SYNARA_PORT_OFFSET=3158 SYNARA_NO_BROWSER=1 bun run dev -- --home-dir ./.synara-pr84 --port 58090`.
-- Always dry-run first when avoiding conflicts: `env -u SYNARA_AUTH_TOKEN SYNARA_PORT_OFFSET=3158 bun run dev -- --home-dir ./.synara-pr84 --port 58090 --dry-run`.
-- Unset `SYNARA_AUTH_TOKEN` for browser dev instances unless the web app is also configured to connect with that token. If auth is accidentally inherited, the browser WebSocket can be rejected and the UI will show no threads even though SQLite has projects/threads.
-- Check both server and web ports with `lsof -nP -iTCP:<port> -sTCP:LISTEN`. A desktop app can bind `127.0.0.1:<port>` while the dev server binds IPv6 `*:<port>`, and `localhost` may still hit the wrong process.
-- If the UI shows no threads, verify the server path before changing SQL: inspect the isolated `state.sqlite`, then probe `orchestration.getSnapshot` over WebSocket. A healthy snapshot with projects/threads means the issue is client connection/hydration, not empty history.
-
-## Codex App Server (Important)
-
-Synara is currently Codex-first. The server starts `codex app-server` (JSON-RPC over stdio) per provider session, then streams structured events to the browser through WebSocket push messages.
-
-How we use it in this codebase:
-
-- Session startup/resume and turn lifecycle are brokered in `apps/server/src/codexAppServerManager.ts`.
-- Provider dispatch and thread event logging are coordinated in `apps/server/src/providerManager.ts`.
-- WebSocket server routes NativeApi methods in `apps/server/src/wsServer.ts`.
-- Web app consumes orchestration domain events via WebSocket push on channel `orchestration.domainEvent` (provider runtime activity is projected into orchestration events server-side).
-
-Docs:
-
-- Codex App Server docs: https://developers.openai.com/codex/sdk/#app-server
-
-## Reference Repos
-
-- Open-source Codex repo: https://github.com/openai/codex
-- Codex-Monitor (Tauri, feature-complete, strong reference implementation): https://github.com/Dimillian/CodexMonitor
-
-Use these as implementation references when designing protocol handling, UX flows, and operational safeguards.
+- Never start the default `bun run dev` while another instance (including the Synara desktop app) is running, unless shared ports/state are intended.
+- Use an isolated home dir and non-default ports when running side by side, e.g. `env -u SYNARA_AUTH_TOKEN SYNARA_PORT_OFFSET=3158 SYNARA_NO_BROWSER=1 bun run dev -- --home-dir ./.ade-dev --port 58090` (dry-run first with `--dry-run`).
+- Check ports with `lsof -nP -iTCP:<port> -sTCP:LISTEN`.
