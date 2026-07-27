@@ -70,6 +70,7 @@ Rules:
 
 - `upstream` remote points to the original Synara repo. We selectively pull improvements; we do not track it as a hard dependency.
 - **Merge released versions only, never upstream HEAD.** Sync targets are upstream release tags (check `gh api repos/Emanuele-web04/synara/releases`): `git fetch upstream --tags`, then merge the chosen `vX.Y.Z` tag via a `sync/upstream-<version>` branch. Why: HEAD commits are unstable/diluted; releases are the tested checkpoints.
+- **Full sync runbook: `docs/UPSTREAM-SYNC.md`** — follow it step by step (conflict resolution rules per file class, verification, landing). Read it before any sync work.
 - To inspect what a release brings: `git log --oneline main..vX.Y.Z`.
 - Once diverged, prefer `git cherry-pick` of specific commits from a release (especially anything touching `PiAdapter`, `piTurnFailure`, or `@earendil-works/pi-*` version bumps).
 - Never push to `upstream`.
