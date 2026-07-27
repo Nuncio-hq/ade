@@ -33,3 +33,16 @@
 - **Devin** (Cognition) — the inspiration for "your machine as cloud, agents"; study their task lifecycle writeups.
 - **Factory Droid** — strong harness; its **mission** feature is something we want to build. Also a Synara provider, so observable in-app.
 - **Amp** (Sourcegraph) — user's #2 after Cursor; unusually candid engineering blog + changelog (threads, oracle, sub-agents).
+
+## Mobile / remote clients (for `apps/mobile`)
+
+Open source:
+
+- **Remodex** (Emanuele-web04) — same author as Synara; mobile remote for coding agents. Closest open reference to our mobile plan, from the codebase family we already know.
+- **Orca mobile** — mobile version of orca (we already run its pi extensions); shows the extension-world take on remote control.
+
+Closed source — study UX and feature scope:
+
+- **Codex remote/cloud** (OpenAI) — phone-initiated async tasks, review-and-land flow.
+- **Cursor mobile/web agents** (Anysphere) — remote agent UX from the #1 harness.
+- **Devin PWA** (Cognition) — mobile surface for the original "cloud agents" product; note it's a PWA (we chose native — see DECISIONS.md) but its task-centric IA is the pattern to study.
