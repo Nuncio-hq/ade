@@ -123,3 +123,12 @@
   Newline-terminated tool output violated TrimmedNonEmptyString at durable journal
   encode; events quarantined and durable tool records dropped. toolDetailText()
   trims + drops whitespace-only. Candidate to offer upstream.
+
+- **2026-07-27 — ADE gets its own version line, human-gated.** Reset to 0.0.1;
+  upstream Synara base tracked separately in `UPSTREAM-BASE` (v0.6.1). Agents
+  never bump or tag — releases happen only on the user's explicit "release X.Y.Z"
+  (z=fixes/syncs, y=nameable ADE feature, x=reserved for 1.0). Motivated by a
+  prior project (nuncio) where automation inflated tags continuously. Upstream's
+  CI finalize auto-bump stays disabled. Rationale for the split: we focus on Pi;
+  the non-Pi platform is effectively outsourced to Synara upstream, and its
+  version is an "engine version", not our product version.

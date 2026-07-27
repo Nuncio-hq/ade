@@ -66,6 +66,31 @@ Rules:
 - Releases are tags on `main` (`v0.x.y`) → `bun run build:desktop`. The gate before tagging is dogfooding via the dev instance, not a staging branch.
 - Direct small commits to `main` are fine (solo project); use branches when work is multi-step or risky.
 
+## Versioning & Releases
+
+ADE has its OWN version line (currently 0.0.x), independent of Synara's. The
+Synara release our main is based on lives in the `UPSTREAM-BASE` file at the repo
+root — our "engine version". Think of it as: ADE version = our product; upstream
+base = the outsourced platform underneath (we focus on Pi; everything else is
+effectively outsourced to Synara upstream).
+
+Hard rules:
+
+- **Agents NEVER bump versions or push tags on their own.** A release happens
+  only when the user explicitly says "release X.Y.Z". No auto-bump, no nightly,
+  no CI-driven version increments (upstream's finalize job stays disabled — do
+  not set the `SYNARA_FINALIZE_RELEASE` repo var).
+- Version meaning (user decides, these are the defaults): **z** = fixes/polish/
+  upstream syncs with no new ADE feature; **y** = a nameable ADE feature ships
+  (e.g. AskUserQuestion, Devin provider); **x** = reserved until the user
+  declares 1.0. Every release must be justifiable in one meaningful changelog line.
+- Release procedure: set the version in the four release package.json files via
+  `scripts/update-release-package-versions.ts`, commit `release: vX.Y.Z`, then
+  `git tag vX.Y.Z && git push --tags` — CI does the rest.
+- After an upstream sync lands, update `UPSTREAM-BASE` to the merged Synara tag
+  in the same commit. Keeping the base fresh IS part of maintaining ADE: the
+  non-Pi surface improves only through these syncs.
+
 ## Upstream Workflow
 
 - `upstream` remote points to the original Synara repo. We selectively pull improvements; we do not track it as a hard dependency.

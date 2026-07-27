@@ -37,7 +37,10 @@ bridge gaps. All Synara providers are kept working.
   web UI from the phone and collect real mobile requirements.
 - Naming: inherited code stays `@synara/*` / `SYNARA_*`; new code is `@nuncio/*` /
   `NUNCIO_` / `ade_` tools. See AGENTS.md §Naming Convention.
-- Upstream = `Emanuele-web04/synara`, remote `upstream`; **sync on release tags only** (latest seen: v0.6.2), cherry-pick once diverged.
+- Versioning: ADE line = 0.0.x (currently 0.0.1), user-decided only, agents never
+  bump/tag. Upstream base = `UPSTREAM-BASE` file (currently v0.6.1). See AGENTS.md
+  §Versioning & Releases.
+- Upstream = `Emanuele-web04/synara`, remote `upstream`; **sync on release tags only** (latest seen: v0.6.2 — pending sync), cherry-pick once diverged.
 - Origin = `https://github.com/Nuncio-hq/ade` (private), `main` pushed and tracking.
 - Extensions dev is project-local first (`.pi/extensions` symlink → `harness/extensions`);
   promote to `~/.pi/agent/extensions/` (global) only when stable.

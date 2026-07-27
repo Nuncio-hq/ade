@@ -40,6 +40,7 @@ git merge vX.Y.Z --no-edit
 | `apps/**`, `packages/**` we never touched                                                                        | **Take theirs** (`git checkout --theirs`).                                                                                                                                         |
 | `apps/**`, `packages/**` we modified (bridge changes — check `git log main --oneline -- <file>` for our commits) | Real merge: keep upstream's restructuring AND re-apply our bridge change. Read both sides; do not blind-pick. Our bridge changes are small and noted in their commit messages.     |
 | `bun.lock`, `package.json` deps                                                                                  | Take theirs, then re-apply any of our own additions (grep for `@nuncio/` and packages upstream lacks), then `bun install` to regenerate the lock.                                  |
+| `"version"` in the four release package.json files | **Always keep ours** (ADE's own 0.0.x line; the merged Synara tag is recorded in `UPSTREAM-BASE` instead). |
 
 After resolving: `git commit` (keep the merge commit; do not squash).
 
@@ -70,6 +71,7 @@ git branch -d sync/upstream-vX.Y.Z
 
 Update docs (this is part of the sync, per AGENTS.md Living Docs):
 
+- `UPSTREAM-BASE`: set to the merged Synara tag (same commit as the merge).
 - `docs/STATE.md`: bump "latest seen" upstream version.
 - `docs/DECISIONS.md`: append an entry ONLY if the sync forced a real decision
   (e.g. dropped/adapted an upstream change); routine syncs don't need one.
