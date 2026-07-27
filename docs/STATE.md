@@ -23,8 +23,8 @@ bridge gaps. All Synara providers are kept working.
 - [~] **M2 Bridge gaps** — first bridge extension landed: `extension/ui/askUserQuestion`
   in PiAdapter + `allowNotes`/`allowCustomAnswer` on UserInputQuestion + notes UI.
 - [~] **M3 Daily driver** — STARTED: NuncioADE.app branded, built, installed;
-      DB migrated from Synara (sqlite .backup snapshot); user works in NuncioADE.
-      Remaining: signed builds + no-script auto-update via GitHub releases.
+  DB migrated from Synara (sqlite .backup snapshot); user works in NuncioADE.
+  Remaining: signed builds + no-script auto-update via GitHub releases.
 
 ## In force
 

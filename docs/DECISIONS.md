@@ -113,7 +113,7 @@
 
 - **2026-07-27 — NuncioADE branding shipped; migrated off Synara.app.** User-facing
   values only (display name NuncioADE, bundle com.nuncio.ade, scheme nuncioade://,
-  home ~/.nuncioade, artifact NuncioADE-*.dmg); identifier names keep SYNARA_ per
+  home ~/.nuncioade, artifact NuncioADE-\*.dmg); identifier names keep SYNARA\_ per
   the no-rename decision. brand:check exempts lineage docs. Synara DB snapshotted
   into NuncioADE via sqlite .backup (attachments, signing key, keybindings, codex
   overlay copied; environment-id kept distinct). Lesson recorded: never replace
