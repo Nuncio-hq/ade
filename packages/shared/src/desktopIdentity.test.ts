@@ -16,34 +16,34 @@ import {
 
 describe("desktopIdentity", () => {
   it("uses the exact canonical production and development bundle IDs", () => {
-    expect(SYNARA_PRODUCTION_BUNDLE_ID).toBe("com.emanueledipietro.synara");
-    expect(SYNARA_DEVELOPMENT_BUNDLE_ID).toBe("com.emanueledipietro.synara.dev");
+    expect(SYNARA_PRODUCTION_BUNDLE_ID).toBe("com.nuncio.ade");
+    expect(SYNARA_DEVELOPMENT_BUNDLE_ID).toBe("com.nuncio.ade.dev");
     expect(synaraBundleId(false)).toBe(SYNARA_PRODUCTION_BUNDLE_ID);
     expect(synaraBundleId(true)).toBe(SYNARA_DEVELOPMENT_BUNDLE_ID);
   });
 
   it("uses the exact packaged renderer origin and entry URL", () => {
-    expect(SYNARA_DESKTOP_ORIGIN).toBe("synara://app");
-    expect(SYNARA_DESKTOP_ENTRY_URL).toBe("synara://app/index.html");
+    expect(SYNARA_DESKTOP_ORIGIN).toBe("nuncioade://app");
+    expect(SYNARA_DESKTOP_ENTRY_URL).toBe("nuncioade://app/index.html");
   });
 
-  it("uses the isolated Synara desktop update channel", () => {
-    expect(SYNARA_DESKTOP_UPDATE_CHANNEL).toBe("synara");
+  it("uses the isolated NuncioADE desktop update channel", () => {
+    expect(SYNARA_DESKTOP_UPDATE_CHANNEL).toBe("nuncioade");
   });
 
   it("gives Canary a fully separate desktop identity and storage profile", () => {
-    expect(SYNARA_CANARY_BUNDLE_ID).toBe("com.emanueledipietro.synara.canary");
-    expect(SYNARA_CANARY_DESKTOP_ORIGIN).toBe("synara-canary://app");
-    expect(SYNARA_CANARY_DESKTOP_ENTRY_URL).toBe("synara-canary://app/index.html");
+    expect(SYNARA_CANARY_BUNDLE_ID).toBe("com.nuncio.ade.canary");
+    expect(SYNARA_CANARY_DESKTOP_ORIGIN).toBe("nuncioade-canary://app");
+    expect(SYNARA_CANARY_DESKTOP_ENTRY_URL).toBe("nuncioade-canary://app/index.html");
     expect(synaraDesktopIdentity("canary")).toEqual({
       flavor: "canary",
-      displayName: "Synara Canary",
+      displayName: "NuncioADE Canary",
       bundleId: SYNARA_CANARY_BUNDLE_ID,
-      scheme: "synara-canary",
+      scheme: "nuncioade-canary",
       origin: SYNARA_CANARY_DESKTOP_ORIGIN,
       entryUrl: SYNARA_CANARY_DESKTOP_ENTRY_URL,
-      userDataDirectoryName: "synara-canary",
-      defaultHomeDirectoryName: ".synara-canary",
+      userDataDirectoryName: "nuncioade-canary",
+      defaultHomeDirectoryName: ".nuncioade-canary",
       usesScriptedUpdates: true,
     });
   });

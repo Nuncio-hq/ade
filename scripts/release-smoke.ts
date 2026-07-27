@@ -103,10 +103,10 @@ function verifyCanonicalIdentity(): void {
       "Expected the CLI to expose only the Synara entry point and migration recovery binary.",
     );
   }
-  if (SYNARA_PRODUCTION_BUNDLE_ID !== "com.emanueledipietro.synara") {
+  if (SYNARA_PRODUCTION_BUNDLE_ID !== "com.nuncio.ade") {
     throw new Error(`Unexpected production bundle ID: ${SYNARA_PRODUCTION_BUNDLE_ID}.`);
   }
-  if (SYNARA_DESKTOP_UPDATE_CHANNEL !== "synara") {
+  if (SYNARA_DESKTOP_UPDATE_CHANNEL !== "nuncioade") {
     throw new Error(`Unexpected desktop update channel: ${SYNARA_DESKTOP_UPDATE_CHANNEL}.`);
   }
 

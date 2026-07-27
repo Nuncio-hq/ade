@@ -1,14 +1,17 @@
 // FILE: desktopIdentity.ts
 // Purpose: Defines the canonical desktop application identity across packaging and runtime.
 
-export const SYNARA_DESKTOP_SCHEME = "synara";
+// NuncioADE identity: values are ours (must not collide with the upstream
+// Synara.app installed on the same machine); identifier NAMES keep the SYNARA_
+// prefix per the no-rename decision (docs/DECISIONS.md).
+export const SYNARA_DESKTOP_SCHEME = "nuncioade";
 export const SYNARA_DESKTOP_ORIGIN = `${SYNARA_DESKTOP_SCHEME}://app`;
 export const SYNARA_DESKTOP_ENTRY_URL = `${SYNARA_DESKTOP_ORIGIN}/index.html`;
-export const SYNARA_DESKTOP_UPDATE_CHANNEL = "synara";
-export const SYNARA_PRODUCTION_BUNDLE_ID = "com.emanueledipietro.synara";
+export const SYNARA_DESKTOP_UPDATE_CHANNEL = "nuncioade";
+export const SYNARA_PRODUCTION_BUNDLE_ID = "com.nuncio.ade";
 export const SYNARA_DEVELOPMENT_BUNDLE_ID = `${SYNARA_PRODUCTION_BUNDLE_ID}.dev`;
 export const SYNARA_CANARY_BUNDLE_ID = `${SYNARA_PRODUCTION_BUNDLE_ID}.canary`;
-export const SYNARA_CANARY_DESKTOP_SCHEME = "synara-canary";
+export const SYNARA_CANARY_DESKTOP_SCHEME = "nuncioade-canary";
 export const SYNARA_CANARY_DESKTOP_ORIGIN = `${SYNARA_CANARY_DESKTOP_SCHEME}://app`;
 export const SYNARA_CANARY_DESKTOP_ENTRY_URL = `${SYNARA_CANARY_DESKTOP_ORIGIN}/index.html`;
 
@@ -40,38 +43,38 @@ export function synaraDesktopIdentity(flavor: SynaraDesktopFlavor): SynaraDeskto
   if (flavor === "canary") {
     return {
       flavor,
-      displayName: "Synara Canary",
+      displayName: "NuncioADE Canary",
       bundleId: SYNARA_CANARY_BUNDLE_ID,
       scheme: SYNARA_CANARY_DESKTOP_SCHEME,
       origin: SYNARA_CANARY_DESKTOP_ORIGIN,
       entryUrl: SYNARA_CANARY_DESKTOP_ENTRY_URL,
-      userDataDirectoryName: "synara-canary",
-      defaultHomeDirectoryName: ".synara-canary",
+      userDataDirectoryName: "nuncioade-canary",
+      defaultHomeDirectoryName: ".nuncioade-canary",
       usesScriptedUpdates: true,
     };
   }
   if (flavor === "development") {
     return {
       flavor,
-      displayName: "Synara (Dev)",
+      displayName: "NuncioADE (Dev)",
       bundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
       scheme: SYNARA_DESKTOP_SCHEME,
       origin: SYNARA_DESKTOP_ORIGIN,
       entryUrl: SYNARA_DESKTOP_ENTRY_URL,
-      userDataDirectoryName: "synara-dev",
-      defaultHomeDirectoryName: ".synara",
+      userDataDirectoryName: "nuncioade-dev",
+      defaultHomeDirectoryName: ".nuncioade",
       usesScriptedUpdates: false,
     };
   }
   return {
     flavor,
-    displayName: "Synara",
+    displayName: "NuncioADE",
     bundleId: SYNARA_PRODUCTION_BUNDLE_ID,
     scheme: SYNARA_DESKTOP_SCHEME,
     origin: SYNARA_DESKTOP_ORIGIN,
     entryUrl: SYNARA_DESKTOP_ENTRY_URL,
-    userDataDirectoryName: "synara",
-    defaultHomeDirectoryName: ".synara",
+    userDataDirectoryName: "nuncioade",
+    defaultHomeDirectoryName: ".nuncioade",
     usesScriptedUpdates: false,
   };
 }
