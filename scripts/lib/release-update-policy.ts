@@ -136,8 +136,11 @@ export function prepareReleaseUpdateManifests(
   config: ReleaseUpdatePolicyConfig,
 ): readonly string[] {
   const normalizedConfig = validateReleaseUpdatePolicyConfig(config);
-  const sourceNames = ["latest-mac.yml", "latest.yml", "latest-linux.yml"] as const;
-  const destinationNames = channelManifestNames(normalizedConfig.channel);
+  // NuncioADE ships macOS only (release.yml matrix); Windows/Linux manifests
+  // are not produced. Restore the full lists alongside the upstream matrix if
+  // those platforms ever come back.
+  const sourceNames = ["latest-mac.yml"] as const;
+  const destinationNames = [channelManifestNames(normalizedConfig.channel)[0]!] as const;
   if (normalizedConfig.lane === "bridge") {
     const missing = sourceNames.filter((name) => !existsSync(resolve(assetDirectory, name)));
     if (missing.length > 0) {

@@ -15,7 +15,8 @@ const cleanConfig: ReleaseUpdatePolicyConfig = {
   bridgeVersion: "0.4.2",
   channel: "synara",
 };
-const defaultManifestNames = ["latest-mac.yml", "latest.yml", "latest-linux.yml"] as const;
+// NuncioADE ships macOS only; see prepareReleaseUpdateManifests.
+const defaultManifestNames = ["latest-mac.yml"] as const;
 
 describe("release update policy", () => {
   it("publishes stable clean releases to Latest and keeps prereleases off it", () => {
@@ -62,12 +63,12 @@ describe("release update policy", () => {
 
       expect(prepareReleaseUpdateManifests(root, cleanConfig)).toEqual([
         ...defaultManifestNames,
-        ...channelManifestNames("synara"),
+        channelManifestNames("synara")[0],
       ]);
       for (const name of defaultManifestNames) {
         expect(readFileSync(resolve(root, name), "utf8")).toBe(name);
       }
-      for (const [index, channelName] of channelManifestNames("synara").entries()) {
+      for (const [index, channelName] of [channelManifestNames("synara")[0]!].entries()) {
         const defaultName = defaultManifestNames[index];
         if (!defaultName) throw new Error(`Missing default manifest mapping for ${channelName}`);
         expect(readFileSync(resolve(root, channelName), "utf8")).toBe(
@@ -87,9 +88,9 @@ describe("release update policy", () => {
       }
       expect(prepareReleaseUpdateManifests(root, { ...cleanConfig, lane: "bridge" })).toEqual([
         ...defaultManifestNames,
-        ...channelManifestNames("synara"),
+        channelManifestNames("synara")[0],
       ]);
-      for (const [index, channelName] of channelManifestNames("synara").entries()) {
+      for (const [index, channelName] of [channelManifestNames("synara")[0]!].entries()) {
         const defaultName = defaultManifestNames[index];
         if (!defaultName) throw new Error(`Missing default manifest mapping for ${channelName}`);
         expect(readFileSync(resolve(root, channelName), "utf8")).toBe(
@@ -125,10 +126,9 @@ describe("release update policy", () => {
   it("rejects a clean Latest release with missing default metadata", () => {
     const root = mkdtempSync(join(tmpdir(), "synara-release-policy-"));
     try {
-      writeFileSync(resolve(root, "latest-mac.yml"), "bridge");
-
+      // mac-only: the sole required manifest missing entirely
       expect(() => prepareReleaseUpdateManifests(root, cleanConfig)).toThrow(
-        "Latest release is missing update manifests: latest.yml, latest-linux.yml",
+        "Latest release is missing update manifests: latest-mac.yml",
       );
     } finally {
       rmSync(root, { recursive: true, force: true });

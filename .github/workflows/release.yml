@@ -120,9 +120,7 @@ jobs:
           )"
           required_assets=(
             latest-mac.yml
-            latest.yml
             "${UPDATE_CHANNEL}-mac.yml"
-            "${UPDATE_CHANNEL}.yml"
           )
           for required_asset in "${required_assets[@]}"; do
             if ! grep -Fxq "$required_asset" <<< "$bridge_assets"; then
@@ -471,8 +469,6 @@ jobs:
           )"
           channel_manifests=(
             "${UPDATE_CHANNEL}-mac.yml"
-            "${UPDATE_CHANNEL}.yml"
-            "${UPDATE_CHANNEL}-linux.yml"
           )
           existing_manifests=()
           for manifest in "${channel_manifests[@]}"; do
@@ -564,8 +560,6 @@ jobs:
           )
           manifests=(
             "release-assets/${UPDATE_CHANNEL}-mac.yml"
-            "release-assets/${UPDATE_CHANNEL}.yml"
-            "release-assets/${UPDATE_CHANNEL}-linux.yml"
           )
 
           if [[ "${#payloads[@]}" -eq 0 ]]; then
