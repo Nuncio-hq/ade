@@ -362,7 +362,9 @@ describe("binaryUploadEffectRouteLayer", () => {
           });
 
           expect(response.status).toBe(204);
-          expect(response.headers.get("access-control-allow-origin")).toBe("nuncioade-canary://app");
+          expect(response.headers.get("access-control-allow-origin")).toBe(
+            "nuncioade-canary://app",
+          );
           expect(response.headers.get("access-control-allow-credentials")).toBe("true");
           expect(response.headers.get("access-control-allow-methods")).toContain("POST");
           expect(response.headers.get("access-control-allow-headers")?.toLowerCase()).toContain(
