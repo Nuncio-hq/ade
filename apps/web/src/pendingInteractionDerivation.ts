@@ -197,6 +197,8 @@ function parseUserInputQuestions(
         question: question.question,
         options,
         ...(question.multiSelect === true ? { multiSelect: true } : {}),
+        ...(question.allowCustomAnswer === true ? { allowCustomAnswer: true } : {}),
+        ...(question.allowNotes === true ? { allowNotes: true } : {}),
       };
     })
     .filter((question): question is UserInputQuestion => question !== null);
