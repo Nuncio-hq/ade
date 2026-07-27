@@ -89,3 +89,13 @@
 - **2026-07-27 — openusage CLI is the quota source of truth.** Agents check
   subscription quotas (`openusage`, JSON output: claude/codex/cursor/devin/grok)
   before heavy delegation. Documented in DELEGATION.md.
+
+- **2026-07-27 — AskUserQuestion ships as the first harness+bridge feature.**
+  Tool name stays `AskUserQuestion` (matches Claude Code / Synara's provider-native
+  layer; Synara canonical language used everywhere else: UserInputQuestion,
+  user-input.requested, respondToUserInput). Extension copied from my-pi-harness
+  into `harness/extensions/` as the single source of truth. Bridge adds
+  `extension/ui/askUserQuestion` (feature-detected via `ctx.ui.askUserQuestions`);
+  contract gains optional `allowCustomAnswer`/`allowNotes` and a structured
+  `{selected, choiceNotes}` answer form — notes UI renders only for questions
+  that opt in, so Claude/Grok behavior is unchanged.

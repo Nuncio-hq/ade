@@ -17,8 +17,11 @@ bridge gaps. All Synara providers are kept working.
 - [x] **M0 Baseline** — clone, merge upstream, `bun install`, isolated dev instance
       runs (`.ade-dev/`, server :58090, web :8891), first extension (`ade_hello`)
       loads and is callable end-to-end (TUI + SDK path verified).
-- [ ] **M1 Harness v0** — real extensions in `harness/extensions/` (current)
-- [ ] **M2 Bridge gaps** — extend PiAdapter UI bridge as extensions demand
+- [~] **M1 Harness v0** — real extensions in `harness/extensions/` (current).
+      Shipped: AskUserQuestion (structured, notes + custom answers, E2E verified).
+      Next: Devin provider extension (research OMP's devin-agent impl first).
+- [~] **M2 Bridge gaps** — first bridge extension landed: `extension/ui/askUserQuestion`
+      in PiAdapter + `allowNotes`/`allowCustomAnswer` on UserInputQuestion + notes UI.
 - [ ] **M3 Daily driver** — `bun run build:desktop`, use ADE daily; branding last
 
 ## In force
@@ -43,6 +46,12 @@ bridge gaps. All Synara providers are kept working.
 ## Deprecated / do not revive
 
 - (none yet)
+
+## Known issues
+
+- 36 web tests fail on main (upstream-inherited; zustand persist vs missing
+  localStorage in test env: splitViewStore, pinned*Store, workflowRunUiStore,
+  chatHotPath.compiler). Not ours; recheck after next release sync.
 
 ## Reference material
 
