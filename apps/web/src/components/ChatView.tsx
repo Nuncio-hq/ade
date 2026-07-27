@@ -231,6 +231,7 @@ import {
   findSidebarProposedPlan,
   findLatestProposedPlan,
   deriveWorkLogEntries,
+  omitRoutedSubagentWorkEntries,
   buildSourceProposedPlanReference,
   hasActionableProposedPlan,
   hasLiveTurnTailWork,
@@ -273,6 +274,7 @@ import {
 } from "../hooks/useComposerCommandMenuItems";
 import { useProviderModelCatalog } from "../hooks/useProviderModelCatalog";
 import { useThreadHandoff } from "../hooks/useThreadHandoff";
+import { useThreadUnblock } from "../hooks/useThreadUnblock";
 import { useTurnDiffSummaries } from "../hooks/useTurnDiffSummaries";
 import BranchToolbar, { RuntimeUsageControls } from "./BranchToolbar";
 import { SynaraLogo } from "./SynaraLogo";
@@ -321,6 +323,7 @@ import {
   getProviderStartOptions,
   resolveAppModelSelection,
   resolveAssistantDeliveryMode,
+  resolveFollowUpDispatchMode,
   useAppSettings,
 } from "../appSettings";
 import { isTerminalFocused } from "../lib/terminalFocus";
@@ -474,10 +477,6 @@ import {
   deriveComposerSubagentStripItems,
   type ComposerSubagentStripItem,
 } from "./chat/ComposerSubagentStrip.logic";
-import {
-  deriveSubagentToolTraceByThreadId,
-  type SubagentToolTrace,
-} from "./chat/subagentToolTrace.logic";
 import { WorkflowRunCard } from "./chat/WorkflowRunCard";
 import {
   buildWorkflowResumePrompt,
@@ -579,7 +578,6 @@ const EMPTY_KEYBINDINGS: ResolvedKeybindingsConfig = [];
 const EMPTY_PROJECT_ENTRIES: ProjectEntry[] = [];
 const EMPTY_PROVIDER_NATIVE_COMMANDS: ProviderNativeCommandDescriptor[] = [];
 const EMPTY_PROVIDER_SKILLS: ProviderSkillDescriptor[] = [];
-const EMPTY_SUBAGENT_TOOL_TRACES: ReadonlyMap<string, SubagentToolTrace> = new Map();
 const LOCAL_PROJECT_DRAFT_CONTEXT = {
   envMode: "local",
   worktreePath: null,
@@ -1758,6 +1756,9 @@ export default function ChatView({
   // `foo?.bar` read inside a memo makes React Compiler infer `foo` as the dependency, which
   // no longer matches the hand-written `foo?.bar` dep and bails the whole component out.
   const activeLatestTurnId = activeLatestTurn?.turnId ?? null;
+  const activeLatestTurnStartedAt = activeLatestTurn?.startedAt ?? null;
+  const activeLatestTurnState = activeLatestTurn?.state ?? null;
+  const activeLatestTurnCompletedAt = activeLatestTurn?.completedAt ?? null;
   const threadActivities = activeThread?.activities ?? EMPTY_ACTIVITIES;
   const hasLiveTurnTail = hasLiveTurnTailWork({
     latestTurn: activeLatestTurn,
@@ -2274,10 +2275,22 @@ export default function ChatView({
   }, [activeLatestTurnId, activeThread?.messages]);
   const rawWorkLogEntries = useMemo(
     () =>
-      deriveWorkLogEntries(threadActivities, activeLatestTurn?.turnId ?? undefined, {
+      deriveWorkLogEntries(threadActivities, activeLatestTurnId ?? undefined, {
         visibleTurnIds: workLogVisibleTurnIds,
+        activeTurnId: latestTurnLive ? activeLatestTurnId : null,
+        activeTurnStartedAt: activeLatestTurnStartedAt,
+        latestTurnState: activeLatestTurnState,
+        latestTurnCompletedAt: activeLatestTurnCompletedAt,
       }),
-    [activeLatestTurn?.turnId, threadActivities, workLogVisibleTurnIds],
+    [
+      activeLatestTurnCompletedAt,
+      activeLatestTurnId,
+      activeLatestTurnStartedAt,
+      activeLatestTurnState,
+      latestTurnLive,
+      threadActivities,
+      workLogVisibleTurnIds,
+    ],
   );
   const hasWorkLogSubagents = useMemo(
     () => rawWorkLogEntries.some((entry) => (entry.subagents?.length ?? 0) > 0),
@@ -2294,7 +2307,7 @@ export default function ChatView({
       [activeThread?.id, hasWorkLogSubagents, rawWorkLogEntries],
     ),
   );
-  const workLogEntries = useMemo(
+  const enrichedWorkLogEntries = useMemo(
     () =>
       hasWorkLogSubagents
         ? enrichSubagentWorkEntries(
@@ -2305,16 +2318,22 @@ export default function ChatView({
         : rawWorkLogEntries,
     [activeThread?.id, hasWorkLogSubagents, rawWorkLogEntries, relevantWorkLogThreads],
   );
-  // Native-CLI-style nested trace: transcript subagent rows show the child thread's
-  // recent tool calls. Retain child detail subscriptions only while a subagent runs
-  // so its activities stream in live; settled traces stay frozen from whatever the
-  // store already holds.
+  // Subagents are presented by the composer strip (and their own threads); the
+  // transcript drops the routed fan-out rows entirely. The enriched list above is
+  // still what feeds the strip-adjacent derivations that need receiver metadata.
+  const workLogEntries = useMemo(
+    () => omitRoutedSubagentWorkEntries(enrichedWorkLogEntries),
+    [enrichedWorkLogEntries],
+  );
+  // The strip's liveness (running/settled) reads the child thread's own session and
+  // tail activities, so retain a detail subscription while a subagent runs; settled
+  // subagents stay on whatever the store already holds.
   const liveSubagentThreadIdsKey = useMemo(() => {
     if (!hasWorkLogSubagents) {
       return "";
     }
     const threadIds = new Set<string>();
-    for (const entry of workLogEntries) {
+    for (const entry of enrichedWorkLogEntries) {
       for (const subagent of entry.subagents ?? []) {
         if (subagent.isActive && subagent.resolvedThreadId) {
           threadIds.add(subagent.resolvedThreadId);
@@ -2322,7 +2341,7 @@ export default function ChatView({
       }
     }
     return [...threadIds].toSorted().join("\n");
-  }, [hasWorkLogSubagents, workLogEntries]);
+  }, [enrichedWorkLogEntries, hasWorkLogSubagents]);
   useEffect(() => {
     if (!liveSubagentThreadIdsKey) {
       return;
@@ -2336,16 +2355,6 @@ export default function ChatView({
       }
     };
   }, [liveSubagentThreadIdsKey]);
-  const subagentToolTraceByThreadId = useMemo(
-    () =>
-      hasWorkLogSubagents
-        ? deriveSubagentToolTraceByThreadId({
-            workEntries: workLogEntries,
-            threads: relevantWorkLogThreads,
-          })
-        : EMPTY_SUBAGENT_TOOL_TRACES,
-    [hasWorkLogSubagents, relevantWorkLogThreads, workLogEntries],
-  );
   // Native-CLI parity: while a subagent thread is open, the strip derives from the
   // PARENT thread's activities so all sibling subagents (plus a way back to the
   // main thread) stay visible, with the open subagent marked as viewed.
@@ -2366,6 +2375,15 @@ export default function ChatView({
   const stripSourceLatestTurnId = stripParentThread
     ? (stripParentThread.latestTurn?.turnId ?? null)
     : (activeLatestTurn?.turnId ?? null);
+  const stripSourceLatestTurnState = stripParentThread
+    ? (stripParentThread.latestTurn?.state ?? null)
+    : activeLatestTurnState;
+  const stripSourceLatestTurnStartedAt = stripParentThread
+    ? (stripParentThread.latestTurn?.startedAt ?? null)
+    : activeLatestTurnStartedAt;
+  const stripSourceLatestTurnCompletedAt = stripParentThread
+    ? (stripParentThread.latestTurn?.completedAt ?? null)
+    : activeLatestTurnCompletedAt;
   const stripVisibleTurnIds = useMemo(() => {
     if (!stripParentThread) {
       return workLogVisibleTurnIds;
@@ -2388,16 +2406,26 @@ export default function ChatView({
     : latestTurnSettled
       ? null
       : (activeLatestTurn?.turnId ?? null);
-  // Composer-strip source: routed subagent activities are omitted from the timeline
-  // entries above (they render as nested threads), so the strip derives from an
-  // unfiltered pass or it would structurally never see routed subagents.
+  // Composer-strip source: the strip needs the routed subagent entries the
+  // transcript drops, so it derives from the parent thread's own activities.
   const stripRawWorkLogEntries = useMemo(
     () =>
       deriveWorkLogEntries(stripSourceActivities, stripSourceLatestTurnId ?? undefined, {
         visibleTurnIds: stripVisibleTurnIds,
-        includeRoutedSubagentActivities: true,
+        activeTurnId: stripLiveTurnId,
+        activeTurnStartedAt: stripSourceLatestTurnStartedAt,
+        latestTurnState: stripSourceLatestTurnState,
+        latestTurnCompletedAt: stripSourceLatestTurnCompletedAt,
       }),
-    [stripSourceActivities, stripSourceLatestTurnId, stripVisibleTurnIds],
+    [
+      stripLiveTurnId,
+      stripSourceActivities,
+      stripSourceLatestTurnCompletedAt,
+      stripSourceLatestTurnId,
+      stripSourceLatestTurnStartedAt,
+      stripSourceLatestTurnState,
+      stripVisibleTurnIds,
+    ],
   );
   const hasStripWorkLogSubagents = useMemo(
     () => stripRawWorkLogEntries.some((entry) => (entry.subagents?.length ?? 0) > 0),
@@ -2649,7 +2677,7 @@ export default function ChatView({
   // Task tool_use_id produced one; agents spawned without a tool call stay unlinked.
   const workflowSubagentThreadsByToolUseId = useMemo(() => {
     const refs = new Map<string, WorkflowSubagentThreadRef>();
-    for (const entry of workLogEntries) {
+    for (const entry of enrichedWorkLogEntries) {
       for (const subagent of entry.subagents ?? []) {
         if (!subagent.providerThreadId) {
           continue;
@@ -2662,7 +2690,7 @@ export default function ChatView({
       }
     }
     return refs;
-  }, [workLogEntries]);
+  }, [enrichedWorkLogEntries]);
   // Persisted (per-thread) workflow run flags: pausedByUser tells the settled
   // card apart from a plain stop; dismissed retires a settled card the run's
   // activities would otherwise keep visible. Survive reloads via
@@ -3730,9 +3758,9 @@ export default function ChatView({
       resolveActiveTurnLiveDiffState({
         latestTurnId: activeLatestTurn?.turnId ?? null,
         turnDiffSummaries,
-        workLogEntries: rawWorkLogEntries,
+        workLogEntries,
       }),
-    [activeLatestTurn?.turnId, rawWorkLogEntries, turnDiffSummaries],
+    [activeLatestTurn?.turnId, turnDiffSummaries, workLogEntries],
   );
   const splitTerminalShortcutLabel = useMemo(
     () =>
@@ -6674,7 +6702,10 @@ export default function ChatView({
 
   const onSend = async (
     e?: { preventDefault: () => void },
-    dispatchMode: "queue" | "steer" = "queue",
+    dispatchMode: "queue" | "steer" = resolveFollowUpDispatchMode({
+      behavior: settings.followUpBehavior,
+      hasLiveTurn,
+    }),
     queuedTurn?: QueuedComposerChatTurn,
   ): Promise<boolean> => {
     e?.preventDefault();
@@ -9654,7 +9685,14 @@ export default function ChatView({
       !menuIsActive &&
       extractChatAutomationInvocation(snapshot.value) !== null
     ) {
-      void onSend(undefined, event.metaKey || event.ctrlKey ? "steer" : "queue");
+      void onSend(
+        undefined,
+        resolveFollowUpDispatchMode({
+          behavior: settings.followUpBehavior,
+          hasLiveTurn,
+          useOppositeBehavior: event.metaKey || event.ctrlKey,
+        }),
+      );
       return true;
     }
 
@@ -9757,7 +9795,14 @@ export default function ChatView({
         setComposerDraftPromptHistorySavedDraft(threadId, null);
       }
       expectedPromptHistoryPromptRef.current = null;
-      void onSend(undefined, event.metaKey || event.ctrlKey ? "steer" : "queue");
+      void onSend(
+        undefined,
+        resolveFollowUpDispatchMode({
+          behavior: settings.followUpBehavior,
+          hasLiveTurn,
+          useOppositeBehavior: event.metaKey || event.ctrlKey,
+        }),
+      );
       return true;
     }
     return false;
@@ -9881,6 +9926,17 @@ export default function ChatView({
     if (!activeThread) return;
     setThreadError(activeThread.id, null);
   }, [activeThread, setThreadError]);
+  const clearThreadErrorAfterUnblock = useCallback(
+    (unblockedThreadId: ThreadId) => {
+      setThreadError(unblockedThreadId, null);
+    },
+    [setThreadError],
+  );
+  const { unblockThread: unblockActiveThread, unblocking: unblockingActiveThread } =
+    useThreadUnblock({
+      threadId: activeThread?.id ?? null,
+      onUnblocked: clearThreadErrorAfterUnblock,
+    });
   const dismissActiveProviderHealthBanner = useCallback(() => {
     if (!activeProviderHealthBannerDismissalKey) return;
     setDismissedProviderHealthBannerKeys((current) => {
@@ -10932,7 +10988,12 @@ export default function ChatView({
         status={shouldShowProviderHealthBanner ? visibleActiveProviderStatus : null}
         onDismiss={dismissActiveProviderHealthBanner}
       />
-      <ThreadErrorBanner error={activeThread.error} onDismiss={dismissActiveThreadError} />
+      <ThreadErrorBanner
+        error={activeThread.error}
+        onDismiss={dismissActiveThreadError}
+        onUnblock={unblockActiveThread}
+        unblocking={unblockingActiveThread}
+      />
       <RateLimitBanner
         rateLimitStatus={visibleActiveRateLimitStatus}
         onDismiss={dismissActiveRateLimitBanner}
@@ -11063,7 +11124,6 @@ export default function ChatView({
                     onOpenTurnDiff={onOpenTurnDiff}
                     onOpenThread={onNavigateToThread}
                     onOpenAutomation={onOpenAutomation}
-                    subagentToolTraceByThreadId={subagentToolTraceByThreadId}
                     revertTurnCountByUserMessageId={revertTurnCountByUserMessageId}
                     onRevertUserMessage={onRevertUserMessage}
                     onUndoTurnFiles={onUndoTurnFiles}
