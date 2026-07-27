@@ -1027,8 +1027,8 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
     synaraSourceTag: options.sourceTag ?? null,
     synaraWindowsPublisherSubject: resolvedBuildConfig.windowsPublisherSubject,
     private: true,
-    description: "Synara desktop build",
-    author: "Emanuele Di Pietro",
+    description: "NuncioADE desktop build",
+    author: "Nuncio",
     main: "apps/desktop/dist-electron/main.js",
     build: resolvedBuildConfig.buildConfig,
     dependencies: {
