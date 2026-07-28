@@ -1839,6 +1839,11 @@ describe("ChatView timeline estimator parity (full app)", () => {
       stickyActiveProvider: null,
     });
     useStore.setState({
+      // Snapshots below this watermark are dropped as stale. A test that drives
+      // the read model forward leaves it high, and every later mount then hands
+      // the store a fresh low-sequence snapshot that it silently ignores — the
+      // app renders no thread and the composer never appears.
+      shellSnapshotSequence: 0,
       projects: [],
       threadIds: [],
       threadShellById: {},

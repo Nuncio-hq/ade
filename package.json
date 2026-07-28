@@ -35,7 +35,7 @@
     "start:marketing": "turbo run preview --filter=@nuncio/marketing",
     "build": "turbo run build",
     "build:marketing": "turbo run build --filter=@nuncio/marketing",
-    "build:desktop": "turbo run build --filter=@nuncio/desktop --filter=@nuncio/cli",
+    "build:desktop": "turbo run build --filter=@nuncio/desktop --filter=@nuncio/cli --filter=@nuncio/omp-sidecar",
     "typecheck": "turbo run typecheck",
     "lint": "oxlint --report-unused-disable-directives",
     "test": "turbo run test",

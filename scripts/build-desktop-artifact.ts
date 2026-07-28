@@ -18,6 +18,7 @@ import { BRAND_ASSET_PATHS } from "./lib/brand-assets.ts";
 import {
   createDesktopPlatformBuildConfig,
   MAC_APPSNAP_HELPER_STAGE_PATH,
+  OMP_SIDECAR_DIST_DIR,
   validateDesktopNativeBuildHost,
 } from "./lib/desktop-platform-build-config.ts";
 import { NUNCIO_PRODUCTION_BUNDLE_ID } from "@nuncio/shared/desktopIdentity";
@@ -960,6 +961,7 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
   const distDirs = {
     desktopDist: path.join(repoRoot, "apps/desktop/dist-electron"),
     desktopResources: path.join(repoRoot, "apps/desktop/resources"),
+    ompSidecarDist: path.join(repoRoot, OMP_SIDECAR_DIST_DIR),
     serverDist: path.join(repoRoot, "apps/server/dist"),
   };
   const bundledClientEntry = path.join(distDirs.serverDist, "client/index.html");
@@ -999,6 +1001,9 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
   yield* fs.copy(distDirs.desktopDist, path.join(stageAppDir, "apps/desktop/dist-electron"));
   yield* fs.copy(distDirs.desktopResources, stageResourcesDir);
   yield* fs.copy(distDirs.serverDist, path.join(stageAppDir, "apps/server/dist"));
+  // `extraResources` resolves `from` against the staged app root, and the Bun
+  // sidecar binary plus its native addon live outside every other staged tree.
+  yield* fs.copy(distDirs.ompSidecarDist, path.join(stageAppDir, OMP_SIDECAR_DIST_DIR));
 
   yield* assertPlatformBuildResources(options.platform, stageResourcesDir, options.verbose);
 

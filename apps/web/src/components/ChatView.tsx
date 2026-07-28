@@ -886,6 +886,8 @@ function getProviderStartOptionsCustomBinaryPath(
       return normalizeCustomBinaryPath(providerOptions?.cursor?.binaryPath);
     case "pi":
       return normalizeCustomBinaryPath(providerOptions?.pi?.binaryPath);
+    case "omp":
+      return normalizeCustomBinaryPath(providerOptions?.omp?.binaryPath);
   }
 }
 
@@ -2131,6 +2133,7 @@ export default function ChatView({
       kilo: resolveHint("kilo"),
       opencode: resolveHint("opencode"),
       pi: resolveHint("pi"),
+      omp: resolveHint("omp"),
     };
   }, [
     activeProject?.defaultModelSelection,
@@ -2190,7 +2193,10 @@ export default function ChatView({
   const draftModelSelectionForSelectedProvider =
     composerDraft.modelSelectionByProvider[selectedProvider] ?? null;
   const selectedModelSelection = useMemo<ModelSelection>(() => {
-    if (selectedProvider === "pi" && draftModelSelectionForSelectedProvider?.provider === "pi") {
+    if (
+      (selectedProvider === "pi" || selectedProvider === "omp") &&
+      draftModelSelectionForSelectedProvider?.provider === selectedProvider
+    ) {
       return buildModelSelection(
         selectedProvider,
         draftModelSelectionForSelectedProvider.model,
@@ -2228,7 +2234,8 @@ export default function ChatView({
     selectedProvider === "droid" ||
     selectedProvider === "kilo" ||
     selectedProvider === "opencode" ||
-    selectedProvider === "pi";
+    selectedProvider === "pi" ||
+    selectedProvider === "omp";
   const showComposerModelBootstrapSkeleton = shouldShowComposerModelBootstrapSkeleton({
     selectedProvider,
     selectedModel,

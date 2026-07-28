@@ -71,6 +71,7 @@ const PROVIDERS_WITH_THREAD_SCOPED_NUNCIO_MCP = new Set<ProviderKind>([
   "opencode",
   "kilo",
   "pi",
+  "omp",
 ]);
 
 export function providerHasNuncioADEGatewayControl(input: {

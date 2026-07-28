@@ -46,7 +46,43 @@ All Synara-inherited providers are kept working.
       `abort()` reaps bash children natively — no process supervisor needed;
       `agent_settled` gone → `agent_end.isTerminal`; async jobs inject
       self-initiated follow-up turns). Plan + tracker + coverage gộp một doc:
-      `docs/plans/omp-integration.html`. Adapter code not started.
+      `docs/plans/omp-integration.html`. Phases 1–4 DONE 2026-07-28 on
+      `app/omp-adapter`: "omp" ProviderKind + contracts/settings mirrors, the
+      walking skeleton (`Services/OmpAdapter.ts` + `Layers/OmpAdapter.ts`, SDK
+      pinned 17.1.6), event mapping v1 — tool items, reasoning, token
+      usage, compaction/retry/notice status, todo → task list, `ompTurnFailure.ts` —
+      then the bridge: `hasUI:true` + `setToolUIContext` route OMP's native `ask`
+      and extension select/confirm/input onto Synara's user-input flow
+      (`ompExtensionUiContext.ts`), `synara_*` gateway tools ride in as
+      `customTools` (`ompGatewayTools.ts`; a supplied `mcpManager` would NOT
+      register them — the engine only registers MCP tools on its own discovery
+      path; they need `strict: false` or models over-fill optional args, and
+      `"omp"` must sit in `PROVIDERS_WITH_THREAD_SCOPED_SYNARA_MCP` or the
+      harness policy denies control the tools actually have), plus
+      stopTask/compactThread/listSkills/listCommands. Both lifecycle
+      risks closed: an async-result follow-up keeps the same turn id (engine
+      probe + tests in `OmpAdapter.turnLifecycle.test.ts`), and a turn the engine
+      abandons is freed by a watchdog that re-arms while `asyncJobManager` still
+      reports work. Phase 5 found the blocker: **the OMP SDK is Bun-only**
+      (entry is `./src/index.ts`; 19 files import `bun:*`, 145 use `Bun.*`), and
+      the packaged backend is Node (`main.ts:3246`), so a real NuncioADE.app
+      build shows an empty OMP model list. Direction: host the SDK in a
+      compiled Bun sidecar — `docs/plans/omp-sidecar-spec.md`, tracker phase 6.
+      Measured 3 sessions: sidecar 107ms/397MiB vs `omp --mode rpc`
+      895ms/1264MiB, and RPC has no `askDialog` (native `ask` degrades to a
+      single-choice select). Phase 5 shipped dev-side: session resume mints its
+      own session file (`SessionManager.create` stamps an unsuppressable
+      terminal breadcrumb that hijacks the user's own `omp` CLI), engine feature
+      flags reviewed with a reason each (`enableLsp` now ON — `lsp.lazy`
+      defaults true so startup is discovery only), and OMP appears in Settings →
+      Installed CLIs. Phase 6 DONE 2026-07-28: the engine moved into
+      `packages/omp-sidecar` (`@nuncio/omp-sidecar`, our first `@nuncio/*`
+      package) — a compiled Bun binary speaking NDJSON over stdio, with
+      `OmpAdapter` as its supervisor client. Verified end to end in the dev
+      instance (OMP thread, bash tool, reply) and in a real `NuncioADE.app`
+      (binary + `pi_natives` in `Contents/Resources/omp-sidecar/`, 334 models,
+      `turn.completed` with a `command_execution` item). M4 remaining: run OMP
+      as the daily driver.
 
 ## In force
 
@@ -73,8 +109,15 @@ brand:check` in CI. See AGENTS.md §Naming & Identity.
   `~/.omp/agent/extensions/`). Symlinks point at `harness/extensions`.
 - Bisect tool: `omp` CLI after M4 (pi TUI for the frozen pi provider); ADE
   stays the primary dev target.
-- Engine watch: OMP releases fast (local tarball 17.1.3 vs npm 17.1.6 on
-  2026-07-28); pin exact `@oh-my-pi/*` versions when OmpAdapter lands. Old pi
+- Runtime split: Synara's server stays **Node** (packaged, inside asar); the OMP
+  SDK runs in a compiled **Bun** sidecar we own. Moving the whole backend to Bun
+  was rejected — `bun build --compile` of the server dies on
+  `NodeSqliteClient.ts`'s static `node:sqlite` import, so it would force
+  unpacking the server from asar and diverging in packaging/signing, upstream's
+  active patch area. Pre-existing skew stays: dev server runs Bun, packaged runs
+  Node.
+- Engine watch: OMP releases fast (17.1.6 pinned, 17.1.7 already out on
+  2026-07-28); pin exact `@oh-my-pi/*` versions and bump deliberately. Old pi
   skew (CLI 0.82.x vs ^0.81.1) is moot — pi frozen.
 
 ## Deprecated / do not revive

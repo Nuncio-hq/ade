@@ -10,7 +10,11 @@ import type {
 
 export const ACP_LOG_REDACTED_VALUE = "[REDACTED]";
 
-const SENSITIVE_ENTRY_NAMES = new Set(["authorization", "nuncioade_agent_gateway_token"]);
+// Lowercased `NUNCIO_AGENT_GATEWAY_TOKEN`. The rebrand codemod rewrote the
+// literal here as if it were product prose, which silently unhooked the
+// structured `{name, value}` redaction and leaked the bearer token into the
+// request NDJSON while the string regexes below kept working.
+const SENSITIVE_ENTRY_NAMES = new Set(["authorization", "nuncio_agent_gateway_token"]);
 
 function redactSecretString(value: string): string {
   return value

@@ -6,6 +6,7 @@
 import { type ThreadId } from "@nuncio/contracts";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { createLocalStorageStateStorage } from "./persistedLocalStorage";
 import { normalizePinnedIds, pinId, prunePinnedIds, unpinId } from "./pinning.logic";
 
 interface PinnedThreadsStoreState {
@@ -66,7 +67,7 @@ export const usePinnedThreadsStore = create<PinnedThreadsStoreState>()(
     }),
     {
       name: PINNED_THREADS_STORAGE_KEY,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(createLocalStorageStateStorage),
       partialize: (state) => ({
         pinnedThreadIds: normalizePinnedIds(state.pinnedThreadIds),
       }),

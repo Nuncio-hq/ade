@@ -6,6 +6,7 @@
 import type { ThreadId } from "@nuncio/contracts";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { createLocalStorageStateStorage } from "./persistedLocalStorage";
 
 import { randomUUID } from "./lib/utils";
 import {
@@ -116,7 +117,7 @@ export const useRightDockStore = create<RightDockStore>()(
     }),
     {
       name: RIGHT_DOCK_STORAGE_KEY,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(createLocalStorageStateStorage),
       // Validate persisted panes on rehydrate so a stale/unknown pane kind from
       // an older app version can never crash the dock during render.
       merge: (persisted, current) => ({

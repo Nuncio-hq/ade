@@ -37,6 +37,7 @@ export const COMPOSER_PROVIDER_KINDS = [
   "kilo",
   "opencode",
   "pi",
+  "omp",
 ] as const satisfies readonly ProviderKind[];
 
 const isProviderKind = Schema.is(ProviderKind);
@@ -205,6 +206,14 @@ export function makeModelSelection(
         model,
         ...(options
           ? { options: options as Extract<ModelSelection, { provider: "pi" }>["options"] }
+          : {}),
+      };
+    case "omp":
+      return {
+        provider,
+        model,
+        ...(options
+          ? { options: options as Extract<ModelSelection, { provider: "omp" }>["options"] }
           : {}),
       };
   }
@@ -684,7 +693,8 @@ export function deriveEffectiveComposerModelState(input: {
         activeSelection.model,
       )
     : null;
-  const unlistedDraftModel = input.selectedProvider === "pi" ? selectedDraftModel : null;
+  const unlistedDraftModel =
+    input.selectedProvider === "pi" || input.selectedProvider === "omp" ? selectedDraftModel : null;
   const selectedModel =
     resolveAvailableModel(activeSelection?.model) ??
     resolveAvailableModel(
@@ -742,8 +752,11 @@ export function resolvePreferredComposerModelSelection(input: {
     (input.projectModelSelection?.provider === preferredProvider
       ? input.projectModelSelection
       : null) ?? {
-      provider: preferredProvider === "pi" ? "codex" : preferredProvider,
-      model: getDefaultModel(preferredProvider === "pi" ? "codex" : preferredProvider),
+      provider:
+        preferredProvider === "pi" || preferredProvider === "omp" ? "codex" : preferredProvider,
+      model: getDefaultModel(
+        preferredProvider === "pi" || preferredProvider === "omp" ? "codex" : preferredProvider,
+      ),
     }
   );
 }

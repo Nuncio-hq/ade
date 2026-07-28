@@ -78,6 +78,8 @@ describe("createProviderInstallResetPatch", () => {
         "openCodeServerUrl",
         "piAgentDir",
         "piBinaryPath",
+        "ompAgentDir",
+        "ompBinaryPath",
       ].sort(),
     );
     expect(patch.kiloServerPassword).toBe("");

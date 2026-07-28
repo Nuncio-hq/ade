@@ -185,3 +185,57 @@
   the full retired identity and wired into CI to prevent regressions;
   (4) `trysynara.com` feedback/changelog endpoints intentionally still point at
   upstream infra — revisit when we host our own.
+
+- **2026-07-28 — OMP SDK runs in a Bun sidecar; Synara's server stays Node.**
+  Supersedes the "direct SDK, in-process" sub-decision of the 2026-07-28
+  OMP-adoption entry — the SDK choice stands, its _hosting_ changes. Why: the
+  published `@oh-my-pi/pi-coding-agent` is Bun-only (runtime entry is
+  `./src/index.ts`; 19 files import `bun:*`, 145 use `Bun.*`), and the packaged
+  backend is Node (`apps/desktop/src/main.ts:3246`), so a real NuncioADE.app
+  build starts with an empty OMP model list — M4 phases 1–4 only ever worked
+  because the dev server runs under Bun. Three options were measured on
+  hardware, 3 sessions each: in-process SDK 137ms/431MiB (unshippable),
+  `omp --mode rpc` 895ms/1264MiB (one session per process, and `modes/rpc/`
+  exposes no `askDialog` so the native `ask` tool degrades to single-choice
+  select), compiled Bun sidecar **107ms/397MiB with the rich dialog intact** —
+  proven end to end from a binary with zero `node_modules` (auth, model, native
+  brush shell, full event stream). Moving the _whole_ backend to Bun was
+  rejected: `bun build --compile` dies on `NodeSqliteClient.ts`'s static
+  `node:sqlite` import, so it would force the server out of asar and diverge in
+  packaging/signing — upstream's active patch area (`main.ts` took 5 of 41
+  commits since v0.6.0, 7 hunks in the band around the spawn site). The sidecar
+  touches one packaging file upstream has not changed since v0.6.0. Trade
+  accepted: +~91MiB app size, a stdio protocol we own, and one engine crash
+  taking down all OMP threads at once (they resume from session files). Spec:
+  `docs/plans/omp-sidecar-spec.md`; tracker phase 6.
+
+- **2026-07-28 — Provider discovery reads get their own WebSocket admission
+  class (Synara ground).** `apps/server/src/wsRequestAdmission.ts` classified
+  `provider.listModels`/`listAgents`/`listSkills`/`listCommands`/`listPlugins`
+  as `expensive-read`, capped at 2 concurrent per client. The model picker opens
+  one query per installed provider — 10 at once — so two slow CLI probes held
+  both slots and every later provider was rejected with
+  `RPC_EXPENSIVE_READ_CAPACITY_EXCEEDED` before reaching its adapter. Both
+  pi-lineage providers rendered an empty picker (OMP and Pi were last in the
+  fan-out); the OMP sidecar was innocent — it answered 334 models in 420ms once
+  admitted. Fix: a `provider-discovery` class limited to 12, leaving
+  `expensive-read` at 2 for git diffs, snapshots and thread compaction. This is
+  upstream code we diverge in; re-check it on every sync.
+
+- **2026-07-28 — A dead per-thread stream must self-heal (Synara ground).** The
+  client subscribes one WebSocket stream per open thread. When that stream dies
+  with the transport's bounded retries spent, `__root.tsx` only cleared the
+  cursor and called `markThreadDetailSyncFailed` — and that marker is a no-op
+  for a thread already flagged `synced`, because rendering stale data beats
+  blanking a conversation. Nothing resubscribed. The thread froze on whatever
+  the client last applied: an in-flight turn spins "Thinking" forever while the
+  server completes it, writes the reply, and generates the title (observed in
+  `~/.nuncioade` — turn `beb9b24e` completed 11:31:39Z with the UI still
+  spinning). Provider-agnostic by construction. Fix: a self-chaining resubscribe
+  backoff (1s widening to 30s, 12 attempts) that runs for as long as the client
+  holds the lease and stops on the first stream frame. `THREAD_SNAPSHOT_NOT_FOUND`
+  is excluded — an unpromoted draft is expected to 404 and the shell stream
+  already restarts it via `requestThreadSnapshot`; adding a second owner would
+  just churn subscribes for every idle draft. Measured: a new thread burns 8–11
+  of the transport's 12 bootstrap retries before its `thread.create` projection
+  lands, so this margin is thinner than it looks.

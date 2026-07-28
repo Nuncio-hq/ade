@@ -7,6 +7,7 @@ import type { ProjectId } from "@nuncio/contracts";
 import { clampThreadNotes } from "@nuncio/shared/pinnedMessages";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { createLocalStorageStateStorage } from "./persistedLocalStorage";
 
 const PROJECT_INSTRUCTIONS_STORAGE_KEY = "nuncioade:project-instructions:v1";
 
@@ -59,7 +60,7 @@ export const useProjectInstructionsStore = create<ProjectInstructionsStore>()(
     }),
     {
       name: PROJECT_INSTRUCTIONS_STORAGE_KEY,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(createLocalStorageStateStorage),
     },
   ),
 );

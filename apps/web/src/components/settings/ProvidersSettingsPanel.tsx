@@ -79,7 +79,9 @@ type ProviderInstallTextKey =
   | "openCodeBinaryPath"
   | "openCodeServerUrl"
   | "piBinaryPath"
-  | "piAgentDir";
+  | "piAgentDir"
+  | "ompBinaryPath"
+  | "ompAgentDir";
 type ProviderInstallPasswordKey = "kiloServerPassword" | "openCodeServerPassword";
 type ProviderInstallPasswordConfiguredKey =
   | "kiloServerPasswordConfigured"
@@ -370,6 +372,36 @@ const PROVIDER_INSTALL_SETTINGS: readonly ProviderInstallSettings[] = [
         label: "Pi agent directory",
         placeholder: "Pi agent directory",
         description: "Optional custom Pi agent directory for auth, models, skills, and commands.",
+      },
+    ],
+  },
+  {
+    provider: "omp",
+    docs: [
+      { label: "Install", href: "https://omp.sh" },
+      { label: "Docs", href: "https://omp.sh/docs/providers" },
+      { label: "Config", href: "https://omp.sh/docs/tools" },
+    ],
+    fields: [
+      {
+        kind: "text",
+        settingsKey: "ompBinaryPath",
+        label: "OMP binary path",
+        placeholder: "OMP binary path",
+        description: (
+          <>
+            Leave blank to use <code>omp</code> from your PATH. NuncioADE drives the OMP engine
+            through its SDK; the binary is used for version and update checks.
+          </>
+        ),
+      },
+      {
+        kind: "text",
+        settingsKey: "ompAgentDir",
+        label: "OMP agent directory",
+        placeholder: "OMP agent directory",
+        description:
+          "Optional custom OMP agent directory for auth, models, skills, and extensions (default ~/.omp/agent).",
       },
     ],
   },

@@ -46,6 +46,7 @@
     "@effect/language-service": "catalog:",
     "@effect/vitest": "catalog:",
     "@nuncio/contracts": "workspace:*",
+    "@nuncio/omp-sidecar": "workspace:*",
     "@nuncio/shared": "workspace:*",
     "@nuncio/web": "workspace:*",
     "@types/bun": "catalog:",

@@ -255,6 +255,7 @@ describe("resolveAppModelSelection", () => {
           kilo: [],
           opencode: [],
           pi: [],
+          omp: [],
         },
         "galapagos-alpha",
       ),
@@ -275,6 +276,7 @@ describe("resolveAppModelSelection", () => {
           kilo: [],
           opencode: [],
           pi: [],
+          omp: [],
         },
         "",
       ),
@@ -295,6 +297,7 @@ describe("resolveAppModelSelection", () => {
           kilo: [],
           opencode: [],
           pi: [],
+          omp: [],
         },
         "GPT-5.3 Codex",
       ),
@@ -315,6 +318,7 @@ describe("resolveAppModelSelection", () => {
           kilo: [],
           opencode: [],
           pi: [],
+          omp: [],
         },
         "sonnet",
       ),
@@ -335,6 +339,7 @@ describe("resolveAppModelSelection", () => {
           kilo: [],
           opencode: [],
           pi: [],
+          omp: [],
         },
         "custom/selected-model",
       ),
@@ -497,6 +502,8 @@ describe("getProviderStartOptions", () => {
         openCodeServerUrl: "",
         piAgentDir: "",
         piBinaryPath: "",
+        ompAgentDir: "",
+        ompBinaryPath: "",
       }),
     ).toEqual({
       claudeAgent: {
@@ -536,6 +543,8 @@ describe("getProviderStartOptions", () => {
         openCodeServerUrl: "",
         piAgentDir: "",
         piBinaryPath: "",
+        ompAgentDir: "",
+        ompBinaryPath: "",
       }),
     ).toBeUndefined();
   });
@@ -558,6 +567,8 @@ describe("getProviderStartOptions", () => {
         openCodeServerUrl: "",
         piAgentDir: "",
         piBinaryPath: "pi",
+        ompAgentDir: "",
+        ompBinaryPath: "omp",
       }),
     ).toBeUndefined();
   });
@@ -574,6 +585,7 @@ describe("provider-indexed custom model settings", () => {
     customKiloModels: ["kilo/kilo-auto/free"],
     customOpenCodeModels: ["openrouter/gpt-oss-120b"],
     customPiModels: ["anthropic/custom-pi"],
+    customOmpModels: ["anthropic/custom-omp"],
   } as const;
 
   it("exports one provider config per provider", () => {
@@ -587,6 +599,7 @@ describe("provider-indexed custom model settings", () => {
       "kilo",
       "opencode",
       "pi",
+      "omp",
     ]);
   });
 
@@ -605,6 +618,7 @@ describe("provider-indexed custom model settings", () => {
     expect(getCustomModelsForProvider(settings, "kilo")).toEqual(["kilo/kilo-auto/free"]);
     expect(getCustomModelsForProvider(settings, "opencode")).toEqual(["openrouter/gpt-oss-120b"]);
     expect(getCustomModelsForProvider(settings, "pi")).toEqual(["anthropic/custom-pi"]);
+    expect(getCustomModelsForProvider(settings, "omp")).toEqual(["anthropic/custom-omp"]);
   });
 
   it("reads default custom models for each provider", () => {
@@ -618,6 +632,7 @@ describe("provider-indexed custom model settings", () => {
       customKiloModels: ["kilo/default-auto"],
       customOpenCodeModels: ["openai/gpt-5"],
       customPiModels: ["anthropic/default-pi"],
+      customOmpModels: ["anthropic/default-omp"],
     } as const;
 
     expect(getDefaultCustomModelsForProvider(defaults, "codex")).toEqual(["default/codex-model"]);
@@ -633,6 +648,7 @@ describe("provider-indexed custom model settings", () => {
     expect(getDefaultCustomModelsForProvider(defaults, "kilo")).toEqual(["kilo/default-auto"]);
     expect(getDefaultCustomModelsForProvider(defaults, "opencode")).toEqual(["openai/gpt-5"]);
     expect(getDefaultCustomModelsForProvider(defaults, "pi")).toEqual(["anthropic/default-pi"]);
+    expect(getDefaultCustomModelsForProvider(defaults, "omp")).toEqual(["anthropic/default-omp"]);
   });
 
   it("patches custom models for codex", () => {
@@ -700,6 +716,7 @@ describe("provider-indexed custom model settings", () => {
       kilo: ["kilo/kilo-auto/free"],
       opencode: ["openrouter/gpt-oss-120b"],
       pi: ["anthropic/custom-pi"],
+      omp: ["anthropic/custom-omp"],
     });
   });
 
@@ -757,6 +774,7 @@ describe("provider-indexed custom model settings", () => {
         "anthropic/custom-pi",
         "anthropic/custom-pi",
       ],
+      customOmpModels: [" anthropic/custom-omp ", "anthropic/custom-omp"],
     });
 
     expect(
@@ -795,6 +813,9 @@ describe("provider-indexed custom model settings", () => {
     ).toHaveLength(1);
     expect(
       modelOptionsByProvider.pi.filter((option) => option.slug === "anthropic/custom-pi"),
+    ).toHaveLength(1);
+    expect(
+      modelOptionsByProvider.omp.filter((option) => option.slug === "anthropic/custom-omp"),
     ).toHaveLength(1);
   });
 });

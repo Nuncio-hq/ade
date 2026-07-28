@@ -40,7 +40,7 @@ describe("NuncioADE harness policy", () => {
   });
 
   it("delivers once on fresh/load/fork sessions for every scoped MCP provider", () => {
-    for (const provider of ["cursor", "grok", "droid", "opencode", "kilo", "pi"] as const) {
+    for (const provider of ["cursor", "grok", "droid", "opencode", "kilo", "pi", "omp"] as const) {
       for (const lifecycle of ["fresh", "load", "fork"] as const) {
         const state: { harnessPolicyDelivered?: boolean } = {};
         const first =
@@ -61,8 +61,8 @@ describe("NuncioADE harness policy", () => {
     }
   });
 
-  it("keeps OpenCode, Kilo, and Pi identity-only until scoped setup succeeds", () => {
-    for (const provider of ["opencode", "kilo", "pi"] as const) {
+  it("keeps OpenCode, Kilo, Pi, and OMP identity-only until scoped setup succeeds", () => {
+    for (const provider of ["opencode", "kilo", "pi", "omp"] as const) {
       const text =
         takeNuncioADEHarnessPolicyForProviderSession(
           {},

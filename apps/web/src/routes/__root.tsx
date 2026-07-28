@@ -123,6 +123,11 @@ const SHELL_SNAPSHOT_BOOTSTRAP_FALLBACK_DELAY_MS = 1_500;
 const THREAD_DETAIL_CATCHUP_INTERVAL_MS = 1_500;
 const THREAD_DETAIL_PROJECTION_RECONCILE_INTERVAL_MS = 4_500;
 const THREAD_DETAIL_PROJECTION_RECONCILE_MAX_CONCURRENCY = 2;
+// A dead thread stream is recoverable for as long as the client still holds the
+// lease, so the ceiling is generous: 12 attempts widen 1s -> 12s, ~78s total.
+const THREAD_STREAM_RECOVERY_BASE_DELAY_MS = 1_000;
+const MAX_THREAD_STREAM_RECOVERY_DELAY_MS = 30_000;
+const MAX_THREAD_STREAM_RECOVERY_ATTEMPTS = 12;
 const PENDING_SHELL_EVENT_BUFFER_LIMIT = 1_024;
 const PENDING_THREAD_EVENT_BUFFER_LIMIT = 512;
 const IMMEDIATE_ASSISTANT_FLUSH_ID_LIMIT = 512;
@@ -1017,8 +1022,19 @@ function EventRouter() {
     const threadProjectionTerminalFencePending = new Set<ThreadId>();
     const threadSubscriptionGenerationById = new Map<ThreadId, number>();
     const nextThreadProjectionReconcileAtById = new Map<ThreadId, number>();
+    const threadStreamRecoveryAttempts = new Map<ThreadId, number>();
+    const threadStreamRecoveryTimers = new Map<ThreadId, number>();
     let nextThreadSubscriptionGeneration = 0;
     let reconcileThreadSubscriptionsChain = Promise.resolve();
+
+    const clearThreadStreamRecovery = (threadId: ThreadId) => {
+      const timeoutId = threadStreamRecoveryTimers.get(threadId);
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+        threadStreamRecoveryTimers.delete(threadId);
+      }
+      threadStreamRecoveryAttempts.delete(threadId);
+    };
 
     const beginThreadSubscription = (threadId: ThreadId) => {
       threadSnapshotSequenceById.delete(threadId);
@@ -1027,6 +1043,7 @@ function EventRouter() {
       threadSnapshotRefreshPending.delete(threadId);
       threadProjectionReconcileInFlight.delete(threadId);
       threadProjectionTerminalFencePending.delete(threadId);
+      clearThreadStreamRecovery(threadId);
       nextThreadSubscriptionGeneration += 1;
       threadSubscriptionGenerationById.set(threadId, nextThreadSubscriptionGeneration);
       nextThreadProjectionReconcileAtById.set(
@@ -1077,6 +1094,7 @@ function EventRouter() {
         threadProjectionTerminalFencePending.delete(threadId);
         threadSubscriptionGenerationById.delete(threadId);
         nextThreadProjectionReconcileAtById.delete(threadId);
+        clearThreadStreamRecovery(threadId);
         subscribedThreadIds.delete(threadId);
       }
       // A retention eviction can refresh a thread whose lease is dropping in the
@@ -1141,6 +1159,49 @@ function EventRouter() {
         }
         void refreshThreadSnapshot(threadId);
       });
+    };
+
+    /**
+     * A per-thread stream that dies with every transport retry spent leaves the
+     * thread frozen at whatever the client last applied: an in-flight turn keeps
+     * spinning while the server settles it. The failed-sync banner cannot carry
+     * recovery on its own — an already-synced thread deliberately keeps its
+     * "synced" flag (rendering stale data beats blanking the conversation), so
+     * for those threads the dead stream is invisible.
+     *
+     * Resubscribe on a widening backoff for as long as the lease is held. The
+     * chain re-arms itself rather than waiting for another failure: a refresh
+     * can no-op against an in-flight request, and a rejected resubscribe that
+     * has already spent the transport's retry budget reports nothing new.
+     * `clearThreadStreamRecovery` stops it the moment a stream frame lands.
+     */
+    const scheduleThreadStreamRecovery = (threadId: ThreadId) => {
+      if (threadStreamRecoveryTimers.has(threadId)) {
+        return;
+      }
+      const attempt = (threadStreamRecoveryAttempts.get(threadId) ?? 0) + 1;
+      if (attempt > MAX_THREAD_STREAM_RECOVERY_ATTEMPTS) {
+        return;
+      }
+      threadStreamRecoveryAttempts.set(threadId, attempt);
+      const timeoutId = window.setTimeout(
+        () => {
+          threadStreamRecoveryTimers.delete(threadId);
+          if (disposed || !subscribedThreadIds.has(threadId)) {
+            return;
+          }
+          void refreshThreadSnapshot(threadId).finally(() => {
+            if (!disposed && subscribedThreadIds.has(threadId)) {
+              scheduleThreadStreamRecovery(threadId);
+            }
+          });
+        },
+        Math.min(
+          THREAD_STREAM_RECOVERY_BASE_DELAY_MS * attempt,
+          MAX_THREAD_STREAM_RECOVERY_DELAY_MS,
+        ),
+      );
+      threadStreamRecoveryTimers.set(threadId, timeoutId);
     };
 
     // Draft routes can subscribe before the server thread exists. Once the shell
@@ -1508,6 +1569,13 @@ function EventRouter() {
       }
     });
     const unsubThreadEvent = api.orchestration.onThreadEvent((item) => {
+      // Any frame proves the stream is alive again: drop the recovery backoff so
+      // a later failure starts from a fast retry instead of a widened one.
+      clearThreadStreamRecovery(
+        item.kind === "snapshot"
+          ? item.snapshot.thread.id
+          : ThreadId.makeUnsafe(String(item.event.aggregateId)),
+      );
       if (item.kind === "snapshot") {
         const threadId = item.snapshot.thread.id;
         threadSnapshotRequestInFlight.delete(threadId);
@@ -1573,6 +1641,13 @@ function EventRouter() {
       threadSnapshotRequestInFlight.delete(threadId);
       threadSnapshotRefreshPending.delete(threadId);
       useStore.getState().markThreadDetailSyncFailed(threadId);
+      // A draft that has not been promoted yet is expected to 404 until its
+      // `thread.create` lands, and the shell stream already restarts that one
+      // through `requestThreadSnapshot`. Every other terminal cause has no
+      // owner, so it needs the backoff below or the thread stays frozen.
+      if (failure.code !== "THREAD_SNAPSHOT_NOT_FOUND") {
+        scheduleThreadStreamRecovery(threadId);
+      }
     });
     // Retention can evict a thread's detail slices while its stream lease stays
     // active. The wiped messages never refresh on their own, so drop the cursor
@@ -1814,6 +1889,9 @@ function EventRouter() {
       threadProjectionTerminalFencePending.clear();
       threadSubscriptionGenerationById.clear();
       nextThreadProjectionReconcileAtById.clear();
+      for (const threadId of [...threadStreamRecoveryTimers.keys()]) {
+        clearThreadStreamRecovery(threadId);
+      }
       domainEventFlushThrottler.cancel();
       reconcileThreadSubscriptionsRef.current = null;
       void api.orchestration.unsubscribeShell().catch(() => undefined);

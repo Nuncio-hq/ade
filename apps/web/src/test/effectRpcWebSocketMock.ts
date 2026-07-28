@@ -100,6 +100,34 @@ export function sendEffectRpcExit(
   );
 }
 
+/** Fails a request the way the server's admission gate does, code included. */
+export function sendEffectRpcFailure(
+  client: EffectRpcWebSocketClient,
+  requestId: string,
+  error: { readonly code: string; readonly message?: string; readonly retryable?: boolean },
+): void {
+  client.send(
+    JSON.stringify({
+      _tag: "Exit",
+      requestId,
+      exit: {
+        _tag: "Failure",
+        cause: [
+          {
+            _tag: "Fail",
+            error: {
+              _tag: "WsRpcError",
+              message: error.message ?? "Stream rejected.",
+              code: error.code,
+              retryable: error.retryable ?? false,
+            },
+          },
+        ],
+      },
+    }),
+  );
+}
+
 export function sendEffectRpcChunk(
   client: EffectRpcWebSocketClient,
   requestId: string,

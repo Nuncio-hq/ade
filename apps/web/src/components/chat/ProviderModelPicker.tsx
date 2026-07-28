@@ -212,6 +212,11 @@ export const ProviderModelMenuItems = function ProviderModelMenuItems(
     EMPTY_FAVORITE_MODEL_SLUGS,
     FavoriteModelSlugs,
   );
+  const [ompFavoriteModelSlugs, setOmpFavoriteModelSlugs] = useLocalStorage(
+    FAVORITE_MODEL_STORAGE_KEYS.omp,
+    EMPTY_FAVORITE_MODEL_SLUGS,
+    FavoriteModelSlugs,
+  );
   const deferredModelSearchQuery = useDeferredValue(modelSearchQuery);
   const activeProvider = props.lockedProvider ?? props.provider;
   const hiddenProviders = props.hiddenProviders;
@@ -239,11 +244,13 @@ export const ProviderModelMenuItems = function ProviderModelMenuItems(
   const openCodeFavoriteModelSlugSet = new Set(openCodeFavoriteModelSlugs);
   const cursorFavoriteModelSlugSet = new Set(cursorFavoriteModelSlugs);
   const piFavoriteModelSlugSet = new Set(piFavoriteModelSlugs);
+  const ompFavoriteModelSlugSet = new Set(ompFavoriteModelSlugs);
   const favoriteModelSlugSets = {
     cursor: cursorFavoriteModelSlugSet,
     kilo: kiloFavoriteModelSlugSet,
     opencode: openCodeFavoriteModelSlugSet,
     pi: piFavoriteModelSlugSet,
+    omp: ompFavoriteModelSlugSet,
   };
   const handleModelChange = (provider: ProviderKind, value: string) => {
     if (props.disabled) return;
@@ -265,7 +272,9 @@ export const ProviderModelMenuItems = function ProviderModelMenuItems(
           ? setKiloFavoriteModelSlugs
           : provider === "pi"
             ? setPiFavoriteModelSlugs
-            : setOpenCodeFavoriteModelSlugs;
+            : provider === "omp"
+              ? setOmpFavoriteModelSlugs
+              : setOpenCodeFavoriteModelSlugs;
     setFavoriteModelSlugs((current) => toggleFavoriteModelSlug(current, slug));
   };
 
@@ -288,7 +297,8 @@ export const ProviderModelMenuItems = function ProviderModelMenuItems(
       (provider === "kilo" ||
         provider === "opencode" ||
         provider === "cursor" ||
-        provider === "pi") &&
+        provider === "pi" ||
+        provider === "omp") &&
       providerOptions.length >= SEARCHABLE_MODEL_PICKER_THRESHOLD;
     const normalizedModelSearchQuery = deferredModelSearchQuery.trim().toLowerCase();
     const filteredOptions =

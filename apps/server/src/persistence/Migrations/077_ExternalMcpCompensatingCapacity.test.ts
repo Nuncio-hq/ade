@@ -19,7 +19,7 @@ freshLayer("077_ExternalMcpCompensatingCapacity fresh install", (it) => {
           concurrency_limit
         ) VALUES (
           'integration-migration-77-fresh', 'Migration 77 fresh', 'other',
-          'synara.external-mcp', NULL, '[]', '2026-07-21T00:00:00.000Z',
+          'nuncioade.external-mcp', NULL, '[]', '2026-07-21T00:00:00.000Z',
           '2027-07-21T00:00:00.000Z', 60, 1
         )
       `;

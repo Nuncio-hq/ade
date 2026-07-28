@@ -6,6 +6,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { createLocalStorageStateStorage } from "./persistedLocalStorage";
 
 import type { KanbanOptimisticDispatchSnapshot } from "./components/kanban/kanban.logic";
 
@@ -137,7 +138,7 @@ export const useKanbanUiStore = create<KanbanUiStoreState>()(
     }),
     {
       name: KANBAN_UI_STORAGE_KEY,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(createLocalStorageStateStorage),
       partialize: (state) => ({
         draftOrderByProjectId: state.draftOrderByProjectId,
       }),

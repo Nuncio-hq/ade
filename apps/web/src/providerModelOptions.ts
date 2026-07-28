@@ -18,6 +18,8 @@ import type {
   GrokModelSelection,
   KiloModelSelection,
   ModelSelection,
+  OmpModelOptions,
+  OmpModelSelection,
   OpenCodeModelOptions,
   OpenCodeModelSelection,
   PiModelOptions,
@@ -53,7 +55,12 @@ export function formatProviderModelOptionName(input: {
     return trimmedSlug;
   }
 
-  if (input.provider === "kilo" || input.provider === "opencode" || input.provider === "pi") {
+  if (
+    input.provider === "kilo" ||
+    input.provider === "opencode" ||
+    input.provider === "pi" ||
+    input.provider === "omp"
+  ) {
     const modelIdentifier = trimmedSlug.includes("/")
       ? trimmedSlug.slice(trimmedSlug.lastIndexOf("/") + 1)
       : trimmedSlug;
@@ -359,6 +366,11 @@ export function buildModelSelection(
   options?: PiModelOptions | null | undefined,
 ): PiModelSelection;
 export function buildModelSelection(
+  provider: "omp",
+  model: string,
+  options?: OmpModelOptions | null | undefined,
+): OmpModelSelection;
+export function buildModelSelection(
   provider: ProviderKind,
   model: string,
   options?: ProviderOptions | null | undefined,
@@ -439,6 +451,14 @@ export function buildModelSelection(
             provider,
             model,
             options: options as PiModelOptions,
+          }
+        : { provider, model };
+    case "omp":
+      return options
+        ? {
+            provider,
+            model,
+            options: options as OmpModelOptions,
           }
         : { provider, model };
   }

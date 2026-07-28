@@ -94,13 +94,17 @@ function verifyCanonicalIdentity(): void {
   if (serverPackage.name !== "@nuncio/cli") {
     throw new Error(`Expected CLI package @nuncio/cli, got ${serverPackage.name ?? "<missing>"}.`);
   }
+  // `ade` is the product's short CLI name; `nuncioade` is the branded alias the
+  // rebrand introduced. Both point at the same entry, and the recovery binary
+  // ships beside them. Anything else means the package leaked a stray bin.
   const expectedBinaries = {
+    ade: "dist/index.mjs",
     nuncioade: "dist/index.mjs",
     "nuncioade-restore-migration-backup": "dist/restoreMigrationBackup.mjs",
   };
   if (JSON.stringify(serverPackage.bin ?? {}) !== JSON.stringify(expectedBinaries)) {
     throw new Error(
-      "Expected the CLI to expose only the NuncioADE entry point and migration recovery binary.",
+      "Expected the CLI to expose only the ADE entry points and migration recovery binary.",
     );
   }
   if (NUNCIO_PRODUCTION_BUNDLE_ID !== "com.nuncio.ade") {
