@@ -11,11 +11,11 @@ import {
 describe("canary tooling", () => {
   it("keeps managed source and Canary data separate from Stable", () => {
     expect(resolveCanaryPaths({}, "/Users/tester")).toEqual({
-      home: "/Users/tester/.synara-canary",
-      source: "/Users/tester/.cache/synara-canary/source",
-      state: "/Users/tester/.synara-canary/canary-state.json",
-      pid: "/Users/tester/.synara-canary/canary.pid",
-      log: "/Users/tester/.synara-canary/canary.log",
+      home: "/Users/tester/.nuncioade-canary",
+      source: "/Users/tester/.cache/nuncioade-canary/source",
+      state: "/Users/tester/.nuncioade-canary/canary-state.json",
+      pid: "/Users/tester/.nuncioade-canary/canary.pid",
+      log: "/Users/tester/.nuncioade-canary/canary.log",
     });
   });
 
@@ -23,8 +23,8 @@ describe("canary tooling", () => {
     expect(
       resolveCanaryPaths(
         {
-          SYNARA_CANARY_HOME: "/tmp/canary-data",
-          SYNARA_CANARY_SOURCE: "/tmp/canary-source",
+          NUNCIO_CANARY_HOME: "/tmp/canary-data",
+          NUNCIO_CANARY_SOURCE: "/tmp/canary-source",
         },
         "/Users/tester",
       ),
@@ -39,17 +39,17 @@ describe("canary tooling", () => {
 
   it("tracks main by default and accepts a stacked PR ref", () => {
     expect(parseCanaryArgs(["update"])).toEqual({ command: "update", ref: null });
-    expect(parseCanaryArgs(["setup", "--ref", "codex/synara-canary"])).toEqual({
+    expect(parseCanaryArgs(["setup", "--ref", "codex/nuncioade-canary"])).toEqual({
       command: "setup",
-      ref: "codex/synara-canary",
+      ref: "codex/nuncioade-canary",
     });
   });
 
   it("checks out the managed source during clone so the cleanliness guard starts clean", () => {
-    expect(canaryCloneArgs("git@example.com:synara.git", "/tmp/canary-source")).toEqual([
+    expect(canaryCloneArgs("git@example.com:nuncioade.git", "/tmp/canary-source")).toEqual([
       "clone",
       "--",
-      "git@example.com:synara.git",
+      "git@example.com:nuncioade.git",
       "/tmp/canary-source",
     ]);
   });
@@ -60,8 +60,8 @@ describe("canary tooling", () => {
 
   it("keeps updating the selected stacked ref until explicitly moved to main", () => {
     expect(resolveCanaryRef(parseCanaryArgs(["setup"]), null)).toBe("main");
-    expect(resolveCanaryRef(parseCanaryArgs(["update"]), "codex/synara-canary")).toBe(
-      "codex/synara-canary",
+    expect(resolveCanaryRef(parseCanaryArgs(["update"]), "codex/nuncioade-canary")).toBe(
+      "codex/nuncioade-canary",
     );
     expect(resolveCanaryRef(parseCanaryArgs(["update", "--ref", "main"]), "old-ref")).toBe("main");
   });

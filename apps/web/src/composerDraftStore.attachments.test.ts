@@ -1,4 +1,4 @@
-import { OrchestrationProposedPlanId, ThreadId } from "@synara/contracts";
+import { OrchestrationProposedPlanId, ThreadId } from "@nuncio/contracts";
 import * as Schema from "effect/Schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { pendingComposerAttachmentSyncGenerationCount } from "./composerDraftAttachments";
@@ -494,7 +494,7 @@ describe("composerDraftStore prompt history saved draft", () => {
       captureId,
       capturedAt: "2026-07-14T08:00:00.000Z",
       appName: "Safari",
-      windowTitle: "Synara",
+      windowTitle: "NuncioADE",
     };
     const staleLiveImage = {
       ...makeImage({ id: "appsnap-stale-live", previewUrl: "blob:appsnap-stale-live" }),
@@ -663,7 +663,7 @@ describe("composerDraftStore copyTransferableComposerState", () => {
         captureId: "capture-shared",
         capturedAt: "2026-07-12T20:00:00.000Z",
         appName: "Safari",
-        windowTitle: "Synara",
+        windowTitle: "NuncioADE",
       },
     };
     const store = useComposerDraftStore.getState();
@@ -1082,7 +1082,7 @@ describe("composerDraftStore syncPersistedAttachments", () => {
       appName: "Safari",
       bundleIdentifier: null,
       appIconDataUrl: null,
-      windowTitle: "Synara",
+      windowTitle: "NuncioADE",
     };
     const mergedState = persistApi.getOptions().merge(
       {
@@ -1137,7 +1137,7 @@ describe("composerDraftStore syncPersistedAttachments", () => {
                 appName: "Safari",
                 bundleIdentifier: "com.apple.Safari",
                 appIconDataUrl: "data:image/png;base64,aWNvbg==",
-                windowTitle: "Synara",
+                windowTitle: "NuncioADE",
               },
             },
           ],

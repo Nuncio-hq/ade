@@ -1,4 +1,4 @@
-import { ProjectId } from "@synara/contracts";
+import { ProjectId } from "@nuncio/contracts";
 import { Effect, Layer } from "effect";
 import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { describe, expect, it } from "vitest";
@@ -8,7 +8,7 @@ import { ProjectionSnapshotQuery } from "../../orchestration/Services/Projection
 import { SqlitePersistenceMemory } from "../../persistence/Layers/Sqlite.ts";
 import { ExternalMcpRepositoryLive } from "./ExternalMcpRepository.ts";
 import { ExternalMcpService } from "../Services/ExternalMcpService.ts";
-import { ExternalMcpServiceLive } from "./ExternalMcpService.ts";
+import { ExternalMcpServiceLive, hashExternalMcpSecret } from "./ExternalMcpService.ts";
 
 const project = {
   id: "project-allowed",
@@ -43,13 +43,21 @@ const layer = ExternalMcpServiceLive.pipe(
       getThreadShellById: () => Effect.succeed({ _tag: "None" }),
     } as never),
   ),
-  Layer.provide(Layer.succeed(ServerConfig, { baseDir: "/tmp/synara-test" } as never)),
+  Layer.provide(Layer.succeed(ServerConfig, { baseDir: "/tmp/nuncioade-test" } as never)),
 );
 
 const run = <A, E>(effect: Effect.Effect<A, E, ExternalMcpService | SqlClient.SqlClient>) =>
   Effect.runPromise(effect.pipe(Effect.provide(layer)));
 
 describe("ExternalMcpService", () => {
+  it("keeps the credential hash salt stable across the identity rename", () => {
+    // Pre-rebrand installs stored hashes salted with the legacy audience; the
+    // salt must stay frozen so existing credentials keep verifying.
+    expect(hashExternalMcpSecret("test-secret")).toBe(
+      "950d0b31e5b25e137b949d937b8c08090d91734d9f8f7fb408732eda3bfea2c9",
+    );
+  });
+
   it("keeps browser, server, and provider-session tokens outside the MCP audience", async () => {
     await run(
       Effect.gen(function* () {
@@ -78,10 +86,10 @@ describe("ExternalMcpService", () => {
         });
         expect(created.setupCommand).toContain("mcp");
         expect(created.setupCommand).toContain("pair");
-        expect(created.setupCommand).toContain("syn_pair_v1_");
+        expect(created.setupCommand).toContain("nuncio_pair_v1_");
         expect(created.stdio.command).toBe(process.execPath);
         expect(created.stdio.args).toContain(created.integration.integrationId);
-        expect(created.stdio.args).toContain("/tmp/synara-test");
+        expect(created.stdio.args).toContain("/tmp/nuncioade-test");
         expect(JSON.stringify(created.integration)).not.toContain("credential");
         const credential = "syn_mcp_v1_client-generated-secret";
         const paired = yield* service.pair(created.pairingCode, credential);
@@ -175,7 +183,7 @@ describe("ExternalMcpService", () => {
         const paired = yield* service.pair(created.pairingCode, "syn_mcp_v1_audit-failure-secret");
         const client = yield* service.verifyCredential(paired.credential);
         const auditId = yield* service.beginAudit(client, {
-          tool: "synara_list_allowed_projects",
+          tool: "nuncioade_list_allowed_projects",
         });
         yield* sql`
           CREATE TRIGGER reject_external_mcp_audit_finish

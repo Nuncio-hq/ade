@@ -29,49 +29,51 @@ const projectionThreadsColumnNames = (sql: SqlClient.SqlClient) =>
 
 layer("reconcileMigrationLineage", (it) => {
   // An imported database whose tracker high-water
-  // mark is at or beyond Synara's latest migration ID. The migrator's max-ID
-  // gate then skips every Synara migration — including the #032 self-heal —
+  // mark is at or beyond NuncioADE's latest migration ID. The migrator's max-ID
+  // gate then skips every NuncioADE migration — including the #032 self-heal —
   // and startup crashes on the missing env_mode column.
-  it.effect("re-runs skipped migrations when an imported tracker outruns Synara's latest ID", () =>
-    Effect.gen(function* () {
-      const sql = yield* SqlClient.SqlClient;
+  it.effect(
+    "re-runs skipped migrations when an imported tracker outruns NuncioADE's latest ID",
+    () =>
+      Effect.gen(function* () {
+        const sql = yield* SqlClient.SqlClient;
 
-      // Bring the schema to the last shared migration.
-      yield* runMigrations({ toMigrationInclusive: 16 });
+        // Bring the schema to the last shared migration.
+        yield* runMigrations({ toMigrationInclusive: 16 });
 
-      // Record a foreign lineage from 17 through past Synara's latest ID.
-      const latestSynaraId = Math.max(...migrationEntries.map(([id]) => id));
-      for (let id = 17; id <= latestSynaraId + 3; id++) {
-        yield* sql`
+        // Record a foreign lineage from 17 through past NuncioADE's latest ID.
+        const latestNuncioADEId = Math.max(...migrationEntries.map(([id]) => id));
+        for (let id = 17; id <= latestNuncioADEId + 3; id++) {
+          yield* sql`
           INSERT INTO effect_sql_migrations (migration_id, name)
           VALUES (${id}, ${`ForeignMigration${id}`})
         `;
-      }
+        }
 
-      // The foreign lineage added some of the same columns, so the
-      // re-run must tolerate columns that already exist.
-      yield* sql`ALTER TABLE projection_threads ADD COLUMN archived_at TEXT`;
+        // The foreign lineage added some of the same columns, so the
+        // re-run must tolerate columns that already exist.
+        yield* sql`ALTER TABLE projection_threads ADD COLUMN archived_at TEXT`;
 
-      const beforeColumns = yield* projectionThreadsColumnNames(sql);
-      assert.notInclude(beforeColumns, "env_mode");
+        const beforeColumns = yield* projectionThreadsColumnNames(sql);
+        assert.notInclude(beforeColumns, "env_mode");
 
-      const executed = yield* runMigrations();
-      assert.deepStrictEqual(
-        executed.map(([id]) => id),
-        migrationEntries.map(([id]) => id).filter((id) => id >= 17),
-      );
+        const executed = yield* runMigrations();
+        assert.deepStrictEqual(
+          executed.map(([id]) => id),
+          migrationEntries.map(([id]) => id).filter((id) => id >= 17),
+        );
 
-      const afterColumns = yield* projectionThreadsColumnNames(sql);
-      assert.include(afterColumns, "env_mode");
-      assert.include(afterColumns, "archived_at");
+        const afterColumns = yield* projectionThreadsColumnNames(sql);
+        assert.include(afterColumns, "env_mode");
+        assert.include(afterColumns, "archived_at");
 
-      // The tracker now mirrors the Synara lineage exactly; foreign rows are gone.
-      const rows = yield* trackerRows(sql);
-      assert.deepStrictEqual(
-        rows.map((row) => [row.migration_id, row.name]),
-        migrationEntries.map(([id, name]) => [id, name]),
-      );
-    }),
+        // The tracker now mirrors the NuncioADE lineage exactly; foreign rows are gone.
+        const rows = yield* trackerRows(sql);
+        assert.deepStrictEqual(
+          rows.map((row) => [row.migration_id, row.name]),
+          migrationEntries.map(([id, name]) => [id, name]),
+        );
+      }),
   );
 
   it.effect("leaves a healthy tracker alone", () =>
@@ -111,7 +113,7 @@ layer("reconcileMigrationLineage", (it) => {
     }),
   );
 
-  it.effect("refuses writable migration startup for a newer Synara schema", () =>
+  it.effect("refuses writable migration startup for a newer NuncioADE schema", () =>
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient;
 
@@ -119,7 +121,7 @@ layer("reconcileMigrationLineage", (it) => {
       const futureId = Math.max(...migrationEntries.map(([id]) => id)) + 1;
       yield* sql`
         INSERT INTO effect_sql_migrations (migration_id, name)
-        VALUES (${futureId}, 'FutureSynaraMigration')
+        VALUES (${futureId}, 'FutureNuncioADEMigration')
       `;
 
       const rowsBefore = yield* trackerRows(sql);
@@ -289,12 +291,13 @@ managedAttachmentsLegacyLayer("managed attachment migration after private migrat
         [85, "AutomationSettings"],
         [86, "NormalizeStudioThreadWorkspaces"],
         [87, "DropUnusedOrchestrationEventIndexes"],
-        [88, "AppFactory"],
-        [89, "AppFactoryDetailFetchedAt"],
+        [88, "ExternalMcpAudienceIdentity"],
+        [89, "AppFactory"],
+        [90, "AppFactoryDetailFetchedAt"],
       ]);
 
       const tracker = yield* trackerRows(sql);
-      assert.deepStrictEqual(tracker.slice(-36), [
+      assert.deepStrictEqual(tracker.slice(-37), [
         { migration_id: 54, name: "DurableProviderCommandDelivery" },
         { migration_id: 55, name: "ManagedAttachments" },
         { migration_id: 56, name: "CommandReceiptFingerprints" },
@@ -329,8 +332,9 @@ managedAttachmentsLegacyLayer("managed attachment migration after private migrat
         { migration_id: 85, name: "AutomationSettings" },
         { migration_id: 86, name: "NormalizeStudioThreadWorkspaces" },
         { migration_id: 87, name: "DropUnusedOrchestrationEventIndexes" },
-        { migration_id: 88, name: "AppFactory" },
-        { migration_id: 89, name: "AppFactoryDetailFetchedAt" },
+        { migration_id: 88, name: "ExternalMcpAudienceIdentity" },
+        { migration_id: 89, name: "AppFactory" },
+        { migration_id: 90, name: "AppFactoryDetailFetchedAt" },
       ]);
       const preserved = yield* sql<{ readonly count: number }>`
         SELECT COUNT(*) AS count FROM orchestration_consumer_state
@@ -410,8 +414,9 @@ agentGatewayRetentionLegacyLayer(
           [85, "AutomationSettings"],
           [86, "NormalizeStudioThreadWorkspaces"],
           [87, "DropUnusedOrchestrationEventIndexes"],
-          [88, "AppFactory"],
-          [89, "AppFactoryDetailFetchedAt"],
+          [88, "ExternalMcpAudienceIdentity"],
+          [89, "AppFactory"],
+          [90, "AppFactoryDetailFetchedAt"],
         ]);
 
         const columns = yield* sql<{ readonly name: string }>`
@@ -494,13 +499,14 @@ spacesMigrationCollisionLayer("Spaces migration after the private migration 70 c
         [85, "AutomationSettings"],
         [86, "NormalizeStudioThreadWorkspaces"],
         [87, "DropUnusedOrchestrationEventIndexes"],
-        [88, "AppFactory"],
-        [89, "AppFactoryDetailFetchedAt"],
+        [88, "ExternalMcpAudienceIdentity"],
+        [89, "AppFactory"],
+        [90, "AppFactoryDetailFetchedAt"],
       ]);
 
       const tracker = yield* trackerRows(sql);
       assert.deepStrictEqual(
-        tracker.slice(-20).map((row) => [row.migration_id, row.name]),
+        tracker.slice(-21).map((row) => [row.migration_id, row.name]),
         [
           [70, "AgentGatewayOperations"],
           [71, "ProjectionThreadsGatewayProvenance"],
@@ -520,8 +526,9 @@ spacesMigrationCollisionLayer("Spaces migration after the private migration 70 c
           [85, "AutomationSettings"],
           [86, "NormalizeStudioThreadWorkspaces"],
           [87, "DropUnusedOrchestrationEventIndexes"],
-          [88, "AppFactory"],
-          [89, "AppFactoryDetailFetchedAt"],
+          [88, "ExternalMcpAudienceIdentity"],
+          [89, "AppFactory"],
+          [90, "AppFactoryDetailFetchedAt"],
         ],
       );
 
@@ -599,13 +606,14 @@ spacesMigrationCollisionLayer("Spaces migration after the private migration 70 c
         [85, "AutomationSettings"],
         [86, "NormalizeStudioThreadWorkspaces"],
         [87, "DropUnusedOrchestrationEventIndexes"],
-        [88, "AppFactory"],
-        [89, "AppFactoryDetailFetchedAt"],
+        [88, "ExternalMcpAudienceIdentity"],
+        [89, "AppFactory"],
+        [90, "AppFactoryDetailFetchedAt"],
       ]);
 
       const tracker = yield* trackerRows(sql);
       assert.deepStrictEqual(
-        tracker.slice(-16).map((row) => [row.migration_id, row.name]),
+        tracker.slice(-17).map((row) => [row.migration_id, row.name]),
         [
           [74, "ExternalMcpIntegrations"],
           [75, "ExternalMcpActiveCapacity"],
@@ -621,8 +629,9 @@ spacesMigrationCollisionLayer("Spaces migration after the private migration 70 c
           [85, "AutomationSettings"],
           [86, "NormalizeStudioThreadWorkspaces"],
           [87, "DropUnusedOrchestrationEventIndexes"],
-          [88, "AppFactory"],
-          [89, "AppFactoryDetailFetchedAt"],
+          [88, "ExternalMcpAudienceIdentity"],
+          [89, "AppFactory"],
+          [90, "AppFactoryDetailFetchedAt"],
         ],
       );
       const preservedSpaces = yield* sql<{ readonly spaceId: string }>`

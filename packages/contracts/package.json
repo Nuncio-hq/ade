@@ -1,5 +1,5 @@
 {
-  "name": "@synara/contracts",
+  "name": "@nuncio/contracts",
   "version": "0.0.1",
   "private": true,
   "files": [
@@ -24,7 +24,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@nuncio/contracts": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {

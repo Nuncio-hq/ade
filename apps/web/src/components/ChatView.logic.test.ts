@@ -1,4 +1,4 @@
-import { CheckpointRef, EventId, ThreadId, TurnId, type ModelSlug } from "@synara/contracts";
+import { CheckpointRef, EventId, ThreadId, TurnId, type ModelSlug } from "@nuncio/contracts";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -88,14 +88,14 @@ describe("transcript auto-follow signal", () => {
 describe("file undo completion", () => {
   const pending = {
     threadId: ThreadId.makeUnsafe("thread-file-undo"),
-    turnCount: 2,
+    turnCounts: [2],
     existingFailureActivityIds: [],
   };
   const summary = {
     turnId: TurnId.makeUnsafe("turn-2"),
     checkpointTurnCount: 2,
     checkpointTurnCounts: [2],
-    checkpointRef: CheckpointRef.makeUnsafe("refs/synara/checkpoints/thread-file-undo/turn/2"),
+    checkpointRef: CheckpointRef.makeUnsafe("refs/nuncioade/checkpoints/thread-file-undo/turn/2"),
     status: "ready" as const,
     completedAt: "2026-07-12T17:59:00.000Z",
     files: [{ path: "src/file.ts", additions: 1, deletions: 0 }],
@@ -115,6 +115,38 @@ describe("file undo completion", () => {
         thread: {
           ...baseThread,
           turnDiffSummaries: [{ ...summary, files: [] }],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("stays pending until every merged turn in the card has been reverted", () => {
+    const olderSummary = {
+      ...summary,
+      turnId: TurnId.makeUnsafe("turn-1"),
+      checkpointTurnCount: 1,
+      checkpointTurnCounts: [1],
+      files: [],
+    };
+    const multiTurnPending = { ...pending, turnCounts: [2, 1] };
+
+    expect(
+      hasFileUndoSettled({
+        pending: multiTurnPending,
+        thread: {
+          id: pending.threadId,
+          turnDiffSummaries: [olderSummary, summary],
+          activities: [],
+        },
+      }),
+    ).toBe(false);
+    expect(
+      hasFileUndoSettled({
+        pending: multiTurnPending,
+        thread: {
+          id: pending.threadId,
+          turnDiffSummaries: [olderSummary, { ...summary, files: [] }],
+          activities: [],
         },
       }),
     ).toBe(true);

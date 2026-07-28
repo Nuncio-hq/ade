@@ -10,9 +10,9 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  SYNARA_DESKTOP_UPDATE_CHANNEL,
-  SYNARA_PRODUCTION_BUNDLE_ID,
-} from "@synara/shared/desktopIdentity";
+  NUNCIO_DESKTOP_UPDATE_CHANNEL,
+  NUNCIO_PRODUCTION_BUNDLE_ID,
+} from "@nuncio/shared/desktopIdentity";
 
 import {
   readReleaseUpdatePolicyConfig,
@@ -50,10 +50,10 @@ function writeMacManifestFixtures(targetRoot: string): { arm64Path: string; x64P
     arm64Path,
     `version: 9.9.9-smoke.0
 files:
-  - url: Synara-9.9.9-smoke.0-arm64.zip
+  - url: NuncioADE-9.9.9-smoke.0-arm64.zip
     sha512: arm64zip
     size: 125621344
-path: Synara-9.9.9-smoke.0-arm64.zip
+path: NuncioADE-9.9.9-smoke.0-arm64.zip
 sha512: arm64zip
 releaseDate: '2026-03-08T10:32:14.587Z'
 `,
@@ -63,10 +63,10 @@ releaseDate: '2026-03-08T10:32:14.587Z'
     x64Path,
     `version: 9.9.9-smoke.0
 files:
-  - url: Synara-9.9.9-smoke.0-x64.zip
+  - url: NuncioADE-9.9.9-smoke.0-x64.zip
     sha512: x64zip
     size: 132000112
-path: Synara-9.9.9-smoke.0-x64.zip
+path: NuncioADE-9.9.9-smoke.0-x64.zip
 sha512: x64zip
 releaseDate: '2026-03-08T10:36:07.540Z'
 `,
@@ -91,23 +91,24 @@ function verifyCanonicalIdentity(): void {
   const serverPackage = JSON.parse(
     readFileSync(resolve(repoRoot, "apps/server/package.json"), "utf8"),
   ) as { name?: string; bin?: Record<string, string> };
-  if (serverPackage.name !== "@synara/cli") {
-    throw new Error(`Expected CLI package @synara/cli, got ${serverPackage.name ?? "<missing>"}.`);
+  if (serverPackage.name !== "@nuncio/cli") {
+    throw new Error(`Expected CLI package @nuncio/cli, got ${serverPackage.name ?? "<missing>"}.`);
   }
   const expectedBinaries = {
-    synara: "dist/index.mjs",
-    "synara-restore-migration-backup": "dist/restoreMigrationBackup.mjs",
+    ade: "dist/index.mjs",
+    nuncioade: "dist/index.mjs",
+    "nuncioade-restore-migration-backup": "dist/restoreMigrationBackup.mjs",
   };
   if (JSON.stringify(serverPackage.bin ?? {}) !== JSON.stringify(expectedBinaries)) {
     throw new Error(
-      "Expected the CLI to expose only the Synara entry point and migration recovery binary.",
+      "Expected the CLI to expose only the NuncioADE entry points (nuncioade + ade alias) and migration recovery binary.",
     );
   }
-  if (SYNARA_PRODUCTION_BUNDLE_ID !== "com.nuncio.ade") {
-    throw new Error(`Unexpected production bundle ID: ${SYNARA_PRODUCTION_BUNDLE_ID}.`);
+  if (NUNCIO_PRODUCTION_BUNDLE_ID !== "com.nuncio.ade") {
+    throw new Error(`Unexpected production bundle ID: ${NUNCIO_PRODUCTION_BUNDLE_ID}.`);
   }
-  if (SYNARA_DESKTOP_UPDATE_CHANNEL !== "nuncioade") {
-    throw new Error(`Unexpected desktop update channel: ${SYNARA_DESKTOP_UPDATE_CHANNEL}.`);
+  if (NUNCIO_DESKTOP_UPDATE_CHANNEL !== "nuncioade") {
+    throw new Error(`Unexpected desktop update channel: ${NUNCIO_DESKTOP_UPDATE_CHANNEL}.`);
   }
 
   const releasePolicy = readReleaseUpdatePolicyConfig(repoRoot);
@@ -117,7 +118,7 @@ function verifyCanonicalIdentity(): void {
     !resolvedPolicy.makeLatest ||
     resolvedPolicy.mirrorToStableChannel
   ) {
-    throw new Error("Expected stable clean Synara releases to publish on GitHub Latest.");
+    throw new Error("Expected stable clean NuncioADE releases to publish on GitHub Latest.");
   }
 }
 
@@ -145,17 +146,17 @@ function verifyReleaseWorkflowSafety(): void {
   );
   assertContains(
     workflow,
-    "needs.preflight.outputs.publish_release == 'true' && vars.SYNARA_PUBLISH_CLI == '1'",
+    "needs.preflight.outputs.publish_release == 'true' && vars.NUNCIO_PUBLISH_CLI == '1'",
     "Expected CLI publication to require explicit publication mode.",
   );
   assertContains(
     workflow,
-    "needs.preflight.outputs.publish_release == 'true' && vars.SYNARA_FINALIZE_RELEASE == '1'",
+    "needs.preflight.outputs.publish_release == 'true' && vars.NUNCIO_FINALIZE_RELEASE == '1'",
     "Expected release finalization to require explicit publication mode.",
   );
   assertContains(
     workflow,
-    "SYNARA_PUBLISH_RELEASE: ${{ needs.preflight.outputs.publish_release }}",
+    "NUNCIO_PUBLISH_RELEASE: ${{ needs.preflight.outputs.publish_release }}",
     "Expected artifact signing admission to know whether artifacts will be published.",
   );
   assertContains(
@@ -267,7 +268,7 @@ function verifyReleaseWorkflowSafety(): void {
   );
   assertContains(
     desktopBuildConfig,
-    "__SYNARA_WINDOWS_UPDATER_PUBLISHER__",
+    "__NUNCIO_WINDOWS_UPDATER_PUBLISHER__",
     "Expected the Windows updater publisher identity to be compiled into the main bundle.",
   );
 
@@ -317,7 +318,7 @@ function verifyDesktopStageLockAuthority(): void {
   );
   assertNotContains(
     buildScript,
-    "--filter @synara/",
+    "--filter @nuncio/",
     "Desktop staging must not use Bun workspace filters because filtered hoisted installs can diverge from bun.lock.",
   );
   assertContains(
@@ -357,17 +358,17 @@ function verifyDesktopStageLockAuthority(): void {
   );
   assertContains(
     buildScript,
-    "synaraCommitHash: commitHash",
+    "nuncioadeCommitHash: commitHash",
     "Expected the staged package to carry its exact source commit.",
   );
   assertContains(
     buildScript,
-    "synaraLockfileSha256: resolvedLockfileSha256",
+    "nuncioadeLockfileSha256: resolvedLockfileSha256",
     "Expected the staged package to carry its repository lockfile digest.",
   );
   assertContains(
     buildScript,
-    "synaraWindowsPublisherSubject: resolvedBuildConfig.windowsPublisherSubject",
+    "nuncioadeWindowsPublisherSubject: resolvedBuildConfig.windowsPublisherSubject",
     "Expected signed Windows packages to carry the independently configured certificate subject DN.",
   );
 
@@ -385,7 +386,7 @@ function verifyDesktopStageLockAuthority(): void {
   }
 }
 
-const tempRoot = mkdtempSync(join(tmpdir(), "synara-release-smoke-"));
+const tempRoot = mkdtempSync(join(tmpdir(), "nuncioade-release-smoke-"));
 
 try {
   verifyCanonicalIdentity();
@@ -432,12 +433,12 @@ try {
   const mergedManifest = readFileSync(arm64Path, "utf8");
   assertContains(
     mergedManifest,
-    "Synara-9.9.9-smoke.0-arm64.zip",
+    "NuncioADE-9.9.9-smoke.0-arm64.zip",
     "Merged manifest is missing the arm64 asset.",
   );
   assertContains(
     mergedManifest,
-    "Synara-9.9.9-smoke.0-x64.zip",
+    "NuncioADE-9.9.9-smoke.0-x64.zip",
     "Merged manifest is missing the x64 asset.",
   );
   assertNotContains(

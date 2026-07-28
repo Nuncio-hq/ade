@@ -451,7 +451,7 @@ export interface DesktopWindowState {
   isFullscreen: boolean;
 }
 
-export interface SynaraStorageSnapshot {
+export interface NuncioADEStorageSnapshot {
   readonly version: 1;
   readonly exportedAt: string;
   readonly entries: Readonly<Record<string, string>>;
@@ -519,7 +519,7 @@ export interface DesktopBridge {
     onState: (listener: (state: DesktopAppSnapState) => void) => () => void;
   };
   storageMigration: {
-    readSnapshot: () => SynaraStorageSnapshot | null;
+    readSnapshot: () => NuncioADEStorageSnapshot | null;
     acknowledgeSnapshot: () => Promise<void>;
   };
   server?: {

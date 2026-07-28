@@ -4,7 +4,7 @@ import type {
   ExternalMcpIntegration,
   ExternalMcpPairResult,
   ExternalMcpRefreshPairingInput,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { Data, ServiceMap } from "effect";
 import type { Effect } from "effect";
 
@@ -74,4 +74,4 @@ export interface ExternalMcpServiceShape {
 export class ExternalMcpService extends ServiceMap.Service<
   ExternalMcpService,
   ExternalMcpServiceShape
->()("synara/externalMcp/Services/ExternalMcpService") {}
+>()("nuncioade/externalMcp/Services/ExternalMcpService") {}

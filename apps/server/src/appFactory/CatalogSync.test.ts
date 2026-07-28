@@ -1,4 +1,4 @@
-import { AppFactorySyncInProgressError } from "@synara/contracts";
+import { AppFactorySyncInProgressError } from "@nuncio/contracts";
 import { assert, it } from "@effect/vitest";
 import { Deferred, Effect, Layer } from "effect";
 

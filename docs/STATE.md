@@ -14,9 +14,9 @@ no engine source fork; (3) UI for extensions when the bridge needs it;
 cloning section (M5, plan `plans/260728-1405-app-factory-p1/`; decided
 2026-07-28). Everything else — UI/UX, general features — is inherited from
 Synara upstream. Pi provider frozen: works, gets no investment.
-Synara code (`apps/`, `packages/`) is touched only to close bridge gaps
-(App Factory wiring points excepted — noted in its plan).
-All Synara providers are kept working.
+Synara-inherited code (`apps/`, `packages/`) is touched only to close bridge
+gaps (App Factory wiring points excepted — noted in its plan).
+All Synara-inherited providers are kept working.
 
 ## Milestones
 
@@ -29,8 +29,17 @@ All Synara providers are kept working.
 - [~] **M2 Bridge gaps** — first bridge extension landed: `extension/ui/askUserQuestion`
   in PiAdapter + `allowNotes`/`allowCustomAnswer` on UserInputQuestion + notes UI.
 - [~] **M3 Daily driver** — STARTED: NuncioADE.app branded, built, installed;
-  DB migrated from Synara (sqlite .backup snapshot); user works in NuncioADE.
-  Remaining: signed builds + no-script auto-update via GitHub releases.
+  DB migrated from the old Synara install (sqlite .backup snapshot); user works
+  in NuncioADE. Remaining: signed builds + no-script auto-update via GitHub releases.
+- [x] **Rebrand** (2026-07-28, merged to `main`) — maximum rebrand
+      Synara→NuncioADE across the whole tree via `scripts/rebrand-identity.ts`
+      (deterministic, idempotent); supersedes the old no-rename law. Shipped:
+      `nuncioade` CLI (+ `ade` alias), browser storage-key migration, managed
+      codex-config marker normalization, external-MCP legacy prefix acceptance +
+      frozen hash salt, DB migration 088 (audience constraint), `brand:check`
+      guard extended + CI-enforced, `sync/rebranded-upstream` shadow branch for
+      near-zero-conflict upstream syncs (rehearsed on v0.6.2: merged tree
+      byte-identical). Left upstream: `trysynara.com` feedback/changelog endpoints.
 - [ ] **M4 OMP engine** — `OmpAdapter` in `apps/server` (direct SDK:
       `createAgentSession`/`SessionManager`/`ModelRegistry` from
       `@oh-my-pi/pi-coding-agent` 17.x), models from OMP's registry,
@@ -46,30 +55,32 @@ All Synara providers are kept working.
   P1 = research tool: screensdesign mirror (2,621 apps, free tier),
   Discover/Rising/Watchlist/Data tabs, detail + compare — $0, engine-
   independent, can run parallel to M4. **P1 backend data layer DONE
-  2026-07-28**: contracts, migration 088 (`af_*`), repository,
-  ScreensdesignClient (typed errors + 429 backoff), CatalogSync
+  2026-07-28**: contracts (`@nuncio/contracts`), migrations 089+090 (`af_*`),
+  repository, ScreensdesignClient (typed errors + 429 backoff), CatalogSync
   (full/incremental/refreshApp, single-flight, crash resume),
-  AppFactoryService + 12 WS RPCs — 53 scoped tests green. Remaining P1:
+  AppFactoryService + 12 WS RPCs — 60+ scoped tests green. Remaining P1:
   web UI (tabs/detail/compare). P2: GetAppNiche enrich, media
   download, clone handoff (facts pack + `/ade-app-clone` skill).
 
 ## In force
 
 - Branching: trunk-based on `main`; short-lived branches `harness/*`, `app/*`,
-  `mobile/*`, `sync/upstream-<date>`. No long-lived dev branch; release = tag on main,
-  gated by dogfooding the dev instance. See AGENTS.md §Branching.
+  `mobile/*`, `sync/upstream-<version>`. No long-lived dev branch; ONE exception:
+  `sync/rebranded-upstream` (mechanical shadow: latest upstream tag + codemod,
+  see `docs/UPSTREAM-SYNC.md`). Release = tag on main, gated by dogfooding the
+  dev instance. See AGENTS.md §Branching.
 - Mobile: end goal is "your machine as cloud, agents" — phone is a remote
   client to the Mac-hosted server, never a Pi runtime. **Native app (Expo/RN),
   PWA skipped.** Near-term: use REMOTE.md (Tailscale + auth token) to reach the
   web UI from the phone and collect real mobile requirements.
-- Naming: inherited code stays `@synara/*` / `SYNARA_*`; new code is `@nuncio/*` /
-  `NUNCIO_` / `ade_` tools. First `@nuncio/*` package landed: `@nuncio/contracts`
-  (`packages/nuncio-contracts`, App Factory domain schemas). See AGENTS.md
-  §Naming Convention.
+- Naming: post-rebrand the whole tree is `@nuncio/*` / `NUNCIO_*` / `nuncioade` /
+  `ade_` tools. Retired `synara` tokens survive only in attribution, exempt
+  history, and `// rebrand-exempt` compat shims — enforced by `bun run
+brand:check` in CI. See AGENTS.md §Naming & Identity.
 - Versioning: ADE line = 0.0.x (currently 0.0.1), user-decided only, agents never
   bump/tag. Upstream base = `UPSTREAM-BASE` file (currently v0.6.2). See AGENTS.md
   §Versioning & Releases.
-- Upstream = `Emanuele-web04/synara`, remote `upstream`; **sync on release tags only** (base: v0.6.2, synced), cherry-pick once diverged.
+- Upstream = `Emanuele-web04/synara`, remote `upstream`; **sync on release tags only** (base: v0.6.3, synced 2026-07-28 via the shadow flow), cherry-pick once diverged.
 - Origin = `https://github.com/Nuncio-hq/ade` (private), `main` pushed and tracking.
 - Extensions dev is project-local first, promote to global only when stable
   (pi: `.pi/extensions` → `~/.pi/agent/extensions/`; OMP: `.omp/extensions` →
@@ -88,9 +99,13 @@ All Synara providers are kept working.
 
 ## Known issues
 
-- 36 web tests fail on main (upstream-inherited; zustand persist vs missing
-  localStorage in test env: splitViewStore, pinned\*Store, workflowRunUiStore,
-  chatHotPath.compiler). Not ours; recheck after next release sync.
+- 35 web tests fail on main (upstream-inherited; zustand persist vs missing
+  localStorage in test env: splitViewStore, pinned\*Store, workflowRunUiStore).
+  Not ours; recheck after next release sync. (Was 36 pre-rebrand — count drift
+  from renamed test files, same root cause.)
+- `@nuncio/cli` typecheck has 2 pre-existing upstream errors in `PiAdapter.ts`
+  (`piCompactionTitle` undefined; `PiSessionContext` missing properties) —
+  inherited from main, NOT rebrand-caused; recheck after next release sync.
 - Installed NuncioADE.app lags main until rebuilt: harness extensions hot-load
   via /reload, but `apps/`/`packages/` changes need an app rebuild + reinstall.
 - NEVER swap state.sqlite while the app runs (learned: disk I/O errors, app

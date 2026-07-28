@@ -5,11 +5,11 @@
  * upserted from upstream payloads, revenue months are fully replaced per app on
  * every sync, and watchlist pins/notes are the only locally-authored data.
  */
-import { AppFactorySyncMode, AppFactorySyncRunStatus } from "@synara/contracts";
+import { AppFactorySyncMode, AppFactorySyncRunStatus } from "@nuncio/contracts";
 import { Schema, ServiceMap } from "effect";
 import type { Effect } from "effect";
 
-import { IsoDateTime, NonNegativeInt, PositiveInt } from "@synara/contracts";
+import { IsoDateTime, NonNegativeInt, PositiveInt } from "@nuncio/contracts";
 import type { PersistenceDecodeError, PersistenceSqlError } from "../Errors.ts";
 
 export class AppFactoryNoteWithoutPinError extends Schema.TaggedErrorClass<AppFactoryNoteWithoutPinError>()(
@@ -295,4 +295,4 @@ export interface AppFactoryRepositoryShape {
 export class AppFactoryRepository extends ServiceMap.Service<
   AppFactoryRepository,
   AppFactoryRepositoryShape
->()("synara/persistence/Services/AppFactoryRepository/AppFactoryRepository") {}
+>()("nuncioade/persistence/Services/AppFactoryRepository") {}

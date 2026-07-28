@@ -1,4 +1,4 @@
-import { type ProviderModelDescriptor, ThreadId } from "@synara/contracts";
+import { type ProviderModelDescriptor, ThreadId } from "@nuncio/contracts";
 import { describe, expect, it, vi } from "vitest";
 import {
   getComposerProviderState,

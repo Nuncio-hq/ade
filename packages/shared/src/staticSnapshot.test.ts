@@ -10,9 +10,9 @@ describe("findAsarArchivePath", () => {
   it("resolves the containing archive for a path inside an asar", () => {
     expect(
       findAsarArchivePath(
-        "/Applications/Synara.app/Contents/Resources/app.asar/apps/server/dist/client",
+        "/Applications/NuncioADE.app/Contents/Resources/app.asar/apps/server/dist/client",
       ),
-    ).toBe(path.join("/Applications/Synara.app/Contents/Resources/app.asar"));
+    ).toBe(path.join("/Applications/NuncioADE.app/Contents/Resources/app.asar"));
   });
 
   it("returns the archive itself when the path is the asar file", () => {
@@ -20,7 +20,7 @@ describe("findAsarArchivePath", () => {
   });
 
   it("returns null for plain directories", () => {
-    expect(findAsarArchivePath("/Users/me/dev/synara/apps/web/dist")).toBeNull();
+    expect(findAsarArchivePath("/Users/me/dev/nuncioade/apps/web/dist")).toBeNull();
   });
 });
 

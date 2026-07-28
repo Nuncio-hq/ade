@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 
-import { ThreadId } from "@synara/contracts";
+import { ThreadId } from "@nuncio/contracts";
 import type { BrowserWindow, WebContents } from "electron";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,7 +8,7 @@ import { DesktopBrowserManager } from "./browserManager";
 
 vi.mock("electron", () => ({
   app: {
-    getName: () => "Synara",
+    getName: () => "NuncioADE",
     getPreferredSystemLanguages: () => ["en-US"],
     userAgentFallback:
       "Mozilla/5.0 AppleWebKit/537.36 Chrome/140.0.0.0 Electron/40.0.0 Safari/537.36",
@@ -167,7 +167,7 @@ describe("DesktopBrowserManager repeated workflow characterization", () => {
       const beforeSchemeDenial = afterTabOpen.tabs.length;
       expect(
         handler({
-          url: "synara://unsafe",
+          url: "nuncioade://unsafe",
           frameName: "",
           features: "",
           disposition: "foreground-tab",

@@ -107,7 +107,7 @@ import {
   AppFactoryTestTokenResult,
   AppFactoryTokenInvalidError,
   AppFactoryTokenNotConfiguredError,
-} from "@nuncio/contracts";
+} from "./appFactory";
 import {
   ClientOrchestrationCommand,
   ORCHESTRATION_WS_METHODS,

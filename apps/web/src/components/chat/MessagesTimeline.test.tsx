@@ -3,7 +3,7 @@
 // Layer: Web chat component tests
 // Depends on: renderToStaticMarkup and a mocked LegendList.
 
-import { CheckpointRef, MessageId, ThreadId, TurnId } from "@synara/contracts";
+import { CheckpointRef, MessageId, ThreadId, TurnId } from "@nuncio/contracts";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { formatShortTimestamp } from "../../timestampFormat";
@@ -289,9 +289,9 @@ describe("MessagesTimeline", () => {
     );
 
     expect(markup.match(/data-cross-task-origin="true"/g)).toHaveLength(1);
-    expect(markup).toContain("Sent by Synara from another thread");
+    expect(markup).toContain("Sent by NuncioADE from another thread");
     expect(markup).toContain('aria-label="Open source thread"');
-    expect(markup.indexOf("Sent by Synara from another thread")).toBeLessThan(
+    expect(markup.indexOf("Sent by NuncioADE from another thread")).toBeLessThan(
       markup.indexOf("Inspect the repository"),
     );
   });
@@ -340,7 +340,7 @@ describe("MessagesTimeline", () => {
       />,
     );
 
-    expect(markup).toContain("Sent by Synara from another thread");
+    expect(markup).toContain("Sent by NuncioADE from another thread");
     expect(markup).not.toContain("Sent by agent");
   });
 
@@ -2567,7 +2567,7 @@ describe("MessagesTimeline", () => {
     expect(markup).toContain('data-tool-icon="mcp"');
   });
 
-  it("shows the Synara mark for every provider-specific tool row shape", async () => {
+  it("shows the NuncioADE mark for every provider-specific tool row shape", async () => {
     const { MessagesTimeline } = await import("./MessagesTimeline");
     const baseProps = makeTimelineBaseProps();
 
@@ -2577,28 +2577,28 @@ describe("MessagesTimeline", () => {
         {...baseProps}
         timelineEntries={[
           {
-            id: "entry-inline-synara-claude",
+            id: "entry-inline-nuncioade-claude",
             kind: "work",
             createdAt: "2026-03-17T19:12:28.000Z",
             entry: {
-              id: "work-inline-synara-claude",
+              id: "work-inline-nuncioade-claude",
               createdAt: "2026-03-17T19:12:28.000Z",
               label: "MCP tool call",
               tone: "tool",
               itemType: "dynamic_tool_call",
-              toolTitle: "Synara__synara_create_thread",
-              toolName: "Synara__synara_create_thread",
-              detail: "Synara__synara_create_thread",
+              toolTitle: "NuncioADE__nuncioade_create_thread",
+              toolName: "NuncioADE__nuncioade_create_thread",
+              detail: "NuncioADE__nuncioade_create_thread",
               activityKind: "tool.started",
             },
           },
         ]}
       />,
     );
-    expect(claudeMarkup).toContain('data-tool-icon="synara"');
+    expect(claudeMarkup).toContain('data-tool-icon="nuncioade"');
     expect(claudeMarkup).not.toContain('data-tool-icon="mcp"');
-    expect(claudeMarkup).toContain("Synara is creating a thread");
-    expect(claudeMarkup).not.toContain("Synara__synara_create_thread");
+    expect(claudeMarkup).toContain("NuncioADE is creating a thread");
+    expect(claudeMarkup).not.toContain("NuncioADE__nuncioade_create_thread");
 
     // A provider may misclassify an MCP action containing "create" or "list"
     // as a file change. Tool identity still wins over that transport category.
@@ -2607,41 +2607,41 @@ describe("MessagesTimeline", () => {
         {...baseProps}
         timelineEntries={[
           {
-            id: "entry-inline-synara-codex",
+            id: "entry-inline-nuncioade-codex",
             kind: "work",
             createdAt: "2026-03-17T19:12:28.000Z",
             entry: {
-              id: "work-inline-synara-codex",
+              id: "work-inline-nuncioade-codex",
               createdAt: "2026-03-17T19:12:28.000Z",
               label: "MCP tool call",
               tone: "tool",
               itemType: "file_change",
-              toolTitle: "mcp__Synara__synara_list_threads",
-              detail: "mcp__Synara__synara_list_threads",
+              toolTitle: "mcp__NuncioADE__nuncioade_list_threads",
+              detail: "mcp__NuncioADE__nuncioade_list_threads",
             },
           },
         ]}
       />,
     );
-    expect(codexMarkup).toContain('data-tool-icon="synara"');
-    expect(codexMarkup).toContain("Synara listed threads");
-    expect(codexMarkup).not.toContain("mcp__Synara__synara_list_threads");
+    expect(codexMarkup).toContain('data-tool-icon="nuncioade"');
+    expect(codexMarkup).toContain("NuncioADE listed threads");
+    expect(codexMarkup).not.toContain("mcp__NuncioADE__nuncioade_list_threads");
 
     const failedMarkup = renderToStaticMarkup(
       <MessagesTimeline
         {...baseProps}
         timelineEntries={[
           {
-            id: "entry-inline-synara-failed",
+            id: "entry-inline-nuncioade-failed",
             kind: "work",
             createdAt: "2026-03-17T19:12:28.000Z",
             entry: {
-              id: "work-inline-synara-failed",
+              id: "work-inline-nuncioade-failed",
               createdAt: "2026-03-17T19:12:28.000Z",
               label: "MCP tool call",
               tone: "tool",
               itemType: "mcp_tool_call",
-              toolName: "mcp__synara__synara_create_threads",
+              toolName: "mcp__nuncioade__nuncioade_create_threads",
               toolStatus: "failed",
               detail: "Claude rejected reasoningEffort",
               activityKind: "tool.completed",
@@ -2650,7 +2650,7 @@ describe("MessagesTimeline", () => {
         ]}
       />,
     );
-    expect(failedMarkup).toContain("Synara couldn&#x27;t create threads");
+    expect(failedMarkup).toContain("NuncioADE couldn&#x27;t create threads");
     expect(failedMarkup).toContain("Claude rejected reasoningEffort");
   });
 
@@ -2674,31 +2674,31 @@ describe("MessagesTimeline", () => {
       );
 
     const readThreadMarkup = renderSingleToolRow({
-      id: "work-synara-read-thread-args",
+      id: "work-nuncioade-read-thread-args",
       createdAt: "2026-03-17T19:12:28.000Z",
       label: "MCP tool call",
       tone: "tool",
       itemType: "mcp_tool_call",
-      toolName: "mcp__synara__synara_read_thread",
-      detail: 'mcp__synara__synara_read_thread: {"threadId":"c357d8c5-b4c1-47d0"}',
+      toolName: "mcp__nuncioade__nuncioade_read_thread",
+      detail: 'mcp__nuncioade__nuncioade_read_thread: {"threadId":"c357d8c5-b4c1-47d0"}',
       activityKind: "tool.completed",
     });
-    expect(readThreadMarkup).toContain("Synara read a thread");
-    expect(readThreadMarkup).not.toContain("mcp__synara__synara_read_thread:");
+    expect(readThreadMarkup).toContain("NuncioADE read a thread");
+    expect(readThreadMarkup).not.toContain("mcp__nuncioade__nuncioade_read_thread:");
     expect(readThreadMarkup).not.toContain("threadId");
 
     const diagnoseMarkup = renderSingleToolRow({
-      id: "work-synara-diagnose-args",
+      id: "work-nuncioade-diagnose-args",
       createdAt: "2026-03-17T19:12:28.000Z",
       label: "MCP tool call",
       tone: "tool",
       itemType: "mcp_tool_call",
-      toolName: "mcp__synara__synara_diagnose_thread",
-      detail: 'mcp__synara__synara_diagnose_thread: {"threadId":"09a1615d-084f-40b9"}',
+      toolName: "mcp__nuncioade__nuncioade_diagnose_thread",
+      detail: 'mcp__nuncioade__nuncioade_diagnose_thread: {"threadId":"09a1615d-084f-40b9"}',
       activityKind: "tool.completed",
     });
-    expect(diagnoseMarkup).toContain("Synara diagnosed a thread");
-    expect(diagnoseMarkup).not.toContain("mcp__synara__synara_diagnose_thread:");
+    expect(diagnoseMarkup).toContain("NuncioADE diagnosed a thread");
+    expect(diagnoseMarkup).not.toContain("mcp__nuncioade__nuncioade_diagnose_thread:");
     expect(diagnoseMarkup).not.toContain("threadId");
 
     const dynamicToolMarkup = renderSingleToolRow({
@@ -2709,7 +2709,7 @@ describe("MessagesTimeline", () => {
       itemType: "dynamic_tool_call",
       toolName: "ToolSearch",
       toolTitle: "ToolSearch",
-      detail: 'ToolSearch: {"query":"select:mcp__synara__synara_read_thread_events"}',
+      detail: 'ToolSearch: {"query":"select:mcp__nuncioade__nuncioade_read_thread_events"}',
       activityKind: "tool.completed",
     });
     expect(dynamicToolMarkup).toContain("ToolSearch");
@@ -2718,50 +2718,50 @@ describe("MessagesTimeline", () => {
     // Failed calls are exempt: the JSON-shaped detail may be the only place
     // the error surfaces, so it stays visible inline.
     const failedArgsMarkup = renderSingleToolRow({
-      id: "work-synara-failed-args",
+      id: "work-nuncioade-failed-args",
       createdAt: "2026-03-17T19:12:28.000Z",
       label: "MCP tool call",
       tone: "tool",
       itemType: "mcp_tool_call",
-      toolName: "mcp__synara__synara_create_threads",
+      toolName: "mcp__nuncioade__nuncioade_create_threads",
       toolStatus: "failed",
       detail: 'McpError: {"code":-32602,"message":"Invalid params"}',
       activityKind: "tool.completed",
     });
-    expect(failedArgsMarkup).toContain("Synara couldn&#x27;t create threads");
+    expect(failedArgsMarkup).toContain("NuncioADE couldn&#x27;t create threads");
     expect(failedArgsMarkup).toContain("Invalid params");
   });
 
-  it("keeps Synara tool calls and adds a thread creation recap at the end of the turn", async () => {
+  it("keeps NuncioADE tool calls and adds a thread creation recap at the end of the turn", async () => {
     const { MessagesTimeline } = await import("./MessagesTimeline");
-    const assistantMessageId = MessageId.makeUnsafe("message-synara-recap");
+    const assistantMessageId = MessageId.makeUnsafe("message-nuncioade-recap");
     const workEntries = [
       {
-        id: "entry-synara-create-tool",
+        id: "entry-nuncioade-create-tool",
         kind: "work",
         createdAt: "2026-03-17T19:12:28.000Z",
         entry: {
-          id: "work-synara-create-tool",
+          id: "work-nuncioade-create-tool",
           createdAt: "2026-03-17T19:12:28.000Z",
           label: "MCP tool call",
           tone: "tool",
           itemType: "mcp_tool_call",
-          toolName: "mcp__synara__synara_create_threads",
-          toolTitle: "Synara created threads",
+          toolName: "mcp__nuncioade__nuncioade_create_threads",
+          toolTitle: "NuncioADE created threads",
           activityKind: "tool.completed",
         },
       },
       {
-        id: "entry-synara-create-recap",
+        id: "entry-nuncioade-create-recap",
         kind: "work",
         createdAt: "2026-03-17T19:12:29.000Z",
         entry: {
-          id: "work-synara-create-recap",
+          id: "work-nuncioade-create-recap",
           createdAt: "2026-03-17T19:12:29.000Z",
-          label: "Created 2 Synara threads",
+          label: "Created 2 NuncioADE threads",
           tone: "info",
-          activityKind: "synara.threads.created",
-          synaraThreadCreation: {
+          activityKind: "nuncioade.threads.created",
+          nuncioadeThreadCreation: {
             operationId: "gateway:create:two-workers",
             requestedCount: 2,
             createdCount: 2,
@@ -2800,8 +2800,8 @@ describe("MessagesTimeline", () => {
         timelineEntries={[...workEntries]}
       />,
     );
-    expect(liveMarkup).toContain("Synara created threads");
-    expect(liveMarkup).not.toContain('data-synara-thread-creation-card="true"');
+    expect(liveMarkup).toContain("NuncioADE created threads");
+    expect(liveMarkup).not.toContain('data-nuncioade-thread-creation-card="true"');
 
     const markup = renderToStaticMarkup(
       <MessagesTimeline
@@ -2811,7 +2811,7 @@ describe("MessagesTimeline", () => {
         timelineEntries={[
           ...workEntries,
           {
-            id: "entry-synara-recap-assistant",
+            id: "entry-nuncioade-recap-assistant",
             kind: "message",
             createdAt: "2026-03-17T19:12:30.000Z",
             message: {
@@ -2830,7 +2830,7 @@ describe("MessagesTimeline", () => {
     // The original MCP tool call is preserved inside the settled turn's
     // "Worked for..." disclosure; the recap is an additional final artifact.
     expect(markup).toContain("Worked for");
-    expect(markup).toContain('data-synara-thread-creation-card="true"');
+    expect(markup).toContain('data-nuncioade-thread-creation-card="true"');
     expect(markup).toContain("2 threads created");
     expect(markup).toContain("2/2 requested threads created");
     expect(markup).toContain("Explain the repository with Terra");
@@ -2838,7 +2838,7 @@ describe("MessagesTimeline", () => {
     expect(markup).toContain("GPT-5.6 Terra");
     expect(markup).toContain("Claude Sonnet 5");
     expect(markup.indexOf("Both threads are running.")).toBeLessThan(
-      markup.indexOf('data-synara-thread-creation-card="true"'),
+      markup.indexOf('data-nuncioade-thread-creation-card="true"'),
     );
   });
 
@@ -3050,7 +3050,7 @@ describe("MessagesTimeline", () => {
                 turnId: TurnId.makeUnsafe("turn-diff-1"),
                 checkpointTurnCount: 1,
                 checkpointTurnCounts: [1],
-                checkpointRef: CheckpointRef.makeUnsafe("refs/synara/checkpoints/thread/turn/1"),
+                checkpointRef: CheckpointRef.makeUnsafe("refs/nuncioade/checkpoints/thread/turn/1"),
                 status: "ready",
                 completedAt: "2026-03-17T19:12:30.000Z",
                 assistantMessageId,

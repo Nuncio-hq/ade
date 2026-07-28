@@ -12,7 +12,7 @@ import {
   type OrchestrationReadModel,
   type OrchestrationShellStreamEvent,
   type ThreadMarker,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -52,7 +52,7 @@ describe("store projection", () => {
       makeState(initialThread),
       makeReadModel(
         makeReadModelThread({
-          branch: "synara/abc123ef",
+          branch: "nuncioade/abc123ef",
           updatedAt: "2026-02-27T00:05:00.000Z",
         }),
       ),
@@ -540,7 +540,7 @@ describe("store projection", () => {
     const initialState = makeState(makeThread());
     const readModel = makeReadModel(
       makeReadModelThread({
-        creationSource: "synara_mcp",
+        creationSource: "nuncioade_mcp",
         sourceThreadId,
       }),
     );
@@ -548,7 +548,7 @@ describe("store projection", () => {
     const next = syncServerReadModel(initialState, readModel);
     const thread = getThreadFromState(next, ThreadId.makeUnsafe("thread-1"));
 
-    expect(thread?.creationSource).toBe("synara_mcp");
+    expect(thread?.creationSource).toBe("nuncioade_mcp");
     expect(thread?.sourceThreadId).toBe(sourceThreadId);
   });
 
@@ -591,7 +591,7 @@ describe("store projection", () => {
   it("adds the desktop bridge token to server attachment preview URLs", () => {
     const previousWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
     const testWindow = {
-      location: { origin: "synara://app" },
+      location: { origin: "nuncioade://app" },
       desktopBridge: {
         getWsUrl: () => "ws://127.0.0.1:53036/?token=desktop-secret",
       },
@@ -1294,7 +1294,7 @@ describe("store projection", () => {
     const liveState = makeState(
       makeThread({
         id: threadId,
-        branch: "synara/tmp-working",
+        branch: "nuncioade/tmp-working",
         worktreePath: "/tmp/worktrees/thread-hot-path-branch-flow",
         createBranchFlowCompleted: true,
       }),
@@ -1304,7 +1304,7 @@ describe("store projection", () => {
       liveState,
       makeReadModelThread({
         id: threadId,
-        branch: "synara/tmp-working",
+        branch: "nuncioade/tmp-working",
         worktreePath: "/tmp/worktrees/thread-hot-path-branch-flow",
         createBranchFlowCompleted: false,
       }),
@@ -1356,7 +1356,7 @@ describe("store projection", () => {
 
   it("caps stored activity detail to the latest activity window", () => {
     const threadId = ThreadId.makeUnsafe("thread-1");
-    const activities = Array.from({ length: 505 }, (_, index) =>
+    const activities = Array.from({ length: 2005 }, (_, index) =>
       makeActivity({
         id: `activity-${index}`,
         sequence: index,
@@ -1369,10 +1369,10 @@ describe("store projection", () => {
       makeReadModel(makeReadModelThread({ activities })),
     );
 
-    expect(threadsOf(next)[0]?.activities).toHaveLength(500);
+    expect(threadsOf(next)[0]?.activities).toHaveLength(2000);
     expect(threadsOf(next)[0]?.activities[0]?.id).toBe(EventId.makeUnsafe("activity-5"));
-    expect(threadsOf(next)[0]?.activities.at(-1)?.id).toBe(EventId.makeUnsafe("activity-504"));
-    expect(next.activityIdsByThreadId?.[threadId]).toHaveLength(500);
+    expect(threadsOf(next)[0]?.activities.at(-1)?.id).toBe(EventId.makeUnsafe("activity-2004"));
+    expect(next.activityIdsByThreadId?.[threadId]).toHaveLength(2000);
     expect(next.activityIdsByThreadId?.[threadId]?.[0]).toBe("activity-5");
   });
 
@@ -1385,7 +1385,7 @@ describe("store projection", () => {
         payload: { requestId: "approval-1", requestKind: "command" },
         sequence: 0,
       }),
-      ...Array.from({ length: 505 }, (_, index) =>
+      ...Array.from({ length: 2005 }, (_, index) =>
         makeActivity({
           id: `activity-${index}`,
           sequence: index + 1,
@@ -1399,7 +1399,7 @@ describe("store projection", () => {
       makeReadModel(makeReadModelThread({ activities })),
     );
 
-    expect(threadsOf(next)[0]?.activities).toHaveLength(501);
+    expect(threadsOf(next)[0]?.activities).toHaveLength(2001);
     expect(threadsOf(next)[0]?.activities[0]?.id).toBe(EventId.makeUnsafe("approval-old"));
     expect(threadsOf(next)[0]?.activities[1]?.id).toBe(EventId.makeUnsafe("activity-5"));
   });
@@ -1420,7 +1420,7 @@ describe("store projection", () => {
         payload: { requestId: "approval-1", decision: "accept" },
         sequence: 1,
       }),
-      ...Array.from({ length: 505 }, (_, index) =>
+      ...Array.from({ length: 2005 }, (_, index) =>
         makeActivity({
           id: `activity-${index}`,
           sequence: index + 2,
@@ -1434,9 +1434,9 @@ describe("store projection", () => {
       makeReadModel(makeReadModelThread({ activities })),
     );
 
-    expect(threadsOf(next)[0]?.activities).toHaveLength(500);
+    expect(threadsOf(next)[0]?.activities).toHaveLength(2000);
     expect(threadsOf(next)[0]?.activities[0]?.id).toBe(EventId.makeUnsafe("activity-5"));
-    expect(threadsOf(next)[0]?.activities.at(-1)?.id).toBe(EventId.makeUnsafe("activity-504"));
+    expect(threadsOf(next)[0]?.activities.at(-1)?.id).toBe(EventId.makeUnsafe("activity-2004"));
   });
 
   it("retains archived threads in the synced store for the archived settings panel", () => {

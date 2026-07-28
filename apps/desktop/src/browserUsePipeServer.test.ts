@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   BrowserUsePipeServer,
-  SYNARA_BROWSER_USE_PIPE_ENV,
+  NUNCIO_BROWSER_USE_PIPE_ENV,
   resolveBrowserUsePipeBackendEnv,
   resolveConfiguredBrowserUsePipePath,
   resolveDefaultBrowserUsePipePath,
@@ -70,7 +70,7 @@ async function withPipeServer(
   },
   run: (socket: Socket) => Promise<void>,
 ): Promise<void> {
-  const directory = await mkdtemp(join(tmpdir(), "synara-browser-pipe-test-"));
+  const directory = await mkdtemp(join(tmpdir(), "nuncioade-browser-pipe-test-"));
   const pipePath = join(directory, "browser.sock");
   const browserManager = options.browserManager ?? { getBrowserUseSnapshot: () => null };
   const server = new BrowserUsePipeServer(browserManager as never, {
@@ -98,38 +98,38 @@ describe("browser-use pipe path resolution", () => {
     const pipePath = resolveDefaultBrowserUsePipePath("darwin");
 
     expect(dirname(pipePath)).toBe("/tmp/codex-browser-use");
-    expect(basename(pipePath)).toMatch(/^synara-iab-\d+-[0-9a-f-]{36}\.sock$/);
+    expect(basename(pipePath)).toMatch(/^nuncioade-iab-\d+-[0-9a-f-]{36}\.sock$/);
   });
 
-  it("prefers an explicit Synara pipe path from the environment", () => {
+  it("prefers an explicit NuncioADE pipe path from the environment", () => {
     expect(
       resolveConfiguredBrowserUsePipePath(
         {
-          [SYNARA_BROWSER_USE_PIPE_ENV]: "/tmp/codex-browser-use/synara.sock",
+          [NUNCIO_BROWSER_USE_PIPE_ENV]: "/tmp/codex-browser-use/nuncioade.sock",
         },
         "darwin",
       ),
-    ).toBe("/tmp/codex-browser-use/synara.sock");
+    ).toBe("/tmp/codex-browser-use/nuncioade.sock");
   });
 
   it("falls back to the generated path when the environment is empty", () => {
     expect(resolveConfiguredBrowserUsePipePath({}, "darwin")).toMatch(
-      /codex-browser-use\/synara-iab-\d+-[0-9a-f-]{36}\.sock$/,
+      /codex-browser-use\/nuncioade-iab-\d+-[0-9a-f-]{36}\.sock$/,
     );
   });
 
   it("publishes the browser-use pipe only after a listener becomes active", () => {
     const inheritedEnv = {
       KEEP_ME: "yes",
-      [SYNARA_BROWSER_USE_PIPE_ENV]: "/tmp/codex-browser-use/stale.sock",
+      [NUNCIO_BROWSER_USE_PIPE_ENV]: "/tmp/codex-browser-use/stale.sock",
     };
     expect(resolveBrowserUsePipeBackendEnv(inheritedEnv, null)).toEqual({ KEEP_ME: "yes" });
     expect(resolveBrowserUsePipeBackendEnv(inheritedEnv, "  ")).toEqual({ KEEP_ME: "yes" });
     expect(
-      resolveBrowserUsePipeBackendEnv(inheritedEnv, "/tmp/codex-browser-use/synara.sock"),
+      resolveBrowserUsePipeBackendEnv(inheritedEnv, "/tmp/codex-browser-use/nuncioade.sock"),
     ).toEqual({
       KEEP_ME: "yes",
-      [SYNARA_BROWSER_USE_PIPE_ENV]: "/tmp/codex-browser-use/synara.sock",
+      [NUNCIO_BROWSER_USE_PIPE_ENV]: "/tmp/codex-browser-use/nuncioade.sock",
     });
   });
 
@@ -143,7 +143,7 @@ describe("browser-use pipe path resolution", () => {
     expect(resolveDefaultBrowserUsePipePath("win32")).toBe("");
     expect(
       resolveConfiguredBrowserUsePipePath(
-        { [SYNARA_BROWSER_USE_PIPE_ENV]: String.raw`\\.\pipe\synara-browser` },
+        { [NUNCIO_BROWSER_USE_PIPE_ENV]: String.raw`\\.\pipe\nuncioade-browser` },
         "win32",
       ),
     ).toBe("");

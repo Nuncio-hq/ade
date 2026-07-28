@@ -14,12 +14,12 @@ import {
   type ClaudeCodeEffort,
   type ProviderKind,
   type UploadChatAttachment,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import {
   ATTACHMENT_CANCEL_ROUTE_PATH,
   ATTACHMENT_UPLOAD_ROUTE_PATH,
-} from "@synara/shared/binaryTransfer";
-import { applyClaudePromptEffortPrefix, getModelCapabilities } from "@synara/shared/model";
+} from "@nuncio/shared/binaryTransfer";
+import { applyClaudePromptEffortPrefix, getModelCapabilities } from "@nuncio/shared/model";
 
 import {
   cloneComposerImageAttachment,

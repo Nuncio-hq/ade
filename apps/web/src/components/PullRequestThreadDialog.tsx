@@ -1,4 +1,4 @@
-import type { GitResolvePullRequestResult } from "@synara/contracts";
+import type { GitResolvePullRequestResult } from "@nuncio/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useEffect, useRef, useState } from "react";

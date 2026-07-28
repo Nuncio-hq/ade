@@ -117,4 +117,4 @@ export interface ScreensdesignClientShape {
 export class ScreensdesignClient extends ServiceMap.Service<
   ScreensdesignClient,
   ScreensdesignClientShape
->()("synara/appFactory/Services/ScreensdesignClient/ScreensdesignClient") {}
+>()("nuncioade/appFactory/Services/ScreensdesignClient") {}

@@ -1,4 +1,4 @@
-// FILE: 089_AppFactoryDetailFetchedAt.ts
+// FILE: 090_AppFactoryDetailFetchedAt.ts
 // Purpose: Track when an app's detail payload (description, App Store link,
 // recordings) was last mirrored, so lazy detail loading knows a fetch is due
 // even for apps that have no recordings to key off.

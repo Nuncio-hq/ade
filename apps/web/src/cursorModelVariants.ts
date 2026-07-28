@@ -1,5 +1,5 @@
-import type { ProviderModelDescriptor } from "@synara/contracts";
-import { parseCursorCliReasoningEffort } from "@synara/shared/model";
+import type { ProviderModelDescriptor } from "@nuncio/contracts";
+import { parseCursorCliReasoningEffort } from "@nuncio/shared/model";
 
 function uniqueByValue<T extends { readonly value: string }>(values: ReadonlyArray<T>): T[] {
   const seen = new Set<string>();

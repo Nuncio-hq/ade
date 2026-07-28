@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ServerLocalServerProcess } from "@synara/contracts";
+import type { ServerLocalServerProcess } from "@nuncio/contracts";
 
 import {
   localServerAddressLabel,
@@ -49,9 +49,9 @@ describe("localServerAddressLabel", () => {
 
 describe("localServerPrimaryLabel", () => {
   it("prefers the live page title when one was resolved", () => {
-    expect(localServerPrimaryLabel(makeServer({ pageTitle: "Synara", displayName: "Vite" }))).toBe(
-      "Synara",
-    );
+    expect(
+      localServerPrimaryLabel(makeServer({ pageTitle: "NuncioADE", displayName: "Vite" })),
+    ).toBe("NuncioADE");
   });
 
   it("falls back to the detected display name when no page title is known", () => {
@@ -61,14 +61,14 @@ describe("localServerPrimaryLabel", () => {
 
 describe("localServerFolderLabel", () => {
   it("returns the final segment of a POSIX cwd", () => {
-    expect(localServerFolderLabel(makeServer({ cwd: "/Users/me/Developer/synara-website" }))).toBe(
-      "synara-website",
-    );
+    expect(
+      localServerFolderLabel(makeServer({ cwd: "/Users/me/Developer/nuncioade-website" })),
+    ).toBe("nuncioade-website");
   });
 
   it("ignores a trailing separator", () => {
-    expect(localServerFolderLabel(makeServer({ cwd: "/Users/me/Developer/synara/" }))).toBe(
-      "synara",
+    expect(localServerFolderLabel(makeServer({ cwd: "/Users/me/Developer/nuncioade/" }))).toBe(
+      "nuncioade",
     );
   });
 

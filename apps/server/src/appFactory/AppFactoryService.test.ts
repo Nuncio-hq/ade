@@ -2,7 +2,7 @@ import {
   AppFactoryAppNotFoundError,
   AppFactoryTokenInvalidError,
   AppFactoryTokenNotConfiguredError,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { assert, it } from "@effect/vitest";
 import { Effect, Layer } from "effect";
 

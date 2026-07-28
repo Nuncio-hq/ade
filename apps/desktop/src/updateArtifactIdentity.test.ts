@@ -13,9 +13,9 @@ import {
 const temporaryDirectories: string[] = [];
 
 function createPayload(contents = "signed update bytes"): string {
-  const directory = FS.mkdtempSync(Path.join(OS.tmpdir(), "synara-update-artifact-"));
+  const directory = FS.mkdtempSync(Path.join(OS.tmpdir(), "nuncioade-update-artifact-"));
   temporaryDirectories.push(directory);
-  const filePath = Path.join(directory, "Synara-update.zip");
+  const filePath = Path.join(directory, "NuncioADE-update.zip");
   FS.writeFileSync(filePath, contents);
   return filePath;
 }

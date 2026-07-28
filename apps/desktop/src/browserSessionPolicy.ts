@@ -13,9 +13,9 @@ import {
   buildAcceptLanguageHeader,
   buildChromeClientHints,
   deriveChromeUserAgent,
-} from "@synara/shared/browserSession";
+} from "@nuncio/shared/browserSession";
 
-export const BROWSER_SESSION_PARTITION = "persist:synara-browser";
+export const BROWSER_SESSION_PARTITION = "persist:nuncioade-browser";
 
 function replaceRequestHeadersCaseInsensitive(
   headers: Record<string, string>,

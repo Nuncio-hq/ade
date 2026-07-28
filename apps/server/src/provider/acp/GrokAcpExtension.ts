@@ -1,4 +1,4 @@
-import type { ProviderUserInputAnswers, UserInputQuestion } from "@synara/contracts";
+import type { ProviderUserInputAnswers, UserInputQuestion } from "@nuncio/contracts";
 import { Schema } from "effect";
 
 export const GROK_ASK_USER_QUESTION_METHODS = [
@@ -84,8 +84,8 @@ export const GrokExitPlanModeRequest = Schema.Struct({
   planContent: Schema.NullOr(Schema.String),
 });
 
-const SYNARA_PLAN_REVIEW_FEEDBACK =
-  "Synara captured this plan for user review. Do not revise or implement it now. End this turn and wait for the user's next message.";
+const NUNCIO_PLAN_REVIEW_FEEDBACK =
+  "NuncioADE captured this plan for user review. Do not revise or implement it now. End this turn and wait for the user's next message.";
 
 export function extractGrokExitPlanMarkdown(
   request: typeof GrokExitPlanModeRequest.Type,
@@ -95,7 +95,7 @@ export function extractGrokExitPlanMarkdown(
 }
 
 /**
- * Synara owns the approval step after the planning turn settles. Returning a
+ * NuncioADE owns the approval step after the planning turn settles. Returning a
  * semantic cancellation keeps Grok's native plan-mode write gate active and
  * avoids both auto-implementation and Grok's misleading client-disconnect path.
  */
@@ -105,11 +105,11 @@ export function makeGrokExitPlanModeCapturedResponse(): {
 } {
   return {
     outcome: "cancelled",
-    feedback: SYNARA_PLAN_REVIEW_FEEDBACK,
+    feedback: NUNCIO_PLAN_REVIEW_FEEDBACK,
   };
 }
 
-/** Synara has already received an implementation turn, so Grok may leave its native gate. */
+/** NuncioADE has already received an implementation turn, so Grok may leave its native gate. */
 export function makeGrokExitPlanModeApprovedResponse(): { readonly outcome: "approved" } {
   return { outcome: "approved" };
 }

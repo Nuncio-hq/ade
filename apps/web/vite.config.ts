@@ -1,5 +1,5 @@
 // FILE: vite.config.ts
-// Purpose: Builds the Synara web client and controls diagnostic source maps.
+// Purpose: Builds the NuncioADE web client and controls diagnostic source maps.
 // Layer: Web build config
 // Depends on: Vite, Tailwind, React compiler, TanStack Router.
 
@@ -9,11 +9,11 @@ import tailwindcss from "@tailwindcss/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, type Plugin } from "vitest/config";
 import pkg from "./package.json" with { type: "json" };
 
 const port = Number(process.env.PORT ?? 5733);
-const sourcemapEnv = process.env.SYNARA_WEB_SOURCEMAP?.trim().toLowerCase();
+const sourcemapEnv = process.env.NUNCIO_WEB_SOURCEMAP?.trim().toLowerCase();
 
 const buildSourcemap =
   sourcemapEnv === "1" || sourcemapEnv === "true"
@@ -45,7 +45,7 @@ function centralIconPrunePlugin(): Plugin {
   let resolvedRoot = process.cwd();
   let resolvedOutDir = "dist";
   return {
-    name: "synara-central-icon-prune",
+    name: "nuncioade-central-icon-prune",
     apply: "build",
     configResolved(config) {
       resolvedRoot = config.root;
@@ -133,6 +133,9 @@ export default defineConfig({
   },
   resolve: {
     tsconfigPaths: true,
+  },
+  test: {
+    setupFiles: ["./src/test/localStorageStub.ts"],
   },
   server: {
     port,

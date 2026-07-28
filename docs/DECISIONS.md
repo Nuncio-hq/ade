@@ -211,3 +211,54 @@
   extracting it would make a package depend back on app internals (secret
   store, persistence infra) — wrong direction. Future Nuncio cross-app
   contracts (mobile, harness-as-package) live in `@nuncio/contracts`.
+
+- **2026-07-28 — Maximum rebrand Synara→NuncioADE; supersedes the no-rename naming
+  law.** The "inherited code keeps its Synara identity — do NOT rename" rule
+  (2026-07-26) is reversed: the whole tree now carries the NuncioADE identity
+  (`@nuncio/*`, `NUNCIO_*`, `nuncioade` CLI + `ade` alias, `NuncioADE` product,
+  `com.nuncio.ade` bundle id kept as our pre-existing divergence). Why now:
+  product is the daily driver (M3), and keeping two identities made every doc,
+  CLI, and support conversation ambiguous. Why it stays maintainable: the rename
+  is owned by ONE deterministic idempotent codemod (`scripts/rebrand-identity.ts`)
+  applied to BOTH our tree and a new long-lived shadow branch
+  `sync/rebranded-upstream` (= latest upstream tag + codemod). Upstream syncs now
+  merge an already-rebranded tree, so identity renames never conflict — rehearsed
+  on v0.6.2: the shadow merge into the rebrand branch produced a tree
+  byte-identical to the pre-merge state. Sub-decisions: (1) retired `synara`
+  tokens survive only in attribution/upstream references (`SYNARA-*.md`,
+  `trysynara.com`, `Emanuele-web04/synara`), immutable history (DECISIONS.md,
+  CHANGELOG.md, `persistence/Migrations/**`), and `// rebrand-exempt` compat
+  shims; (2) compat shims keep pre-rebrand user data alive: browser storage
+  keys migrated `synara.*`→`nuncioade.*` at bootstrap, managed codex-config
+  markers normalized on read, external-MCP accepts legacy credential/pairing
+  prefixes with the hash salt frozen at the legacy audience, DB migration 088
+  rebuilds the audience CHECK constraint; (3) `bun run brand:check` extended to
+  the full retired identity and wired into CI to prevent regressions;
+  (4) `trysynara.com` feedback/changelog endpoints intentionally still point at
+  upstream infra — revisit when we host our own.
+
+- **2026-07-28 — App Factory contracts folded into the rebranded
+  `@nuncio/contracts`; supersedes "First `@nuncio/*` package" (same day).**
+  The maximum rebrand renamed `packages/contracts` itself to
+  `@nuncio/contracts`, claiming the name the App Factory schemas package had
+  taken hours earlier — and removed the separation rationale (keep our
+  schemas out of Synara ground), since the whole tree is now `@nuncio/*`.
+  App Factory schemas live directly in `packages/contracts/src/appFactory.ts`;
+  `packages/nuncio-contracts` is deleted. Same merge collision, different
+  kind: upstream v0.6.3 shipped migration 088 (`ExternalMcpAudienceIdentity`),
+  so the App Factory migrations renumber to 089 (`af_*` tables) and 090
+  (`detail_fetched_at`). Also on this branch — pre-existing main breakage
+  that blocked CI green, fixed here so the PR could merge: (1) restored
+  `PiAdapter` pieces dropped by checkpoint merges (`piCompactionTitle`,
+  four `PiSessionContext` fields); (2) release smoke now expects the
+  deliberate `ade` CLI bin alias; (3) rebrand codemod fallout: the v0.6.3
+  sync re-imported `@synara/contracts` into `035_...test.ts` (brand-exempt
+  dir, so brand:check missed it — typecheck caught it); service tags
+  renamed `synara/...`→`nuncioade/...`; ACP log redactor's entry-name set
+  used a non-existent lowercase name (`nuncioade_agent_gateway_token`) and
+  now redacts both real identities; TOML escape-decode fixtures re-pinned
+  to the current managed table name; 077 fresh-install test seeds the
+  post-088 audience value; (4) web store tests were broken by Node >= 22's
+  unbacked `localStorage` global (zustand persist resolves storage once at
+  store creation) — fixed with a vitest setup file installing a writable
+  in-memory localStorage for all web tests.

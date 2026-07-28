@@ -56,7 +56,7 @@ describe("packaged desktop startup verification", () => {
   });
 
   it("isolates user state and removes inherited runtime authority", () => {
-    const root = mkdtempSync(join(tmpdir(), "synara-packaged-smoke-env-test-"));
+    const root = mkdtempSync(join(tmpdir(), "nuncioade-packaged-smoke-env-test-"));
     temporaryRoots.push(root);
 
     const env = createPackagedDesktopSmokeEnvironment(
@@ -64,12 +64,12 @@ describe("packaged desktop startup verification", () => {
       { platform: "linux", version: "1.2.3" },
       {
         PATH: process.env.PATH,
-        SYNARA_AUTH_TOKEN: "must-not-leak",
+        NUNCIO_AUTH_TOKEN: "must-not-leak",
         ELECTRON_RUN_AS_NODE: "1",
       },
     );
 
-    expect(env.SYNARA_AUTH_TOKEN).toBeUndefined();
+    expect(env.NUNCIO_AUTH_TOKEN).toBeUndefined();
     expect(env.ELECTRON_RUN_AS_NODE).toBeUndefined();
     for (const name of [
       "HOME",
@@ -79,7 +79,7 @@ describe("packaged desktop startup verification", () => {
       "XDG_CONFIG_HOME",
       "XDG_CACHE_HOME",
       "XDG_DATA_HOME",
-      "SYNARA_HOME",
+      "NUNCIO_HOME",
     ] as const) {
       expect(env[name]?.startsWith(root)).toBe(true);
       expect(existsSync(env[name]!)).toBe(true);

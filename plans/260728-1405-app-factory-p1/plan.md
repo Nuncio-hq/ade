@@ -37,7 +37,7 @@ UX data), analyze them, compare shortlist. Clone execution is **deferred**
 - `apps/server/src/appFactory/{Services,Layers}/` — `ScreensdesignClient`
   (via `outboundHttp`/`fetchJson`), `CatalogSync` (full upsert mirror +
   incremental + per-app refresh), repository; SQLite migration
-  `088_AppFactory.ts`; wire `serverLayers.ts`, `wsRpc.ts`
+  `089_AppFactory.ts` + `090_AppFactoryDetailFetchedAt.ts`; wire `serverLayers.ts`, `wsRpc.ts`
 - `apps/web`: routes `_chat.app-factory*.tsx`, `components/appFactory/*`,
   sidebar `SidebarPrimaryAction`
 - Clone handoff later: deterministic facts pack + `/ade-app-clone` skill in

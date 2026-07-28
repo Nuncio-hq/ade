@@ -22,7 +22,7 @@ import type {
   AppFactoryTestTokenResult,
   AppFactoryTokenInvalidError,
   AppFactoryTokenNotConfiguredError,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { ServiceMap } from "effect";
 import type { Effect } from "effect";
 
@@ -61,4 +61,4 @@ export interface AppFactoryServiceShape {
 export class AppFactoryService extends ServiceMap.Service<
   AppFactoryService,
   AppFactoryServiceShape
->()("synara/appFactory/Services/AppFactoryService/AppFactoryService") {}
+>()("nuncioade/appFactory/Services/AppFactoryService") {}

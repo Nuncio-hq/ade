@@ -1,6 +1,6 @@
 # Disabled workflows
 
-Community-management workflows inherited from Synara upstream, disabled for
+Community-management workflows inherited from NuncioADE upstream, disabled for
 NuncioADE (private, solo): pr-size, pr-vouch, issue-labels serve public repos
 with external contributors and would only add noise (pr-vouch could even block
 our own PRs).

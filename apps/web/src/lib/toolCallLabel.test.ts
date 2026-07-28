@@ -3,12 +3,12 @@ import {
   deriveInlineCommandCall,
   deriveReadableCommandDisplay,
   deriveReadableToolTitle,
-  deriveSynaraMcpToolTitle,
+  deriveNuncioADEMcpToolTitle,
   extractWebFetchUrl,
   isInspectCommand,
   normalizeCompactToolLabel,
   resolveCommandVisualKind,
-  sanitizeSynaraMcpToolPreview,
+  sanitizeNuncioADEMcpToolPreview,
 } from "./toolCallLabel";
 
 describe("extractWebFetchUrl", () => {
@@ -59,188 +59,219 @@ describe("normalizeCompactToolLabel", () => {
   });
 });
 
-describe("deriveSynaraMcpToolTitle", () => {
-  it("has intentional running and completed copy for every Synara gateway action", () => {
+describe("deriveNuncioADEMcpToolTitle", () => {
+  it("has intentional running and completed copy for every NuncioADE gateway action", () => {
     const cases = [
-      ["synara_context", "Synara is checking its context", "Synara checked its context"],
+      ["nuncioade_context", "NuncioADE is checking its context", "NuncioADE checked its context"],
       [
-        "synara_capabilities",
-        "Synara is checking available agents",
-        "Synara checked available agents",
+        "nuncioade_capabilities",
+        "NuncioADE is checking available agents",
+        "NuncioADE checked available agents",
       ],
-      ["synara_list_projects", "Synara is listing projects", "Synara listed projects"],
-      ["synara_list_threads", "Synara is listing threads", "Synara listed threads"],
-      ["synara_read_thread", "Synara is reading a thread", "Synara read a thread"],
+      ["nuncioade_list_projects", "NuncioADE is listing projects", "NuncioADE listed projects"],
+      ["nuncioade_list_threads", "NuncioADE is listing threads", "NuncioADE listed threads"],
+      ["nuncioade_read_thread", "NuncioADE is reading a thread", "NuncioADE read a thread"],
       [
-        "synara_read_thread_activity",
-        "Synara is reading thread activity",
-        "Synara read thread activity",
+        "nuncioade_read_thread_activity",
+        "NuncioADE is reading thread activity",
+        "NuncioADE read thread activity",
       ],
-      ["synara_read_thread_events", "Synara is reading thread events", "Synara read thread events"],
       [
-        "synara_read_thread_runtime_events",
-        "Synara is reading thread runtime events",
-        "Synara read thread runtime events",
+        "nuncioade_read_thread_events",
+        "NuncioADE is reading thread events",
+        "NuncioADE read thread events",
       ],
-      ["synara_diagnose_thread", "Synara is diagnosing a thread", "Synara diagnosed a thread"],
-      ["synara_create_thread", "Synara is creating a thread", "Synara created a thread"],
-      ["synara_create_threads", "Synara is creating threads", "Synara created threads"],
       [
-        "synara_wait_for_threads",
-        "Synara is waiting for threads",
-        "Synara finished waiting for threads",
+        "nuncioade_read_thread_runtime_events",
+        "NuncioADE is reading thread runtime events",
+        "NuncioADE read thread runtime events",
       ],
-      ["synara_send_message", "Synara is sending a message", "Synara sent a message"],
-      ["synara_interrupt_thread", "Synara is interrupting a thread", "Synara interrupted a thread"],
-      ["synara_set_thread_title", "Synara is renaming a thread", "Synara renamed a thread"],
-      ["synara_set_thread_archived", "Synara is updating a thread", "Synara updated a thread"],
       [
-        "synara_create_automation",
-        "Synara is creating an automation",
-        "Synara created an automation",
+        "nuncioade_diagnose_thread",
+        "NuncioADE is diagnosing a thread",
+        "NuncioADE diagnosed a thread",
       ],
-      ["synara_list_automations", "Synara is listing automations", "Synara listed automations"],
+      ["nuncioade_create_thread", "NuncioADE is creating a thread", "NuncioADE created a thread"],
+      ["nuncioade_create_threads", "NuncioADE is creating threads", "NuncioADE created threads"],
       [
-        "synara_cancel_automation",
-        "Synara is stopping an automation",
-        "Synara stopped an automation",
+        "nuncioade_wait_for_threads",
+        "NuncioADE is waiting for threads",
+        "NuncioADE finished waiting for threads",
       ],
-      ["synara_overview", "Synara is gathering an overview", "Synara gathered an overview"],
+      ["nuncioade_send_message", "NuncioADE is sending a message", "NuncioADE sent a message"],
       [
-        "synara_list_allowed_projects",
-        "Synara is listing allowed projects",
-        "Synara listed allowed projects",
+        "nuncioade_interrupt_thread",
+        "NuncioADE is interrupting a thread",
+        "NuncioADE interrupted a thread",
       ],
-      ["synara_create_task", "Synara is creating a task", "Synara created a task"],
       [
-        "synara_wait_for_task",
-        "Synara is waiting for a task",
-        "Synara finished waiting for a task",
+        "nuncioade_set_thread_title",
+        "NuncioADE is renaming a thread",
+        "NuncioADE renamed a thread",
       ],
-      ["synara_read_task", "Synara is reading a task", "Synara read a task"],
+      [
+        "nuncioade_set_thread_archived",
+        "NuncioADE is updating a thread",
+        "NuncioADE updated a thread",
+      ],
+      [
+        "nuncioade_create_automation",
+        "NuncioADE is creating an automation",
+        "NuncioADE created an automation",
+      ],
+      [
+        "nuncioade_list_automations",
+        "NuncioADE is listing automations",
+        "NuncioADE listed automations",
+      ],
+      [
+        "nuncioade_cancel_automation",
+        "NuncioADE is stopping an automation",
+        "NuncioADE stopped an automation",
+      ],
+      [
+        "nuncioade_overview",
+        "NuncioADE is gathering an overview",
+        "NuncioADE gathered an overview",
+      ],
+      [
+        "nuncioade_list_allowed_projects",
+        "NuncioADE is listing allowed projects",
+        "NuncioADE listed allowed projects",
+      ],
+      ["nuncioade_create_task", "NuncioADE is creating a task", "NuncioADE created a task"],
+      [
+        "nuncioade_wait_for_task",
+        "NuncioADE is waiting for a task",
+        "NuncioADE finished waiting for a task",
+      ],
+      ["nuncioade_read_task", "NuncioADE is reading a task", "NuncioADE read a task"],
     ] as const;
 
     for (const [toolName, running, completed] of cases) {
-      expect(deriveSynaraMcpToolTitle({ toolName, status: "running" })).toBe(running);
-      expect(deriveSynaraMcpToolTitle({ toolName, status: "completed" })).toBe(completed);
+      expect(deriveNuncioADEMcpToolTitle({ toolName, status: "running" })).toBe(running);
+      expect(deriveNuncioADEMcpToolTitle({ toolName, status: "completed" })).toBe(completed);
     }
 
     expect(
-      deriveSynaraMcpToolTitle({
-        toolName: "synara_create_threads",
+      deriveNuncioADEMcpToolTitle({
+        toolName: "nuncioade_create_threads",
         status: "failed",
       }),
-    ).toBe("Synara couldn't create threads");
+    ).toBe("NuncioADE couldn't create threads");
     expect(
-      deriveSynaraMcpToolTitle({
-        toolName: "synara_create_thread",
+      deriveNuncioADEMcpToolTitle({
+        toolName: "nuncioade_create_thread",
         status: "cancelled",
       }),
-    ).toBe("Synara stopped creating a thread");
+    ).toBe("NuncioADE stopped creating a thread");
   });
 
   it("turns provider-specific create-thread identifiers into activity sentences", () => {
     expect(
-      deriveSynaraMcpToolTitle({
-        toolName: "Synara__synara_create_thread",
+      deriveNuncioADEMcpToolTitle({
+        toolName: "NuncioADE__nuncioade_create_thread",
         status: "running",
       }),
-    ).toBe("Synara is creating a thread");
+    ).toBe("NuncioADE is creating a thread");
     expect(
-      deriveSynaraMcpToolTitle({
-        toolName: "mcp__synara__synara_create_thread",
+      deriveNuncioADEMcpToolTitle({
+        toolName: "mcp__nuncioade__nuncioade_create_thread",
         status: "completed",
       }),
-    ).toBe("Synara created a thread");
+    ).toBe("NuncioADE created a thread");
   });
 
-  it("recognizes bare and already-humanized Synara tool names", () => {
-    expect(deriveSynaraMcpToolTitle({ toolName: "synara_send_message", status: "running" })).toBe(
-      "Synara is sending a message",
-    );
+  it("recognizes bare and already-humanized NuncioADE tool names", () => {
     expect(
-      deriveSynaraMcpToolTitle({ title: "Synara: Synara List Threads", status: "completed" }),
-    ).toBe("Synara listed threads");
+      deriveNuncioADEMcpToolTitle({ toolName: "nuncioade_send_message", status: "running" }),
+    ).toBe("NuncioADE is sending a message");
+    expect(
+      deriveNuncioADEMcpToolTitle({
+        title: "NuncioADE: NuncioADE List Threads",
+        status: "completed",
+      }),
+    ).toBe("NuncioADE listed threads");
   });
 
   it("ignores tools from other MCP servers", () => {
     expect(
-      deriveSynaraMcpToolTitle({
+      deriveNuncioADEMcpToolTitle({
         toolName: "mcp__codex_apps__github_fetch_pr",
         status: "running",
       }),
     ).toBeNull();
   });
 
-  it("keeps future Synara actions branded without exposing raw identifiers", () => {
+  it("keeps future NuncioADE actions branded without exposing raw identifiers", () => {
     expect(
-      deriveSynaraMcpToolTitle({
-        toolName: "mcp__synara__synara_delete_project",
+      deriveNuncioADEMcpToolTitle({
+        toolName: "mcp__nuncioade__nuncioade_delete_project",
         status: "running",
       }),
-    ).toBe("Synara is handling delete project");
+    ).toBe("NuncioADE is handling delete project");
     expect(
-      deriveSynaraMcpToolTitle({
-        toolName: "Synara__synara_delete_project",
+      deriveNuncioADEMcpToolTitle({
+        toolName: "NuncioADE__nuncioade_delete_project",
         status: "completed",
       }),
-    ).toBe("Synara handled delete project");
+    ).toBe("NuncioADE handled delete project");
     expect(
-      deriveSynaraMcpToolTitle({
-        toolName: "synara_is_handling_delete_project",
+      deriveNuncioADEMcpToolTitle({
+        toolName: "nuncioade_is_handling_delete_project",
         status: "completed",
       }),
-    ).toBe("Synara handled delete project");
+    ).toBe("NuncioADE handled delete project");
   });
 
   it("does not reinterpret free text beginning with fallback status copy", () => {
     expect(
-      deriveSynaraMcpToolTitle({
-        title: "Synara is handling delete project after recovery",
+      deriveNuncioADEMcpToolTitle({
+        title: "NuncioADE is handling delete project after recovery",
         status: "completed",
       }),
     ).toBeNull();
     expect(
-      deriveSynaraMcpToolTitle({
-        title: "Synara handled delete project after recovery",
+      deriveNuncioADEMcpToolTitle({
+        title: "NuncioADE handled delete project after recovery",
         status: "running",
       }),
     ).toBeNull();
     expect(
-      deriveSynaraMcpToolTitle({
-        title: "Synara couldn't handle delete project after recovery",
+      deriveNuncioADEMcpToolTitle({
+        title: "NuncioADE couldn't handle delete project after recovery",
         status: "failed",
       }),
     ).toBeNull();
   });
 
-  it("leaves free-text activity summaries starting with Synara untouched", () => {
+  it("leaves free-text activity summaries starting with NuncioADE untouched", () => {
     expect(
-      deriveSynaraMcpToolTitle({
-        title: "Synara recovered a stale running state",
+      deriveNuncioADEMcpToolTitle({
+        title: "NuncioADE recovered a stale running state",
         status: "completed",
       }),
     ).toBeNull();
     expect(
-      deriveSynaraMcpToolTitle({
-        fallbackLabel: "Synara restarted the provider session",
+      deriveNuncioADEMcpToolTitle({
+        fallbackLabel: "NuncioADE restarted the provider session",
         status: "running",
       }),
     ).toBeNull();
   });
 
-  it("removes transport identifiers without hiding meaningful Synara details", () => {
+  it("removes transport identifiers without hiding meaningful NuncioADE details", () => {
     expect(
-      sanitizeSynaraMcpToolPreview({
-        preview: "Synara__synara_create_threads",
-        heading: "Synara created threads",
+      sanitizeNuncioADEMcpToolPreview({
+        preview: "NuncioADE__nuncioade_create_threads",
+        heading: "NuncioADE created threads",
         status: "completed",
       }),
     ).toBeNull();
     expect(
-      sanitizeSynaraMcpToolPreview({
+      sanitizeNuncioADEMcpToolPreview({
         preview: 'Unexpected key "reasoningEffort" for Claude Agent',
-        heading: "Synara couldn't create threads",
+        heading: "NuncioADE couldn't create threads",
         status: "failed",
       }),
     ).toBe('Unexpected key "reasoningEffort" for Claude Agent');
@@ -425,13 +456,13 @@ describe("deriveReadableCommandDisplay", () => {
   it("removes env and timeout wrappers from inline command summaries", () => {
     expect(
       deriveReadableCommandDisplay(
-        "env -u SYNARA_AUTH_TOKEN SYNARA_PORT_OFFSET=3158 timeout 180s bun run dev",
+        "env -u NUNCIO_AUTH_TOKEN NUNCIO_PORT_OFFSET=3158 timeout 180s bun run dev",
         true,
       ),
     ).toEqual({
       verb: "Running",
       target: "bun run dev",
-      fullCommand: "env -u SYNARA_AUTH_TOKEN SYNARA_PORT_OFFSET=3158 timeout 180s bun run dev",
+      fullCommand: "env -u NUNCIO_AUTH_TOKEN NUNCIO_PORT_OFFSET=3158 timeout 180s bun run dev",
     });
   });
 

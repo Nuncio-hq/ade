@@ -3,14 +3,14 @@
 // Layer: Header action control
 // Depends on: git React Query hooks, native shell bridges, and shared picker/menu primitives.
 
-import { DEFAULT_GIT_TEXT_GENERATION_MODEL } from "@synara/contracts";
+import { DEFAULT_GIT_TEXT_GENERATION_MODEL } from "@nuncio/contracts";
 import type {
   GitActionProgressEvent,
   GitStackedAction,
   GitStatusResult,
   ModelSelection,
   ThreadId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {

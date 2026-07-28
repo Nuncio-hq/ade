@@ -1,4 +1,4 @@
-import { parseGitHubRepositoryNameWithOwnerFromRemoteUrl } from "@synara/shared/githubRepository";
+import { parseGitHubRepositoryNameWithOwnerFromRemoteUrl } from "@nuncio/shared/githubRepository";
 import { Effect } from "effect";
 
 import type { GitCoreShape } from "../git/Services/GitCore";

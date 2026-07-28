@@ -55,11 +55,11 @@ server: appFactory/Services/AppFactoryService.ts (tag)
   appFactory/ScreensdesignClient.ts (fetchJson + Bearer from ServerSecretStore)
   appFactory/CatalogSync.ts (full upsert + incremental + per-app refresh,
   progress events)
-  persistence/Migrations/088_AppFactory.ts
+  persistence/Migrations/089_AppFactory.ts
   persistence/Services/AppFactoryRepository.ts (+ Layers)
 ```
 
-### SQLite schema (migration 088)
+### SQLite schema (migration 089)
 
 ```sql
 af_apps(sd_id PK, store_id, slug, name, shortname, developer_name,
@@ -89,7 +89,7 @@ af_sync_runs(id PK, kind, started_at, finished_at, rows, status, error)
 
 - Create: `packages/contracts/src/appFactory.ts`;
   `apps/server/src/appFactory/*` (6 files);
-  `apps/server/src/persistence/Migrations/088_AppFactory.ts`;
+  `apps/server/src/persistence/Migrations/089_AppFactory.ts`;
   `apps/server/src/persistence/{Services,Layers}/AppFactoryRepository.ts`
 - Modify: `packages/contracts/src/ws.ts`, `packages/contracts/src/rpc.ts`,
   `apps/server/src/serverLayers.ts`, `apps/server/src/wsRpc.ts`
@@ -161,7 +161,7 @@ imagined shapes.
 - [ ] edge-case catalog reviewed/extended with user before coding
 - [ ] tests written first, failing for the right reason (Red)
 - [ ] contracts/appFactory.ts + ws.ts + rpc.ts compile
-- [ ] migration 088 applies cleanly on fresh + existing dev DB
+- [ ] migration 089+090 apply cleanly on fresh + existing dev DB
 - [ ] client auth via ServerSecretStore (no token in logs/responses)
 - [ ] full mirror completes (all catalog rows + revenue) with progress + resume
 - [ ] full re-sync updates changed rows (revenue/rating/updated) and adds new apps

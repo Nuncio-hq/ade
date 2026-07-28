@@ -41,7 +41,7 @@
 - **Claude Code** (Anthropic) — harness behavior, hooks/skills model, release notes.
 - **Cursor** (Anysphere) — user's #1 harness overall; UX bar to measure against.
 - **Devin** (Cognition) — the inspiration for "your machine as cloud, agents"; study their task lifecycle writeups.
-- **Factory Droid** — strong harness; its **mission** feature is something we want to build. Also a Synara provider, so observable in-app.
+- **Factory Droid** — strong harness; its **mission** feature is something we want to build. Also a NuncioADE provider, so observable in-app.
 - **Amp** (Sourcegraph) — user's #2 after Cursor; unusually candid engineering blog + changelog (threads, oracle, sub-agents).
 
 ## Mobile / remote clients (for `apps/mobile`)

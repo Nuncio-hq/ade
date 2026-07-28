@@ -14,7 +14,7 @@
  * pass on purpose: its seen-id set only covers pages fetched after the resume, so
  * marking would produce false removals (the next complete full sync re-checks).
  */
-import { AppFactorySyncInProgressError, type AppFactorySyncMode } from "@synara/contracts";
+import { AppFactorySyncInProgressError, type AppFactorySyncMode } from "@nuncio/contracts";
 import { Effect, Ref } from "effect";
 
 import type { AppFactoryRepositoryShape } from "../persistence/Services/AppFactoryRepository.ts";

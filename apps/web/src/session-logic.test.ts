@@ -1,4 +1,4 @@
-import { ThreadId, TurnId, type OrchestrationThreadActivity } from "@synara/contracts";
+import { ThreadId, TurnId, type OrchestrationThreadActivity } from "@nuncio/contracts";
 import { describe, expect, it } from "vitest";
 
 import {

@@ -1,5 +1,5 @@
 // FILE: AppSnapCoordinator.tsx
-// Purpose: Routes native macOS AppSnaps into the correct Synara composer draft.
+// Purpose: Routes native macOS AppSnaps into the correct NuncioADE composer draft.
 // Layer: Root web coordinator
 // Depends on: Desktop bridge, focused chat context, and existing composer attachment intake.
 
@@ -7,7 +7,7 @@ import {
   type DesktopAppSnapCapture,
   type DesktopAppSnapShortcut,
   type ThreadId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -383,7 +383,7 @@ export function AppSnapCoordinator() {
           // fresh-thread creation: the user actively went somewhere else, so
           // follow them there instead of failing the capture.
           const focused = focusedTargetRef.current;
-          if (!focused) throw new Error("Synara could not create a task for this AppSnap.");
+          if (!focused) throw new Error("NuncioADE could not create a task for this AppSnap.");
           target = focused;
           openChatThreadPage(target.threadId);
         }
@@ -403,7 +403,7 @@ export function AppSnapCoordinator() {
         existingAttachmentCount,
       });
       const image = images[0];
-      if (!image) throw new Error(error ?? "Synara could not attach the captured AppSnap.");
+      if (!image) throw new Error(error ?? "NuncioADE could not attach the captured AppSnap.");
 
       let imageAddedToDraft = false;
       let blobKey: string | null = null;
@@ -471,7 +471,7 @@ export function AppSnapCoordinator() {
           persistenceResult === "unverified" ? "AppSnap added with a warning" : "AppSnap added",
         description:
           persistenceResult === "unverified"
-            ? "The capture is attached, but Synara could not verify its draft metadata. If it is missing after a reload, Synara will attach it again."
+            ? "The capture is attached, but NuncioADE could not verify its draft metadata. If it is missing after a reload, NuncioADE will attach it again."
             : capture.sourceAppName
               ? `Captured ${capture.sourceAppName} and added it to the composer.`
               : "The frontmost window was added to the composer.",

@@ -126,7 +126,7 @@ import {
   AppFactorySetPinnedInput,
   AppFactorySetTokenInput,
   AppFactorySyncNowInput,
-} from "@nuncio/contracts";
+} from "./appFactory";
 import {
   ExternalMcpCreateIntegrationInput,
   ExternalMcpRefreshPairingInput,

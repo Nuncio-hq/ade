@@ -1,4 +1,4 @@
-import type { OrchestrationSession } from "@synara/contracts";
+import type { OrchestrationSession } from "@nuncio/contracts";
 
 type TurnState = "pending" | "running" | "completed" | "interrupted" | "error";
 

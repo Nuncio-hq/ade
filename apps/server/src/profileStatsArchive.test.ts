@@ -5,7 +5,7 @@
 // Exports: Vitest coverage for ProfileStatsArchive.
 
 import * as NodeServices from "@effect/platform-node/NodeServices";
-import { MessageId, ThreadId, TurnId } from "@synara/contracts";
+import { MessageId, ThreadId, TurnId } from "@nuncio/contracts";
 import { Effect, Layer } from "effect";
 import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -64,7 +64,7 @@ const testLayer = Layer.mergeAll(ProfileStatsQueryLive, ProfileStatsArchiveLive)
   Layer.provideMerge(SqlitePersistenceMemory),
   Layer.provide(
     ServerConfig.layerTest(process.cwd(), {
-      prefix: "synara-profile-stats-archive-test-",
+      prefix: "nuncioade-profile-stats-archive-test-",
     }),
   ),
   Layer.provide(NodeServices.layer),
@@ -410,7 +410,7 @@ describe("ProfileStatsArchive", () => {
             capabilities_json, created_at, expires_at, rate_limit_per_minute,
             concurrency_limit
           ) VALUES (
-            'integration-purge', 'Purge integration', 'synara.external-mcp', 'other',
+            'integration-purge', 'Purge integration', 'nuncioade.external-mcp', 'other',
             'credential-purge', '["tasks.create","tasks.read"]',
             '2026-06-13T17:00:00.000Z', '2027-06-13T17:00:00.000Z', 60, 1
           )

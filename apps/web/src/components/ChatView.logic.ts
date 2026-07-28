@@ -8,11 +8,11 @@ import {
   type RuntimeMode,
   type ServerProviderAuthStatus,
   type ThreadId as ThreadIdType,
-} from "@synara/contracts";
-import { normalizeModelSlug } from "@synara/shared/model";
-import { buildSynaraBranchName } from "@synara/shared/git";
-import { isGenericChatThreadTitle } from "@synara/shared/chatThreads";
-import { isGenericTerminalThreadTitle } from "@synara/shared/terminalThreads";
+} from "@nuncio/contracts";
+import { normalizeModelSlug } from "@nuncio/shared/model";
+import { buildNuncioADEBranchName } from "@nuncio/shared/git";
+import { isGenericChatThreadTitle } from "@nuncio/shared/chatThreads";
+import { isGenericTerminalThreadTitle } from "@nuncio/shared/terminalThreads";
 import {
   type ChatMessage,
   type SessionPhase,
@@ -44,8 +44,8 @@ import {
 import { localSubagentThreadId } from "./ChatView.selectors";
 import type { ProviderModelOption } from "../providerModelOptions";
 
-export const LAST_INVOKED_SCRIPT_BY_PROJECT_KEY = "synara:last-invoked-script-by-project";
-export const DISMISSED_PROVIDER_HEALTH_BANNERS_KEY = "synara:dismissed-provider-health-banners";
+export const LAST_INVOKED_SCRIPT_BY_PROJECT_KEY = "nuncioade:last-invoked-script-by-project";
+export const DISMISSED_PROVIDER_HEALTH_BANNERS_KEY = "nuncioade:dismissed-provider-health-banners";
 export const PROMPT_HISTORY_MAX_ENTRIES = 100;
 
 export const LastInvokedScriptByProjectSchema = Schema.Record(ProjectId, Schema.String);
@@ -53,7 +53,9 @@ export const DismissedProviderHealthBannersSchema = Schema.Array(Schema.String);
 
 export interface PendingFileUndo {
   readonly threadId: ThreadIdType;
-  readonly turnCount: number;
+  // A changes card can merge several turns; one Undo reverts all of them, so the
+  // request only settles once every targeted turn has settled (or one failed).
+  readonly turnCounts: readonly number[];
   readonly existingFailureActivityIds: readonly string[];
 }
 
@@ -65,10 +67,16 @@ export function hasFileUndoSettled(input: {
     return false;
   }
 
-  const targetSummary = input.thread.turnDiffSummaries.find(
-    (summary) => summary.checkpointTurnCount === input.pending.turnCount,
+  const targetTurnCounts = new Set(input.pending.turnCounts);
+  const targetSummaries = input.thread.turnDiffSummaries.filter(
+    (summary) =>
+      summary.checkpointTurnCount !== undefined &&
+      targetTurnCounts.has(summary.checkpointTurnCount),
   );
-  if (targetSummary?.files.length === 0) {
+  if (
+    targetSummaries.length > 0 &&
+    targetSummaries.every((summary) => summary.files.length === 0)
+  ) {
     return true;
   }
 
@@ -79,11 +87,12 @@ export function hasFileUndoSettled(input: {
       existingFailureActivityIdSet.has(activity.id) ||
       typeof activity.payload !== "object" ||
       activity.payload === null ||
-      !("turnCount" in activity.payload)
+      !("turnCount" in activity.payload) ||
+      typeof activity.payload.turnCount !== "number"
     ) {
       return false;
     }
-    return activity.payload.turnCount === input.pending.turnCount;
+    return targetTurnCounts.has(activity.payload.turnCount);
   });
 }
 
@@ -681,7 +690,7 @@ export function describeVoiceRecordingStartError(error: unknown): string {
   const errorName = typeof error.name === "string" ? error.name : "";
 
   if (errorName === "NotAllowedError" || errorName === "PermissionDeniedError") {
-    return "Microphone access was denied. Enable it in macOS Privacy & Security > Microphone for Synara, then try again.";
+    return "Microphone access was denied. Enable it in macOS Privacy & Security > Microphone for NuncioADE, then try again.";
   }
   if (errorName === "NotFoundError" || errorName === "DevicesNotFoundError") {
     return "No microphone was found. Connect one and try again.";
@@ -1062,7 +1071,7 @@ export function buildSuggestedWorktreeName(input: {
   associatedWorktreeBranch?: string | null;
   title?: string | null;
 }): string {
-  return buildSynaraBranchName(input.associatedWorktreeBranch ?? input.title);
+  return buildNuncioADEBranchName(input.associatedWorktreeBranch ?? input.title);
 }
 
 export function deriveComposerSendState(options: {

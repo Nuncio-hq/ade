@@ -12,7 +12,7 @@ import {
   type AppFactoryAppSummary,
   type AppFactoryRevenuePoint,
   type AppFactoryVideo,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { Effect, Layer } from "effect";
 
 import { ServerSecretStore } from "../../auth/Services/ServerSecretStore.ts";

@@ -1,4 +1,4 @@
-import type { ProviderKind, ThreadId } from "@synara/contracts";
+import type { ProviderKind, ThreadId } from "@nuncio/contracts";
 import { Cause, Effect } from "effect";
 
 import type { EventNdjsonLogger } from "../Layers/EventNdjsonLogger.ts";
@@ -10,15 +10,28 @@ import type {
 
 export const ACP_LOG_REDACTED_VALUE = "[REDACTED]";
 
-const SENSITIVE_ENTRY_NAMES = new Set(["authorization", "synara_agent_gateway_token"]);
+// Entry names are compared lowercased; cover both the current env name and
+// the pre-rebrand one so tokens injected from unmigrated configs still
+// redact. rebrand-exempt pins the legacy literal.
+const SENSITIVE_ENTRY_NAMES = new Set([
+  "authorization",
+  "nuncio_agent_gateway_token",
+  "synara_agent_gateway_token", // rebrand-exempt
+]);
 
 function redactSecretString(value: string): string {
   return value
     .replace(/(\bBearer\s+)[^\s"',}\]]+/gi, `$1${ACP_LOG_REDACTED_VALUE}`)
-    .replace(/(SYNARA_AGENT_GATEWAY_TOKEN\s*=\s*)[^\s"',}\]]+/g, `$1${ACP_LOG_REDACTED_VALUE}`)
-    .replace(/("SYNARA_AGENT_GATEWAY_TOKEN"\s*:\s*")[^"]*/g, `$1${ACP_LOG_REDACTED_VALUE}`)
+    .replace(/(NUNCIO_AGENT_GATEWAY_TOKEN\s*=\s*)[^\s"',}\]]+/g, `$1${ACP_LOG_REDACTED_VALUE}`)
+    .replace(/("NUNCIO_AGENT_GATEWAY_TOKEN"\s*:\s*")[^"]*/g, `$1${ACP_LOG_REDACTED_VALUE}`)
     .replace(
-      /("name"\s*:\s*"SYNARA_AGENT_GATEWAY_TOKEN"\s*,\s*"value"\s*:\s*")[^"]*/g,
+      /("name"\s*:\s*"NUNCIO_AGENT_GATEWAY_TOKEN"\s*,\s*"value"\s*:\s*")[^"]*/g,
+      `$1${ACP_LOG_REDACTED_VALUE}`,
+    )
+    .replace(/(SYNARA_AGENT_GATEWAY_TOKEN\s*=\s*)[^\s"',}\]]+/g, `$1${ACP_LOG_REDACTED_VALUE}`) // rebrand-exempt
+    .replace(/("SYNARA_AGENT_GATEWAY_TOKEN"\s*:\s*")[^"]*/g, `$1${ACP_LOG_REDACTED_VALUE}`) // rebrand-exempt
+    .replace(
+      /("name"\s*:\s*"SYNARA_AGENT_GATEWAY_TOKEN"\s*,\s*"value"\s*:\s*")[^"]*/g, // rebrand-exempt
       `$1${ACP_LOG_REDACTED_VALUE}`,
     );
 }

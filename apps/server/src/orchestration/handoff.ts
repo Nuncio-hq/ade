@@ -2,7 +2,7 @@ import {
   PROVIDER_SEND_TURN_MAX_INPUT_CHARS,
   type OrchestrationMessage,
   type OrchestrationThread,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 
 const RECENT_MESSAGE_COUNT = 6;
 const EARLIER_MESSAGE_CHAR_LIMIT = 320;
@@ -209,7 +209,7 @@ export function buildPriorTranscriptBootstrapText(
     thread,
     importedMessages: priorMessages,
     intro:
-      "This provider session may have been restarted without native conversation state. Use this prior Synara transcript as context for the latest user message.",
+      "This provider session may have been restarted without native conversation state. Use this prior NuncioADE transcript as context for the latest user message.",
     maxChars,
   });
 }
