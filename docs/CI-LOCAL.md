@@ -31,7 +31,7 @@ bun run ci:local:web -- --install-browsers   # first machine / after Playwright 
 
 1. **Do not push** while a local step is red. Fix, re-run from the failed tier (or full `ci:local*`), then push once.
 2. **Do not spam pushes** to "see if CI likes it" — each push cancels in-flight runs and re-pays install + unit time before browser.
-3. **Browser hang signal:** if output sits on `[optimizer] bundling dependencies...` with no new tests for **>3 minutes**, kill the process. That is the same failure mode as the CI 20-minute step timeout. Check that `apps/web/vite.config.ts` imports `defineConfig` from `"vite"` (not `"vitest/config"`); browser config clears `setupFiles` so the node `localStorage` stub does not run in Chromium.
+3. **Browser hang signal:** if output sits on `[optimizer] bundling dependencies...` with no new tests for **>3 minutes**, kill the process. That is the same failure mode as the CI 20-minute step timeout. Keep node-only Vitest setup (`setupFiles`, localStorage stub) in `apps/web/vitest.config.ts` — never in `vite.config.ts` — so Playwright configs that `mergeConfig` the Vite app config do not inherit it. `vite.config.ts` must import `defineConfig` from `"vite"`, not `"vitest/config"`.
 4. **Never** use bare `bun test`. Unit step is `bun run test` (Vitest via turbo), same as CI.
 5. Windows Process Regression and the geometry-quarantine browser step are **not** in `ci:local*` (quarantine is `continue-on-error` on CI). Do not block on them locally unless the change specifically targets those paths.
 

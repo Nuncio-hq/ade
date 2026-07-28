@@ -156,7 +156,7 @@ for (const [index, step] of steps.entries()) {
     if (step.name === "test:browser:stable") {
       console.error(
         "  Hint: first-time setup → bun run ci:local:web -- --install-browsers\n" +
-          "  Hint: hang on bundling dependencies >3 min → kill; check vite.config imports vite not vitest/config",
+          "  Hint: hang on bundling dependencies >3 min → kill; keep setupFiles in vitest.config.ts not vite.config.ts",
       );
     }
     console.error(`ci-local: stopped after ${formatDuration(Date.now() - wallStart)}`);

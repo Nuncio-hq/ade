@@ -2,7 +2,6 @@
 // Purpose: Builds the NuncioADE web client and controls diagnostic source maps.
 // Layer: Web build config
 // Depends on: Vite, Tailwind, React compiler, TanStack Router.
-/// <reference types="vitest/config" />
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -134,9 +133,6 @@ export default defineConfig({
   },
   resolve: {
     tsconfigPaths: true,
-  },
-  test: {
-    setupFiles: ["./src/test/localStorageStub.ts"],
   },
   server: {
     port,
