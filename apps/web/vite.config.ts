@@ -2,6 +2,7 @@
 // Purpose: Builds the NuncioADE web client and controls diagnostic source maps.
 // Layer: Web build config
 // Depends on: Vite, Tailwind, React compiler, TanStack Router.
+/// <reference types="vitest/config" />
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -9,7 +10,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import { defineConfig, type Plugin } from "vitest/config";
+import { defineConfig, type Plugin } from "vite";
 import pkg from "./package.json" with { type: "json" };
 
 const port = Number(process.env.PORT ?? 5733);
