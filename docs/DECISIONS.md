@@ -264,9 +264,9 @@
   in-memory localStorage for all web tests.
 
 - **2026-07-28 — Local CI mirror scripts (`ci:local*`) are the agent pre-push
-  gate.** GitHub CI (inherited from Synara) always runs the full quality job on
-  every PR and every push to `main` with no path filters; the browser step alone
-  budgets 20 minutes. Agents must not use the runner as a debug loop. Added
+  gate.** GitHub CI (upstream-inherited quality job) always runs on every PR and
+  every push to `main` with no path filters; the browser step alone budgets 20
+  minutes. Agents must not use the runner as a debug loop. Added
   `scripts/ci-local.ts` + package scripts `ci:local:fast` / `ci:local` /
   `ci:local:web` / `ci:local:full` (fail-fast, cheapest first, order aligned with
   `.github/workflows/ci.yml`). Runbook for agents: `docs/CI-LOCAL.md`; law

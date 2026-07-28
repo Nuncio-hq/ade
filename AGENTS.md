@@ -128,7 +128,7 @@ Boundary rules:
 1. **Dev loop**: run an isolated ADE instance (see Local Dev Instance Isolation), edit extensions in `harness/extensions/`, hot-reload via the engine's reload command in-app, test against `playground/`.
 2. **Bisect**: if an extension misbehaves in ADE, run the same extension in the engine CLI (`omp`; `pi` TUI for the frozen pi provider). CLI-works/ADE-fails ⇒ bridge gap in Synara-inherited code; both-fail ⇒ extension bug. Watch for version skew between the `omp` CLI and `@oh-my-pi/*` pinned in `apps/server/package.json` (once OmpAdapter lands).
 3. **Ship**: `bun run build:desktop` → install and use ADE as the daily driver; feedback loops back into `harness/`.
-4. **Pre-push CI mirror** — GitHub always runs the full Synara-inherited gate on every
+4. **Pre-push CI mirror** — GitHub always runs the full upstream-inherited quality gate on every
    PR and every push to `main` (no path filters; browser step alone budgets 20 minutes).
    **Do not use the runner as a debug loop.** Run the local mirror first (fail-fast,
    cheapest steps first); push only when it is green. Full agent runbook:

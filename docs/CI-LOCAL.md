@@ -6,8 +6,8 @@
 
 ## Why
 
-GitHub CI always runs the full Synara-inherited gate on every PR and every
-push to `main` (no path filters). The Ubuntu job is sequential and budgets
+GitHub CI always runs the full upstream-inherited quality gate on every PR and
+every push to `main` (no path filters). The Ubuntu job is sequential and budgets
 **20 minutes** for browser tests alone. Debugging a red check on the runner
 burns that budget. Run the mirror locally first; treat GitHub as confirmation.
 
