@@ -78,6 +78,9 @@ describe("transformContent protections", () => {
     expect(transformContent('"https://www.trysynara.com/api/feedback"')).toBe(
       '"https://www.trysynara.com/api/feedback"',
     );
+    expect(transformContent("// Depends on: The public trysynara feedback endpoint.")).toBe(
+      "// Depends on: The public trysynara feedback endpoint.",
+    );
   });
 
   it("skips lines flagged with the exempt marker", () => {

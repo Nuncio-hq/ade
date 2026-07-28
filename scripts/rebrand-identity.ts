@@ -30,7 +30,7 @@ export const EXEMPT_MARKER = "rebrand-exempt";
 const PROTECTIONS: readonly RegExp[] = [
   /\[Synara\]\(https:\/\/github\.com\/Emanuele-web04\/synara\)/g,
   /Emanuele-web04\/synara/gi,
-  /trysynara\.com/gi,
+  /trysynara/gi,
 ];
 
 const EXEMPT_PATHS = new Set([
