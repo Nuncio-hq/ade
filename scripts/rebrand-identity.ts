@@ -46,7 +46,15 @@ const EXEMPT_PATHS = new Set([
   "scripts/rebrand-identity.test.ts",
 ]);
 
-const EXEMPT_PREFIXES = ["plans/", ".plans/", "audit/", "advisor-plans/"];
+// Migration files are immutable history: their SQL was applied to real
+// databases and their contents must never change.
+const EXEMPT_PREFIXES = [
+  "plans/",
+  ".plans/",
+  "audit/",
+  "advisor-plans/",
+  "apps/server/src/persistence/Migrations/",
+];
 
 export function isExemptPath(path: string): boolean {
   return EXEMPT_PATHS.has(path) || EXEMPT_PREFIXES.some((prefix) => path.startsWith(prefix));

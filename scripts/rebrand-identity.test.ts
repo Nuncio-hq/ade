@@ -130,6 +130,7 @@ describe("isExemptPath", () => {
       "advisor-plans/README.md",
       "scripts/rebrand-identity.ts",
       "scripts/rebrand-identity.test.ts",
+      "apps/server/src/persistence/Migrations/074_ExternalMcpIntegrations.ts",
     ]) {
       expect(isExemptPath(path), path).toBe(true);
     }
