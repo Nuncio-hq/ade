@@ -37,9 +37,13 @@ All Synara providers are kept working.
       `abort()` reaps bash children natively — no process supervisor needed;
       `agent_settled` gone → `agent_end.isTerminal`; async jobs inject
       self-initiated follow-up turns). Plan + tracker + coverage gộp một doc:
-      `docs/plans/omp-integration.html`. Phase 1 (contracts & plumbing) DONE
-      2026-07-28 on `app/omp-adapter`: "omp" ProviderKind + OmpModelSelection +
-      settings/switch mirrors, typecheck/lint green. Adapter (phase 2) not started.
+      `docs/plans/omp-integration.html`. Phases 1–2 DONE 2026-07-28 on
+      `app/omp-adapter`: "omp" ProviderKind + contracts/settings mirrors, then
+      the walking skeleton (`Services/OmpAdapter.ts` + `Layers/OmpAdapter.ts`,
+      SDK pinned 17.1.6). Smoke-verified in `.ade-dev`: OMP thread streams chat,
+      models come from OMP's ModelRegistry, `/bin/sleep` child dies on Stop and
+      on shutdown (no supervisor needed). Next: phase 3 (event mapping v1 —
+      tools, reasoning, token usage, async follow-up turns).
 
 ## In force
 

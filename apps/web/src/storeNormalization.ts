@@ -17,6 +17,7 @@ import { normalizeModelSlug } from "@synara/shared/model";
 import { deriveThreadSummaryMetadata } from "@synara/shared/threadSummary";
 
 import { isStalePendingRequestFailureDetail } from "./lib/pendingInteraction";
+import { isProviderKind } from "./providerOrdering";
 import { toAttachmentPreviewUrl } from "./lib/wsHttpUrl";
 import { hasLiveTurnTailWork } from "./session-logic";
 import { getRememberedProjectUiState, projectCwdKey } from "./storePersistence";
@@ -1710,21 +1711,10 @@ function toLegacySessionStatus(
   }
 }
 
+// Session snapshots carry providerName as a plain string; route it through the
+// canonical guard so new provider kinds (e.g. "omp") never collapse to codex.
 function toLegacyProvider(providerName: string | null): ProviderKind {
-  if (
-    providerName === "codex" ||
-    providerName === "claudeAgent" ||
-    providerName === "cursor" ||
-    providerName === "antigravity" ||
-    providerName === "grok" ||
-    providerName === "droid" ||
-    providerName === "kilo" ||
-    providerName === "opencode" ||
-    providerName === "pi"
-  ) {
-    return providerName;
-  }
-  return "codex";
+  return providerName !== null && isProviderKind(providerName) ? providerName : "codex";
 }
 
 function attachmentPreviewRoutePath(attachmentId: string): string {

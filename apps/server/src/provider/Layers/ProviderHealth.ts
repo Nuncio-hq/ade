@@ -116,6 +116,7 @@ const DROID_PROVIDER = "droid" as const;
 const KILO_PROVIDER = "kilo" as const;
 const OPENCODE_PROVIDER = "opencode" as const;
 const PI_PROVIDER = "pi" as const;
+const OMP_PROVIDER = "omp" as const;
 type ProviderStatuses = ReadonlyArray<ServerProviderStatus>;
 const DISABLED_PROVIDER_STATUS_MESSAGE = "Provider is disabled in Synara settings.";
 const MINIMUM_ANTIGRAVITY_CLI_VERSION = "1.0.12";
@@ -130,6 +131,7 @@ const PROVIDERS = [
   KILO_PROVIDER,
   OPENCODE_PROVIDER,
   PI_PROVIDER,
+  OMP_PROVIDER,
 ] as const satisfies ReadonlyArray<ProviderKind>;
 
 const providerChildKind = (provider: ProviderKind): ProviderChildKind =>
@@ -268,6 +270,18 @@ export const PACKAGE_MANAGED_PROVIDER_UPDATES: Partial<
       executable: "pi",
       args: () => ["update"],
       lockKey: "pi-native",
+      strategy: "always",
+    },
+  },
+  omp: {
+    provider: OMP_PROVIDER,
+    binaryName: "omp",
+    npmPackageName: "@oh-my-pi/pi-coding-agent",
+    homebrew: null,
+    nativeUpdate: {
+      executable: "omp",
+      args: () => ["update"],
+      lockKey: "omp-native",
       strategy: "always",
     },
   },
@@ -818,6 +832,15 @@ function cursorModelsOutputHasNoModels(output: string): boolean {
 
 const runPiCommand = (args: ReadonlyArray<string>, executable = "pi") =>
   runProviderCommand(executable, args, providerCommandEnv(PI_PROVIDER)).pipe(
+    Effect.flatMap((result) =>
+      isWindowsShellCommandMissingResult({ code: result.code, stderr: result.stderr })
+        ? Effect.fail(new Error(`spawn ${executable} ENOENT`))
+        : Effect.succeed(result),
+    ),
+  );
+
+const runOmpCommand = (args: ReadonlyArray<string>, executable = "omp") =>
+  runProviderCommand(executable, args, providerCommandEnv(OMP_PROVIDER)).pipe(
     Effect.flatMap((result) =>
       isWindowsShellCommandMissingResult({ code: result.code, stderr: result.stderr })
         ? Effect.fail(new Error(`spawn ${executable} ENOENT`))
@@ -1577,6 +1600,81 @@ export const checkPiProviderStatus = (
       message: configuredAgentDir
         ? `Pi CLI is installed. Synara will use Pi agent dir ${configuredAgentDir}.`
         : "Pi CLI is installed. Configure provider credentials inside Pi as needed.",
+    } satisfies ServerProviderStatus;
+  });
+
+// ── OMP health check ────────────────────────────────────────────
+
+export const checkOmpProviderStatus = (
+  agentDir?: string,
+  binaryPath?: string,
+): Effect.Effect<ServerProviderStatus, never, ChildProcessSpawner.ChildProcessSpawner> =>
+  Effect.gen(function* () {
+    const checkedAt = new Date().toISOString();
+    const executable = nonEmptyTrimmed(binaryPath) ?? "omp";
+
+    const versionProbe = yield* probeProviderCliVersion(
+      runOmpCommand(["--version"], executable),
+      DEFAULT_TIMEOUT_MS,
+    );
+
+    // OMP is SDK-backed in Synara. Keep this CLI probe advisory so health
+    // refreshes never import the SDK (native modules) outside a session.
+    if (versionProbe.outcome === "missing" || versionProbe.outcome === "failure") {
+      const error = versionProbe.cause;
+      return {
+        provider: OMP_PROVIDER,
+        status: "warning" as const,
+        available: true,
+        authStatus: "unknown" as const,
+        checkedAt,
+        message:
+          versionProbe.outcome === "missing"
+            ? "OMP SDK is bundled, but the OMP CLI (`omp`) is not on PATH, so Synara could not verify the installed CLI version."
+            : `OMP SDK is bundled, but the CLI health check failed: ${error instanceof Error ? error.message : String(error)}.`,
+      } satisfies ServerProviderStatus;
+    }
+
+    if (versionProbe.outcome === "timeout") {
+      return {
+        provider: OMP_PROVIDER,
+        status: "warning" as const,
+        available: true,
+        authStatus: "unknown" as const,
+        checkedAt,
+        message:
+          "OMP SDK is bundled, but the CLI health check timed out before Synara could verify the installed version.",
+      } satisfies ServerProviderStatus;
+    }
+
+    if (versionProbe.outcome === "nonzero") {
+      const version = versionProbe.result;
+      const detail = detailFromResult(version);
+      return {
+        provider: OMP_PROVIDER,
+        status: "warning" as const,
+        available: true,
+        authStatus: "unknown" as const,
+        checkedAt,
+        message: detail
+          ? `OMP SDK is bundled, but the CLI health check failed. ${detail}`
+          : "OMP SDK is bundled, but the CLI health check failed.",
+      } satisfies ServerProviderStatus;
+    }
+
+    const version = versionProbe.result;
+    const parsedVersion = parseGenericCliVersion(`${version.stdout}\n${version.stderr}`);
+    const configuredAgentDir = nonEmptyTrimmed(agentDir);
+    return {
+      provider: OMP_PROVIDER,
+      status: "ready" as const,
+      available: true,
+      authStatus: "unknown" as const,
+      version: parsedVersion,
+      checkedAt,
+      message: configuredAgentDir
+        ? `OMP CLI is installed. Synara will use OMP agent dir ${configuredAgentDir}.`
+        : "OMP CLI is installed. Configure provider credentials inside OMP as needed.",
     } satisfies ServerProviderStatus;
   });
 
@@ -2367,6 +2465,14 @@ export function makeProviderHealthLive(options?: { readonly providerUpdateTimeou
                   checkPiProviderStatus(
                     settings.providers.pi.agentDir,
                     settings.providers.pi.binaryPath,
+                  ),
+                ),
+                checkProviderWhenEnabled(
+                  settings,
+                  OMP_PROVIDER,
+                  checkOmpProviderStatus(
+                    settings.providers.omp.agentDir,
+                    settings.providers.omp.binaryPath,
                   ),
                 ),
               ],

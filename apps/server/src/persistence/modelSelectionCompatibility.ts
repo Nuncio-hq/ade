@@ -3,18 +3,11 @@
 // Layer: Persistence compatibility helper
 // Exports: normalizeLegacyModelSelection, normalizePersistedModelSelection
 
-import { MODEL_OPTIONS_BY_PROVIDER } from "@synara/contracts";
+import { MODEL_OPTIONS_BY_PROVIDER, type ProviderKind } from "@synara/contracts";
 
-type ModelProviderKind =
-  | "codex"
-  | "claudeAgent"
-  | "cursor"
-  | "antigravity"
-  | "grok"
-  | "droid"
-  | "kilo"
-  | "opencode"
-  | "pi";
+// Alias, not a copy: a hand-maintained union drifts every time a provider is
+// added (that drift is exactly how "omp" once normalized back to codex).
+type ModelProviderKind = ProviderKind;
 
 const NON_DROID_MODEL_SLUGS = new Set(
   Object.entries(MODEL_OPTIONS_BY_PROVIDER).flatMap(([provider, models]) =>
@@ -91,7 +84,8 @@ function inferLegacyModelProvider(provider: unknown, model: string): ModelProvid
     provider === "droid" ||
     provider === "kilo" ||
     provider === "opencode" ||
-    provider === "pi"
+    provider === "pi" ||
+    provider === "omp"
   ) {
     return provider;
   }

@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { StarFilledIcon, StarIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import type { FavoriteModelProvider } from "../../lib/modelFavorites";
 import {
   resolveModelGroupDefaultOpen,
   shouldUseCollapsibleModelGroups,
@@ -24,7 +25,8 @@ import {
   COMPOSER_PICKER_RADIUS_CLASS_NAME,
 } from "./composerPickerStyles";
 
-type FavoriteModelProvider = "cursor" | "kilo" | "opencode" | "pi";
+// FavoriteModelProvider is owned by lib/modelFavorites so new providers only
+// have to be added in one place.
 
 type ProviderModelOptionGroupListProps = {
   groupedOptions: ReadonlyArray<ProviderModelOptionGroup>;

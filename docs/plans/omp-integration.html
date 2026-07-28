@@ -609,7 +609,7 @@
             },
           ],
           accept:
-            '<b>Kiểm tra:</b> <code>bun typecheck</code> xanh toàn workspace. Chưa có gì thay đổi trong UI — đúng dự kiến. <b>ĐÃ CHẠY 2026-07-28:</b> typecheck 0 lỗi, lint 0 lỗi, 327 test pass (shared 90, web 150, ProviderHealth 87). Ghi chú: vá kèm 2 mảnh WIP pi-turn-resilience bị leak dở lên main (piCompactionTitle + 4 field PiSessionContext) để main-lineage compile lại được.',
+            "<b>Kiểm tra:</b> <code>bun typecheck</code> xanh toàn workspace. Chưa có gì thay đổi trong UI — đúng dự kiến. <b>ĐÃ CHẠY 2026-07-28:</b> typecheck 0 lỗi, lint 0 lỗi, 327 test pass (shared 90, web 150, ProviderHealth 87). Ghi chú: vá kèm 2 mảnh WIP pi-turn-resilience bị leak dở lên main (piCompactionTitle + 4 field PiSessionContext) để main-lineage compile lại được.",
           unlock: [],
           prompt: `Làm Phase 1 của M4 theo docs/plans/omp-integration.html (tab Plan):
 - Tạo branch app/omp-adapter từ main.
@@ -622,37 +622,37 @@
         {
           id: 2,
           name: "Phase 2 — Walking skeleton (chat được!)",
-          st: "todo",
+          st: "done",
           goal: "Lát cắt dọc mỏng nhất: tạo thread OMP trong ADE, chat streaming, kill sạch. Lộ sớm 2 risk lifecycle.",
           tasks: [
             {
               t: "Pin exact @oh-my-pi/* mới nhất vào apps/server/package.json (KHÔNG dùng ^)",
-              st: "todo",
+              st: "done",
             },
             {
               t: "Services/OmpAdapter.ts — service tag, mirror Services/PiAdapter.ts (21 dòng)",
-              st: "todo",
+              st: "done",
             },
             {
               t: "Layers/OmpAdapter.ts — lazy import SDK; createAgentSession({cwd, agentDir, hasUI:false→true khi bridge, enableIrc:false, skipPythonPreflight:true, enableMCP:false tạm, enableLsp:false tạm})",
-              st: "todo",
+              st: "done",
             },
             {
               t: "startSession / sendTurn (session.prompt) / steerTurn (session.steer) / interruptTurn (session.abort) / stopSession+stopAll (abort+dispose) / listSessions / hasSession / readThread",
-              st: "todo",
+              st: "done",
             },
             {
               t: "Event switch tối thiểu: turn_start/end, message_start/update/end (text), agent_end — xử lý isTerminal ĐÚNG ngay từ đầu (chỉ complete turn khi isTerminal !== false)",
-              st: "todo",
+              st: "done",
             },
-            { t: "listModels từ ModelRegistry.getAvailable()", st: "todo" },
+            { t: "listModels từ ModelRegistry.getAvailable()", st: "done" },
             {
               t: "Wire vào runtimeLayer.ts (cạnh makePiAdapterLive dòng 81) + ProviderAdapterRegistry.ts:46 + web provider entry (label/icon tối thiểu)",
-              st: "todo",
+              st: "done",
             },
           ],
           accept:
-            "<b>Kiểm tra (bạn tự làm):</b> chạy dev instance cô lập (lệnh trong AGENTS.md §Local Dev Instance Isolation), tạo thread provider OMP, gõ một câu — thấy text streaming về. Bấm stop thread → <code>ps aux | grep omp</code> không còn gì của thread.",
+            '<b>Kiểm tra (bạn tự làm):</b> chạy dev instance cô lập (lệnh trong AGENTS.md §Local Dev Instance Isolation), tạo thread provider OMP, gõ một câu — thấy text streaming về. Bấm stop thread → <code>ps aux | grep omp</code> không còn gì của thread. <b>ĐÃ CHẠY 2026-07-28:</b> thread OMP trong .ade-dev, model picker liệt kê 4 nhóm upstream từ ModelRegistry (anthropic 26 / cursor 168 / devin 81 / openai-codex 7), chat 2 lượt streaming OK, <code>/bin/sleep 400</code> spawn thật (pid con của server) và biến mất ngay sau nút Stop; shutdown server → 0 process rò rỉ. Bug phát sinh &amp; đã sửa: <code>toLegacyProvider</code> (storeNormalization.ts) là ladder chuỗi thiếu "omp" nên client map session omp → codex, làm lượt 2 bị reactor từ chối; đã thay bằng <code>isProviderKind</code> và dọn 4 ladder tương tự.',
           unlock: ["Chat với OMP ngay trong ADE (text streaming, chọn model từ registry OMP)"],
           prompt: `Làm Phase 2 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
 - Pin exact @oh-my-pi/pi-coding-agent (+ pi-agent-core, pi-ai nếu cần type) vào apps/server.

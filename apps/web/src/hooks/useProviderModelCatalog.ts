@@ -114,6 +114,7 @@ export function useProviderModelCatalog(input: {
   const kiloModelDiscoveryEnabled = shouldDiscoverProvider("kilo");
   const openCodeModelDiscoveryEnabled = shouldDiscoverProvider("opencode");
   const piModelDiscoveryEnabled = shouldDiscoverProvider("pi");
+  const ompModelDiscoveryEnabled = shouldDiscoverProvider("omp");
 
   const claudeDynamicModelsQuery = useQuery(
     providerModelsQueryOptions({
@@ -183,6 +184,15 @@ export function useProviderModelCatalog(input: {
       agentDir: settings.piAgentDir || null,
       cwd: discoveryCwd,
       enabled: piModelDiscoveryEnabled,
+    }),
+  );
+  const ompDynamicModelsQuery = useQuery(
+    providerModelsQueryOptions({
+      provider: "omp",
+      binaryPath: settings.ompBinaryPath || null,
+      agentDir: settings.ompAgentDir || null,
+      cwd: discoveryCwd,
+      enabled: ompModelDiscoveryEnabled,
     }),
   );
 
@@ -259,6 +269,13 @@ export function useProviderModelCatalog(input: {
     piModelDiscoveryEnabled &&
     !hasResolvedPiModelDiscovery &&
     isInitialModelDiscoveryPending(piDynamicModelsQuery);
+  const hasResolvedOmpModelDiscovery =
+    ompDynamicModelsQuery.data?.source?.startsWith("omp.sdk") === true &&
+    (ompDynamicModelsQuery.data.models.length ?? 0) > 0;
+  const ompModelDiscoveryPending =
+    ompModelDiscoveryEnabled &&
+    !hasResolvedOmpModelDiscovery &&
+    isInitialModelDiscoveryPending(ompDynamicModelsQuery);
   const antigravityModelDiscoveryPending =
     antigravityModelDiscoveryEnabled &&
     !(
@@ -313,8 +330,7 @@ export function useProviderModelCatalog(input: {
       kilo: kiloDynamicModelsQuery.data,
       opencode: openCodeDynamicModelsQuery.data,
       pi: piDynamicModelsQuery.data,
-      // OMP runtime model discovery arrives with the OmpAdapter (M4 phase 2).
-      omp: undefined,
+      omp: ompDynamicModelsQuery.data,
     };
     for (const provider of [
       "claudeAgent",
@@ -326,6 +342,7 @@ export function useProviderModelCatalog(input: {
       "kilo",
       "opencode",
       "pi",
+      "omp",
     ] as const) {
       const dynamicModels = dynamicSources[provider]?.models;
       if (dynamicModels && dynamicModels.length > 0) {
@@ -350,6 +367,7 @@ export function useProviderModelCatalog(input: {
     modelHintByProvider,
     openCodeDynamicModelsQuery.data,
     piDynamicModelsQuery.data,
+    ompDynamicModelsQuery.data,
   ]);
 
   const loadingModelProviders = useMemo<Partial<Record<ProviderKind, boolean>>>(
@@ -360,6 +378,7 @@ export function useProviderModelCatalog(input: {
       kilo: kiloModelDiscoveryPending,
       opencode: openCodeModelDiscoveryPending,
       pi: piModelDiscoveryPending,
+      omp: ompModelDiscoveryPending,
     }),
     [
       antigravityModelDiscoveryPending,
@@ -368,6 +387,7 @@ export function useProviderModelCatalog(input: {
       kiloModelDiscoveryPending,
       openCodeModelDiscoveryPending,
       piModelDiscoveryPending,
+      ompModelDiscoveryPending,
     ],
   );
 
@@ -384,7 +404,7 @@ export function useProviderModelCatalog(input: {
       kilo: kiloDynamicModelsQuery.data?.models ?? [],
       opencode: openCodeDynamicModelsQuery.data?.models ?? [],
       pi: piDynamicModelsQuery.data?.models ?? [],
-      omp: [],
+      omp: ompDynamicModelsQuery.data?.models ?? [],
     }),
     [
       antigravityModelsQuery.data?.models,
@@ -396,6 +416,7 @@ export function useProviderModelCatalog(input: {
       kiloDynamicModelsQuery.data?.models,
       openCodeDynamicModelsQuery.data?.models,
       piDynamicModelsQuery.data?.models,
+      ompDynamicModelsQuery.data?.models,
     ],
   );
 
