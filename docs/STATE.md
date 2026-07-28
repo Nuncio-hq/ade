@@ -66,7 +66,7 @@ brand:check` in CI. See AGENTS.md §Naming & Identity.
 - Versioning: ADE line = 0.0.x (currently 0.0.1), user-decided only, agents never
   bump/tag. Upstream base = `UPSTREAM-BASE` file (currently v0.6.2). See AGENTS.md
   §Versioning & Releases.
-- Upstream = `Emanuele-web04/synara`, remote `upstream`; **sync on release tags only** (base: v0.6.2, synced), cherry-pick once diverged.
+- Upstream = `Emanuele-web04/synara`, remote `upstream`; **sync on release tags only** (base: v0.6.3, synced 2026-07-28 via the shadow flow), cherry-pick once diverged.
 - Origin = `https://github.com/Nuncio-hq/ade` (private), `main` pushed and tracking.
 - Extensions dev is project-local first, promote to global only when stable
   (pi: `.pi/extensions` → `~/.pi/agent/extensions/`; OMP: `.omp/extensions` →
