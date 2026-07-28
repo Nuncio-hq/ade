@@ -47,7 +47,10 @@ All Synara providers are kept working.
       (`ompExtensionUiContext.ts`), `synara_*` gateway tools ride in as
       `customTools` (`ompGatewayTools.ts`; a supplied `mcpManager` would NOT
       register them — the engine only registers MCP tools on its own discovery
-      path), plus stopTask/compactThread/listSkills/listCommands. Both lifecycle
+      path; they need `strict: false` or models over-fill optional args, and
+      `"omp"` must sit in `PROVIDERS_WITH_THREAD_SCOPED_SYNARA_MCP` or the
+      harness policy denies control the tools actually have), plus
+      stopTask/compactThread/listSkills/listCommands. Both lifecycle
       risks closed: an async-result follow-up keeps the same turn id (engine
       probe + tests in `OmpAdapter.turnLifecycle.test.ts`), and a turn the engine
       abandons is freed by a watchdog that re-arms while `asyncJobManager` still

@@ -13,6 +13,7 @@
 // feature-detect; it is kept for compatibility, not as the main path.
 
 import type {
+  ExtensionAskDialogOption,
   ExtensionAskDialogQuestion,
   ExtensionAskDialogResult,
   ExtensionAskDialogResultItem,
@@ -29,9 +30,19 @@ export interface OmpUserInputRequest {
   readonly rawPayload?: Record<string, unknown>;
 }
 
+export interface OmpUserInputOutcome {
+  readonly answers: ProviderUserInputAnswers;
+  /**
+   * True when the dialog's own deadline expired instead of the user answering.
+   * The ask tool distinguishes the two: a timeout keeps the turn going with the
+   * recommended option, an empty answer cancels it.
+   */
+  readonly timedOut: boolean;
+}
+
 export interface OmpExtensionUiBridge {
   /** Opens a Synara dialog and resolves once the user answers (or it is aborted). */
-  readonly requestUserInput: (input: OmpUserInputRequest) => Promise<ProviderUserInputAnswers>;
+  readonly requestUserInput: (input: OmpUserInputRequest) => Promise<OmpUserInputOutcome>;
   /** Reports a TUI-only API that Synara deliberately does not implement. */
   readonly warnUnsupported: (method: string) => void;
   /** Surfaces extension chatter (status/working message/title) as tool progress. */
@@ -59,25 +70,42 @@ interface UserInputOptionMapping {
   readonly option: UserInputQuestion["options"][number];
 }
 
+/** Matches the suffix OMP appends in its own selector (tools/ask.ts). */
+const RECOMMENDED_SUFFIX = " (Recommended)";
+
 function trimToUndefined(value: string | null | undefined): string | undefined {
   const trimmed = typeof value === "string" ? value.trim() : "";
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-function selectItemLabel(item: ExtensionUISelectItem): string {
+/** Either surface's option shape; only the ask dialog carries `preview`. */
+type OmpUiOption = ExtensionUISelectItem | ExtensionAskDialogOption;
+
+function selectItemLabel(item: OmpUiOption): string {
   return typeof item === "string" ? item : item.label;
 }
 
-function selectItemDescription(item: ExtensionUISelectItem): string | undefined {
-  return typeof item === "string" ? undefined : trimToUndefined(item.description);
+function selectItemDescription(item: OmpUiOption): string | undefined {
+  if (typeof item === "string") return undefined;
+  // `preview` is the ask dialog's rich body. Synara has one description slot,
+  // so both are kept rather than silently dropping the richer half.
+  const preview = "preview" in item ? item.preview : undefined;
+  const parts = [trimToUndefined(item.description), trimToUndefined(preview)].filter(
+    (part): part is string => part !== undefined,
+  );
+  return parts.length > 0 ? parts.join("\n\n") : undefined;
 }
 
 /**
  * Synara matches answers back by label, so duplicate labels have to be made
- * unique before they reach the dialog while still mapping to the original value.
+ * unique before they reach the dialog while still mapping to the original
+ * value. `recommendedIndex` carries the engine's default the only way the
+ * generic contract allows — the same "(Recommended)" suffix OMP's own selector
+ * renders (tools/ask.ts).
  */
 function makeUserInputOptions(
-  items: ReadonlyArray<ExtensionUISelectItem>,
+  items: ReadonlyArray<OmpUiOption>,
+  recommendedIndex?: number,
 ): ReadonlyArray<UserInputOptionMapping> {
   const labelCounts = new Map<string, number>();
   return items.map((item, index) => {
@@ -85,7 +113,11 @@ function makeUserInputOptions(
     const baseLabel = trimToUndefined(rawLabel) ?? `Option ${String(index + 1)}`;
     const count = (labelCounts.get(baseLabel) ?? 0) + 1;
     labelCounts.set(baseLabel, count);
-    const displayLabel = count === 1 ? baseLabel : `${baseLabel} (${String(count)})`;
+    const uniqueLabel = count === 1 ? baseLabel : `${baseLabel} (${String(count)})`;
+    const displayLabel =
+      index === recommendedIndex && !uniqueLabel.endsWith(RECOMMENDED_SUFFIX)
+        ? `${uniqueLabel}${RECOMMENDED_SUFFIX}`
+        : uniqueLabel;
     return {
       value: rawLabel,
       option: { label: displayLabel, description: selectItemDescription(item) ?? baseLabel },
@@ -190,13 +222,14 @@ export function makeOmpExtensionUiContext(bridge: OmpExtensionUiBridge): OmpExte
       const id = trimToUndefined(question.id) ?? header;
       return {
         id,
-        mappings: makeUserInputOptions(question.options),
+        mappings: makeUserInputOptions(question.options, question.recommended),
+        recommended: question.recommended,
         multi: question.multi === true,
         question: trimToUndefined(question.question) ?? header,
         header,
       };
     });
-    const answers = await bridge.requestUserInput({
+    const { answers, timedOut } = await bridge.requestUserInput({
       method: "extension/ui/askDialog",
       opts: dialogOptions,
       rawPayload: { questions },
@@ -222,6 +255,14 @@ export function makeOmpExtensionUiContext(bridge: OmpExtensionUiBridge): OmpExte
         if (mapping) selectedOptions.push(mapping.value);
         else custom.push(selection);
       }
+      // A deadline the user never answered resolves to the recommended option,
+      // which is what the timeout is for; the engine reads `timedOut` to tell
+      // that apart from a real choice.
+      const recommended =
+        timedOut && selectedOptions.length === 0 && custom.length === 0
+          ? entry.mappings[entry.recommended ?? -1]
+          : undefined;
+      if (recommended) selectedOptions.push(recommended.value);
       const note = answerNote(answers, entry.id);
       const customInput = custom.length > 0 ? custom.join("\n") : undefined;
       return {
@@ -232,12 +273,14 @@ export function makeOmpExtensionUiContext(bridge: OmpExtensionUiBridge): OmpExte
         selectedOptions,
         ...(customInput !== undefined ? { customInput } : {}),
         ...(note !== undefined ? { note } : {}),
+        ...(timedOut ? { timedOut: true } : {}),
       };
     });
 
     // Every question answered with nothing means the dialog was dismissed;
-    // `undefined` is the engine's cancel signal.
-    return results.every((result) => result.selectedOptions.length === 0 && !result.customInput)
+    // `undefined` is the engine's cancel signal. A timeout is not a dismissal.
+    return !timedOut &&
+      results.every((result) => result.selectedOptions.length === 0 && !result.customInput)
       ? undefined
       : { kind: "submit", results };
   };
@@ -261,12 +304,13 @@ export function makeOmpExtensionUiContext(bridge: OmpExtensionUiBridge): OmpExte
         }),
       };
     });
-    return bridge.requestUserInput({
+    const { answers } = await bridge.requestUserInput({
       method: "extension/ui/askUserQuestion",
       opts,
       questions,
       rawPayload: { questions: rawQuestions },
     });
+    return answers;
   };
 
   const uiContext: ExtensionUIContext = {
@@ -274,7 +318,7 @@ export function makeOmpExtensionUiContext(bridge: OmpExtensionUiBridge): OmpExte
     async select(title, options, dialogOptions) {
       const questionId = "selection";
       const mappings = makeUserInputOptions(options);
-      const answers = await bridge.requestUserInput({
+      const { answers } = await bridge.requestUserInput({
         method: "extension/ui/select",
         opts: dialogOptions,
         rawPayload: { title, options },
@@ -292,7 +336,7 @@ export function makeOmpExtensionUiContext(bridge: OmpExtensionUiBridge): OmpExte
     },
     async confirm(title, message, dialogOptions) {
       const questionId = "confirmation";
-      const answers = await bridge.requestUserInput({
+      const { answers } = await bridge.requestUserInput({
         method: "extension/ui/confirm",
         opts: dialogOptions,
         rawPayload: { title, message },
@@ -312,7 +356,7 @@ export function makeOmpExtensionUiContext(bridge: OmpExtensionUiBridge): OmpExte
     },
     async input(title, placeholder, dialogOptions) {
       const questionId = "input";
-      const answers = await bridge.requestUserInput({
+      const { answers } = await bridge.requestUserInput({
         method: "extension/ui/input",
         opts: dialogOptions,
         rawPayload: { title, placeholder },

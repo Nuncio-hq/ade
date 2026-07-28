@@ -19,12 +19,16 @@ interface Recorded {
 /** Answers the dialog with `answer(questions)`; records everything it saw. */
 function makeContext(
   answer: (questions: ReadonlyArray<UserInputQuestion>) => ProviderUserInputAnswers,
+  options?: { readonly timedOut?: boolean },
 ) {
   const recorded: Recorded = { requests: [], unsupported: [], progress: [], notifications: [] };
   const context = makeOmpExtensionUiContext({
     requestUserInput: (input) => {
       recorded.requests.push(input);
-      return Promise.resolve(answer(input.questions));
+      return Promise.resolve({
+        answers: answer(input.questions),
+        timedOut: options?.timedOut ?? false,
+      });
     },
     warnUnsupported: (method) => recorded.unsupported.push(method),
     emitProgress: (summary) => recorded.progress.push(summary),
@@ -131,6 +135,72 @@ describe("makeOmpExtensionUiContext", () => {
     ]);
 
     expect(result).toBeUndefined();
+  });
+
+  it("marks the engine's recommended option and keeps its preview text", async () => {
+    const { context, recorded } = makeContext(() => ({ scope: "Web (Recommended)" }));
+
+    const result = await context.askDialog?.([
+      {
+        id: "scope",
+        question: "Where?",
+        header: "Scope",
+        recommended: 1,
+        options: [
+          { label: "Server" },
+          { label: "Web", description: "the app", preview: "apps/web/src/**" },
+        ],
+      },
+    ]);
+
+    // The suffix is the only way the generic contract can carry `recommended`,
+    // and the preview must not be dropped just because Synara has one slot.
+    expect(recorded.requests[0]?.questions[0]?.options).toEqual([
+      { label: "Server", description: "Server" },
+      { label: "Web (Recommended)", description: "the app\n\napps/web/src/**" },
+    ]);
+    // The engine still gets its own untouched label back.
+    expect(result?.kind === "submit" && result.results[0]?.selectedOptions).toEqual(["Web"]);
+  });
+
+  it("resolves a timed-out ask to the recommended option instead of cancelling", async () => {
+    const { context } = makeContext(() => ({}), { timedOut: true });
+
+    const result = await context.askDialog?.([
+      {
+        id: "scope",
+        question: "Where?",
+        header: "Scope",
+        recommended: 0,
+        options: [{ label: "Server" }, { label: "Web" }],
+      },
+    ]);
+
+    expect(result).toEqual({
+      kind: "submit",
+      results: [
+        {
+          id: "scope",
+          question: "Where?",
+          options: ["Server", "Web"],
+          multi: false,
+          selectedOptions: ["Server"],
+          timedOut: true,
+        },
+      ],
+    });
+  });
+
+  it("reports a timeout with no recommendation as timed out, not as a dismissal", async () => {
+    const { context } = makeContext(() => ({}), { timedOut: true });
+
+    const result = await context.askDialog?.([
+      { id: "scope", question: "Where?", header: "Scope", options: [{ label: "Server" }] },
+    ]);
+
+    expect(result?.kind).toBe("submit");
+    expect(result?.kind === "submit" && result.results[0]?.timedOut).toBe(true);
+    expect(result?.kind === "submit" && result.results[0]?.selectedOptions).toEqual([]);
   });
 
   it("keeps the harness askUserQuestions extra answering in Synara's own shape", async () => {

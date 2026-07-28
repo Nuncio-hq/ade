@@ -82,6 +82,7 @@ import {
   makeOmpExtensionUiContext,
   type OmpExtensionUiContext,
   type OmpUserInputRequest,
+  type OmpUserInputOutcome,
 } from "../ompExtensionUiContext.ts";
 import {
   compactProviderRuntimeEventForIngress,
@@ -505,13 +506,13 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
     const requestOmpExtensionUserInput = (
       context: OmpSessionContext,
       input: OmpUserInputRequest,
-    ): Promise<ProviderUserInputAnswers> => {
+    ): Promise<OmpUserInputOutcome> => {
       if (context.stopped || input.opts?.signal?.aborted) {
-        return Promise.resolve({});
+        return Promise.resolve({ answers: {}, timedOut: false });
       }
       const requestId = ApprovalRequestId.makeUnsafe(crypto.randomUUID());
       const runtimeRequestId = RuntimeRequestId.makeUnsafe(requestId);
-      const { promise, resolve } = Promise.withResolvers<ProviderUserInputAnswers>();
+      const { promise, resolve } = Promise.withResolvers<OmpUserInputOutcome>();
       let settled = false;
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
       let abort: () => void = () => undefined;
@@ -522,7 +523,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
         }
         input.opts?.signal?.removeEventListener("abort", abort);
       };
-      const finish = (answers: ProviderUserInputAnswers) => {
+      const finish = (answers: ProviderUserInputAnswers, timedOut = false) => {
         if (settled) return;
         settled = true;
         cleanup();
@@ -538,13 +539,13 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
             payload: { requestId, answers },
           },
         } satisfies ProviderRuntimeEvent);
-        resolve(answers);
+        resolve({ answers, timedOut });
       };
       abort = () => finish({});
 
       context.pendingUserInputs.set(requestId, { resolve: finish });
       if (typeof input.opts?.timeout === "number" && input.opts.timeout > 0) {
-        timeoutId = setTimeout(abort, input.opts.timeout);
+        timeoutId = setTimeout(() => finish({}, true), input.opts.timeout);
         input.opts.onTimeoutStart?.();
       }
       input.opts?.signal?.addEventListener("abort", abort, { once: true });

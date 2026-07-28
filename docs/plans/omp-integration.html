@@ -743,9 +743,21 @@
               t: "listSkills / listCommands từ discoverSkills / discoverSlashCommands + getComposerCapabilities",
               st: "done",
             },
+            {
+              t: 'Gateway policy allowlist: thêm "omp" vào PROVIDERS_WITH_THREAD_SCOPED_SYNARA_MCP (harnessPolicy.ts) — thiếu nó thì tool cài đủ nhưng policy vẫn bảo model "Synara MCP control is unavailable" và model từ chối dùng.',
+              st: "done",
+            },
+            {
+              t: 'strict:false cho gateway tool: OMP mặc định strict khi flag vắng (pi-ai openai-responses #4336) → model điền "" cho optional arg → gateway reject "Argument X must be a non-empty string".',
+              st: "done",
+            },
+            {
+              t: 'Native ask fidelity qua UserInputQuestion contract: recommended → hậu tố "(Recommended)" (map ngược về label gốc), preview gộp vào description, timeout → timedOut + auto-chọn recommended thay vì huỷ turn.',
+              st: "done",
+            },
           ],
           accept:
-            '<b>ĐÃ CHẠY 2026-07-28 (.ade-dev, model openai-codex/gpt-5.4-mini):</b> (1) native <code>ask</code> → dialog trong ADE → trả lời <code>Red</code> → <code>Completed tool · Ask User selected: Red</code>. (2) Compat proof: <code>runtime.warning extension/ui-limited-warning</code> liệt kê 5 extension load được, gồm <code>~/.omp/agent/extensions/AskUserQuestion/index.ts</code> với <code>tools:["AskUserQuestion"]</code> — extension pi (@earendil-works/pi-coding-agent + pi-tui) sống dưới legacy shim. (3) <code>synara_context</code> chạy, trả về threadId/turnId/provider:omp/projectId + capabilities. (4) <code>/compact</code> ×2 → session JSONL của OMP có 2 record <code>"type":"compaction"</code>. Skills/commands OMP hiện trong composer (slash menu).',
+            '<b>ĐÃ CHẠY 2026-07-28 (.ade-dev, model openai-codex/gpt-5.4-mini):</b> (1) native <code>ask</code> → dialog trong ADE → trả lời <code>Red</code> → <code>Completed tool · Ask User selected: Red</code>; với <code>recommended:1</code> dialog hiện <code>Prod (Recommended)</code> và engine nhận lại label sạch <code>Prod</code>. (2) Compat proof: <code>runtime.warning extension/ui-limited-warning</code> liệt kê extension load được — đã xác nhận <code>AskUserQuestion/index.ts</code> (pi-lineage, @earendil-works/*) chạy dưới legacy shim với <code>tools:["AskUserQuestion"]</code>; sau đó gỡ symlink vì OMP đã có native ask. (3) <code>synara_context</code> + <code>synara_list_threads limit:3</code> chạy sạch, trả đúng title thread. (4) <code>/compact</code> ×2 → session JSONL của OMP có 2 record <code>"type":"compaction"</code>. Skills/commands OMP hiện trong composer (slash menu).',
           unlock: [
             "Extensions harness của mình chạy trên OMP trong ADE",
             "synara_* gateway tools",

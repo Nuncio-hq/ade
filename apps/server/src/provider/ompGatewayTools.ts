@@ -86,6 +86,13 @@ export async function buildOmpAgentGatewayCustomTools(input: {
         // policy tells the model to call `synara_*` by name, so they must stay
         // top-level.
         loadMode: "essential",
+        // The gateway's schemas have genuinely optional properties. Strict
+        // structured output cannot express that: it forces every property to be
+        // present, and OpenAI-family models then over-fill optionals with empty
+        // strings, which the gateway rejects ("Argument X must be a non-empty
+        // string"). An omitted flag is NOT the same as an explicit `false` on
+        // the wire — pi-ai only sends `strict: false` when the tool asks for it.
+        strict: false,
         mcpServerName: SYNARA_MCP_SERVER_NAME,
         mcpToolName: tool.name,
         execute: async (_toolCallId, params, signal) =>
