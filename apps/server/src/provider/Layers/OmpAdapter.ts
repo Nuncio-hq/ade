@@ -28,6 +28,7 @@ import type { Api, Model } from "@oh-my-pi/pi-ai";
 import {
   type ChatAttachment,
   EventId,
+  ProviderItemId,
   type ProviderListModelsResult,
   type ProviderRuntimeEvent,
   type ProviderSendTurnInput,
@@ -53,8 +54,16 @@ import {
   PROVIDER_ADAPTER_RUNTIME_EVENT_BUFFER_CAPACITY,
   type ProviderThreadSnapshot,
 } from "../Services/ProviderAdapter.ts";
+import {
+  type AgentToolItemType,
+  toolDetailText,
+  toolItemType,
+  toolLifecycleData,
+  toolTitle,
+} from "../agentToolProjection.ts";
 import { appendFileAttachmentsPromptBlock } from "../attachmentProjection.ts";
 import { makeBoundedCallbackIngress } from "../boundedCallbackIngress.ts";
+import { classifyOmpTurnFailure } from "../ompTurnFailure.ts";
 import {
   compactProviderRuntimeEventForIngress,
   isTerminalProviderRuntimeEvent,
@@ -62,6 +71,7 @@ import {
   PROVIDER_RUNTIME_CALLBACK_TERMINAL_RESERVE,
   providerRuntimeEventBytes,
 } from "../providerRuntimeEventIngress.ts";
+import { makeRuntimeTaskListItem } from "../runtimeTaskList.ts";
 import { clampUsagePercent, nonNegativeFiniteNumber, positiveFiniteNumber } from "../tokenUsage.ts";
 import { type EventNdjsonLogger, makeEventNdjsonLogger } from "./EventNdjsonLogger.ts";
 
@@ -92,6 +102,43 @@ function toOmpThinkingLevel(value: string | null | undefined): ThinkingLevel | u
   return value && (OMP_THINKING_LEVEL_NAMES as readonly string[]).includes(value)
     ? (value as ThinkingLevel)
     : undefined;
+}
+
+/**
+ * A turn with no session activity for this long is treated as wedged. OMP has
+ * no `agent_settled`: `agent_end.isTerminal` is the only "the run is really
+ * over" signal. If it never arrives, `activeTurnId` would stay set and every
+ * later prompt would be rejected with "a turn is already active", so the turn
+ * is failed explicitly instead. Generous enough for xhigh reasoning and long
+ * tool calls; engine-owned async work re-arms it (see `armTurnWatchdog`).
+ */
+const OMP_TURN_INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
+
+interface OmpTrackedToolCall {
+  readonly toolCallId: string;
+  readonly toolName: string;
+  readonly args: unknown;
+  readonly itemId: RuntimeItemId;
+  readonly itemType: AgentToolItemType;
+}
+
+// The reason separates a context-window overflow from a routine threshold pass;
+// the action names which compaction strategy the engine picked.
+function ompCompactionTitle(
+  reason: "threshold" | "overflow" | "idle" | "incomplete",
+  action: "context-full" | "handoff" | "shake" | "snapcompact",
+): string {
+  const suffix = action === "context-full" ? "" : ` (${action})`;
+  switch (reason) {
+    case "overflow":
+      return `Compacting context — context window exceeded${suffix}`;
+    case "idle":
+      return `Compacting context — idle${suffix}`;
+    case "incomplete":
+      return `Compacting context — resuming incomplete pass${suffix}`;
+    default:
+      return `Compacting context${suffix}`;
+  }
 }
 
 type OmpCodingAgentModule = typeof OmpCodingAgent;
@@ -129,6 +176,15 @@ interface OmpSessionContext {
   activeTurn: OmpStoredTurn | undefined;
   activeAssistantItemId: RuntimeItemId | undefined;
   activeReasoningItemId: RuntimeItemId | undefined;
+  activeToolItems: Map<string, OmpTrackedToolCall>;
+  /**
+   * Set by `agent_end.isTerminal === false`: the engine promised to resume this
+   * session with an async-result follow-up turn, so the Synara turn stays open
+   * across the gap and the watchdog tolerates the silence.
+   */
+  pendingAsyncDelivery: boolean;
+  turnWatchdog: ReturnType<typeof setTimeout> | undefined;
+  turnActivityAt: number;
   stopped: boolean;
   lastKnownTokenUsage: ThreadTokenUsageSnapshot | undefined;
   unsubscribe: (() => void) | undefined;
@@ -137,6 +193,13 @@ interface OmpSessionContext {
 export interface OmpAdapterLiveOptions {
   readonly nativeEventLogPath?: string;
   readonly nativeEventLogger?: EventNdjsonLogger;
+  /**
+   * Test seams. The watchdog window is a 10-minute timer and the SDK boots real
+   * native modules, so turn-lifecycle behaviour is only provable with both
+   * injected (mirrors PiAdapterLiveOptions' spawn/teardown seams).
+   */
+  readonly loadSdk?: () => Promise<OmpCodingAgentModule>;
+  readonly turnInactivityTimeoutMs?: number;
 }
 
 function makeOmpRuntimeEventBase(
@@ -316,6 +379,9 @@ function normalizeTokenUsage(
 const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
   Effect.gen(function* () {
     const serverConfig = yield* ServerConfig;
+    const loadSdkModule = options?.loadSdk ?? loadOmpCodingAgentModule;
+    const turnInactivityTimeoutMs =
+      options?.turnInactivityTimeoutMs ?? OMP_TURN_INACTIVITY_TIMEOUT_MS;
     const runtimeEventQueue = yield* Queue.bounded<ProviderRuntimeEvent>(
       PROVIDER_ADAPTER_RUNTIME_EVENT_BUFFER_CAPACITY,
     );
@@ -347,7 +413,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
 
     const loadOmpSdk = (method: string) =>
       Effect.tryPromise({
-        try: () => loadOmpCodingAgentModule(),
+        try: () => loadSdkModule(),
         catch: (cause) =>
           new ProviderAdapterRequestError({
             provider: PROVIDER,
@@ -404,6 +470,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
       context.unsubscribe?.();
       context.unsubscribe = undefined;
       context.stopped = true;
+      clearTurnWatchdog(context);
       // abort() cancels any in-flight turn and reaps every process the engine's
       // brush shell spawned (kill-on-drop, verified in the spike); dispose()
       // then releases session resources (timers, kernels, watchers).
@@ -426,6 +493,10 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
       return turn;
     };
 
+    const recordItem = (context: OmpSessionContext, item: unknown) => {
+      activeTurnFor(context)?.items.push(item);
+    };
+
     /**
      * Deltas arrive one per streamed token. Appending into the trailing item of
      * the same kind keeps `turns` proportional to the response length instead of
@@ -446,11 +517,101 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
       turn.items.push({ type, delta } satisfies OmpStreamDeltaItem);
     };
 
+    const clearTurnWatchdog = (context: OmpSessionContext) => {
+      if (context.turnWatchdog !== undefined) {
+        clearTimeout(context.turnWatchdog);
+        context.turnWatchdog = undefined;
+      }
+    };
+
+    /**
+     * The engine owns async job lifecycles. While it still reports queued,
+     * running, or undelivered work the silence between turns is expected, not a
+     * wedge — the watchdog must not fail a turn that OMP is going to resume.
+     */
+    const hasPendingEngineWork = (context: OmpSessionContext): boolean => {
+      const jobs = context.agentSession.asyncJobManager;
+      if (!jobs) return false;
+      return jobs.getRunningJobs().length > 0 || jobs.hasPendingDeliveries();
+    };
+
     const resetActiveTurnState = (context: OmpSessionContext) => {
+      clearTurnWatchdog(context);
       context.activeTurnId = undefined;
       context.activeTurn = undefined;
       context.activeAssistantItemId = undefined;
       context.activeReasoningItemId = undefined;
+      context.activeToolItems.clear();
+      context.pendingAsyncDelivery = false;
+    };
+
+    const failStalledTurn = (context: OmpSessionContext, idleMs: number) => {
+      if (!context.activeTurnId) return;
+      const message = `OMP produced no session activity for ${String(Math.round(idleMs / 60_000))} minutes and reported no pending async work; failing the turn so the thread accepts new prompts.`;
+      const raw = {
+        source: "omp.sdk.event",
+        method: "turn/watchdog",
+        payload: { idleMs },
+      } satisfies ProviderRuntimeEvent["raw"];
+      const completionBase = makeEventBase(context);
+      offerRuntimeError(context, { message, method: "turn/watchdog" });
+      closeActiveStreamItems(context, "failed", raw);
+      resetActiveTurnState(context);
+      context.session = makeSessionSnapshot(context);
+      offerRuntimeEvent({
+        ...completionBase,
+        type: "turn.completed",
+        payload: { state: "failed", stopReason: "error", errorMessage: message },
+        raw,
+      } satisfies ProviderRuntimeEvent);
+    };
+
+    const armTurnWatchdog = (
+      context: OmpSessionContext,
+      delayMs: number = turnInactivityTimeoutMs,
+    ) => {
+      clearTurnWatchdog(context);
+      if (!context.activeTurnId || context.stopped) return;
+      const turnId = context.activeTurnId;
+      const timer = setTimeout(() => {
+        context.turnWatchdog = undefined;
+        if (context.stopped || context.activeTurnId !== turnId) return;
+        // Session events only stamp `turnActivityAt`; re-arm for the remaining
+        // window so the hot path never churns a timer per streamed token.
+        const idleMs = Date.now() - context.turnActivityAt;
+        if (idleMs < turnInactivityTimeoutMs) {
+          armTurnWatchdog(context, turnInactivityTimeoutMs - idleMs);
+          return;
+        }
+        if (hasPendingEngineWork(context)) {
+          armTurnWatchdog(context);
+          return;
+        }
+        failStalledTurn(context, idleMs);
+      }, delayMs);
+      timer.unref?.();
+      context.turnWatchdog = timer;
+    };
+
+    /**
+     * OMP can start a turn Synara never asked for: when an async job finishes,
+     * the job manager injects the result as a follow-up prompt. If that lands
+     * after the previous turn already settled there is no open Synara turn to
+     * attribute the events to, so mint one. Every later event — items and the
+     * final `turn.completed` — is keyed off this id, which is what keeps the
+     * ingress guard in provider/terminalTurnApplicability.ts from dropping the
+     * follow-up as a foreign turn.
+     */
+    const ensureActiveTurn = (context: OmpSessionContext): TurnId => {
+      const existing = context.activeTurnId;
+      if (existing) return existing;
+      const turnId = TurnId.makeUnsafe(crypto.randomUUID());
+      context.activeTurnId = turnId;
+      context.activeTurn = undefined;
+      context.turns.push({ id: turnId, items: [] });
+      context.session = makeSessionSnapshot(context);
+      armTurnWatchdog(context);
+      return turnId;
     };
 
     const closeActiveStreamItems = (
@@ -570,8 +731,15 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
     };
 
     const handleSessionEvent = (context: OmpSessionContext, event: AgentSessionEvent) => {
+      // Cheap liveness stamp read by the turn watchdog; avoids re-arming a timer
+      // for every streamed token.
+      context.turnActivityAt = Date.now();
       switch (event.type) {
         case "agent_start":
+          // A run starting is the moment an async-result follow-up becomes a
+          // real turn again; adopt or mint one before anything is attributed.
+          context.pendingAsyncDelivery = false;
+          ensureActiveTurn(context);
           offerRuntimeEvent({
             ...makeEventBase(context),
             type: "thread.state.changed",
@@ -580,6 +748,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
           } satisfies ProviderRuntimeEvent);
           return;
         case "turn_start":
+          ensureActiveTurn(context);
           offerRuntimeEvent({
             ...makeEventBase(context),
             type: "turn.started",
@@ -606,6 +775,284 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
             payload: { type: event.type },
           });
           return;
+        case "tool_execution_start": {
+          const itemId = RuntimeItemId.makeUnsafe(`omp-tool-${event.toolCallId}`);
+          const tracked: OmpTrackedToolCall = {
+            toolCallId: event.toolCallId,
+            toolName: event.toolName,
+            args: event.args,
+            itemId,
+            itemType: toolItemType(event.toolName),
+          };
+          context.activeToolItems.set(event.toolCallId, tracked);
+          recordItem(context, {
+            type: "tool_call",
+            status: "started",
+            toolName: event.toolName,
+            args: event.args,
+          });
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            itemId,
+            providerRefs: { providerItemId: ProviderItemId.makeUnsafe(event.toolCallId) },
+            type: "item.started",
+            payload: {
+              itemType: tracked.itemType,
+              status: "inProgress",
+              title: toolTitle(event.toolName, event.args),
+              data: toolLifecycleData({
+                toolCallId: event.toolCallId,
+                toolName: event.toolName,
+                args: event.args,
+              }),
+            },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        }
+        case "tool_execution_update": {
+          const tracked = context.activeToolItems.get(event.toolCallId);
+          if (!tracked) return;
+          const detail = toolDetailText(event.partialResult);
+          recordItem(context, {
+            type: "tool_call",
+            status: "updated",
+            toolName: event.toolName,
+            output: detail,
+          });
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            itemId: tracked.itemId,
+            providerRefs: { providerItemId: ProviderItemId.makeUnsafe(event.toolCallId) },
+            type: "item.updated",
+            payload: {
+              itemType: tracked.itemType,
+              status: "inProgress",
+              title: toolTitle(event.toolName, tracked.args),
+              ...(detail ? { detail } : {}),
+              data: toolLifecycleData({
+                toolCallId: event.toolCallId,
+                toolName: event.toolName,
+                args: tracked.args,
+                partialResult: event.partialResult,
+              }),
+            },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        }
+        case "tool_execution_end": {
+          // `tool_execution_end` carries no args, so the tracked entry is the
+          // only source left for the title and item type.
+          const tracked = context.activeToolItems.get(event.toolCallId) ?? {
+            toolCallId: event.toolCallId,
+            toolName: event.toolName,
+            args: undefined,
+            itemId: RuntimeItemId.makeUnsafe(`omp-tool-${event.toolCallId}`),
+            itemType: toolItemType(event.toolName),
+          };
+          context.activeToolItems.delete(event.toolCallId);
+          const detail = toolDetailText(event.result);
+          recordItem(context, {
+            type: "tool_call",
+            status: event.isError ? "failed" : "completed",
+            toolName: event.toolName,
+            output: detail,
+            result: event.result,
+          });
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            itemId: tracked.itemId,
+            providerRefs: { providerItemId: ProviderItemId.makeUnsafe(event.toolCallId) },
+            type: "item.completed",
+            payload: {
+              itemType: tracked.itemType,
+              status: event.isError ? "failed" : "completed",
+              title: toolTitle(event.toolName, tracked.args),
+              ...(detail ? { detail } : {}),
+              data: toolLifecycleData({
+                toolCallId: event.toolCallId,
+                toolName: event.toolName,
+                args: tracked.args,
+                result: event.result,
+                ...(event.isError !== undefined ? { isError: event.isError } : {}),
+              }),
+            },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        }
+        case "auto_compaction_start":
+          // Activity projection keys compaction by eventId and deliberately
+          // skips `item.started`, so each compaction event stands alone.
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            itemId: RuntimeItemId.makeUnsafe(`omp-compaction-${crypto.randomUUID()}`),
+            type: "item.updated",
+            payload: {
+              itemType: "context_compaction",
+              status: "inProgress",
+              title: ompCompactionTitle(event.reason, event.action),
+            },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        case "auto_compaction_end": {
+          const itemId = RuntimeItemId.makeUnsafe(`omp-compaction-${crypto.randomUUID()}`);
+          const detail = trimToUndefined(event.errorMessage);
+          const raw = {
+            source: "omp.sdk.event",
+            messageType: event.type,
+            payload: event,
+          } satisfies ProviderRuntimeEvent["raw"];
+          // A compaction that will be retried is not a terminal failure; keep it
+          // in progress so the transcript does not report a dead compaction.
+          if (event.willRetry) {
+            offerRuntimeEvent({
+              ...makeEventBase(context),
+              itemId,
+              type: "item.updated",
+              payload: {
+                itemType: "context_compaction",
+                status: "inProgress",
+                title: "Retrying context compaction",
+                ...(detail ? { detail } : {}),
+                data: event,
+              },
+              raw,
+            } satisfies ProviderRuntimeEvent);
+            return;
+          }
+          const failed = event.aborted || detail !== undefined;
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            itemId,
+            type: "item.completed",
+            payload: {
+              itemType: "context_compaction",
+              status: failed ? "failed" : "completed",
+              title: failed
+                ? "Context compaction failed"
+                : event.skipped
+                  ? "Context compaction skipped"
+                  : "Context compacted",
+              ...(detail ? { detail } : {}),
+              data: event,
+            },
+            raw,
+          } satisfies ProviderRuntimeEvent);
+          return;
+        }
+        case "auto_retry_start":
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            type: "runtime.warning",
+            payload: {
+              message: `OMP is retrying (attempt ${String(event.attempt)}/${String(event.maxAttempts)}, waiting ${String(Math.max(1, Math.round(event.delayMs / 1_000)))}s): ${event.errorMessage}`,
+              detail: {
+                attempt: event.attempt,
+                maxAttempts: event.maxAttempts,
+                delayMs: event.delayMs,
+              },
+            },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        case "auto_retry_end":
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            type: "runtime.warning",
+            payload: {
+              message: event.success
+                ? `OMP recovered after ${String(event.attempt)} retry attempt(s).`
+                : `OMP gave up after ${String(event.attempt)} retry attempt(s): ${event.finalError ?? "unknown error"}`,
+              detail: { success: event.success, attempt: event.attempt },
+            },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        case "retry_fallback_applied":
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            type: "model.rerouted",
+            payload: {
+              fromModel: event.from,
+              toModel: event.to,
+              reason: `OMP retry fallback for role "${event.role}"`,
+            },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        case "retry_fallback_succeeded":
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            type: "runtime.warning",
+            payload: {
+              message: `Fallback model ${event.model} succeeded for role "${event.role}".`,
+              detail: { model: event.model, role: event.role },
+            },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        case "notice": {
+          const message = trimToUndefined(event.message);
+          if (!message) return;
+          if (event.level === "error") {
+            offerRuntimeError(context, {
+              message,
+              method: "session/notice",
+              messageType: event.type,
+            });
+            return;
+          }
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            type: "runtime.warning",
+            payload: {
+              message,
+              detail: { level: event.level, ...(event.source ? { source: event.source } : {}) },
+            },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        }
+        case "thinking_level_changed":
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            type: "thread.metadata.updated",
+            payload: {
+              metadata: {
+                thinkingLevel: event.thinkingLevel ?? null,
+                ...(event.configured !== undefined
+                  ? { configuredThinkingLevel: event.configured }
+                  : {}),
+                ...(event.resolved !== undefined ? { resolvedThinkingLevel: event.resolved } : {}),
+              },
+            },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        case "todo_reminder": {
+          const tasks = event.todos.flatMap((todo) => {
+            const item = makeRuntimeTaskListItem(todo.content, todo.status);
+            return item ? [item] : [];
+          });
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            type: "turn.tasks.updated",
+            payload: { tasks },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
+        }
+        case "todo_auto_clear":
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            type: "turn.tasks.updated",
+            payload: { tasks: [] },
+            raw: { source: "omp.sdk.event", messageType: event.type, payload: event },
+          } satisfies ProviderRuntimeEvent);
+          return;
         case "agent_end": {
           const stats = context.agentSession.getSessionStats();
           const usage = normalizeTokenUsage(stats, context.agentSession.model?.contextWindow);
@@ -624,17 +1071,22 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
             } satisfies ProviderRuntimeEvent);
           }
           // OMP has no `agent_settled`: `isTerminal === false` means an async
-          // job delivery will resume this session with a follow-up turn, so the
-          // Synara turn must stay open. Anything else ends the turn here.
+          // delivery will resume this session with a follow-up turn, so the
+          // Synara turn stays open across the gap — same turn id on both sides
+          // is what keeps the ingress from dropping the follow-up.
           if (event.isTerminal === false) {
+            context.pendingAsyncDelivery = true;
+            closeActiveStreamItems(context, "completed", raw);
+            armTurnWatchdog(context);
             return;
           }
           const turnId = context.activeTurnId;
           if (!turnId) return;
           const errorMessage = trimToUndefined(context.agentSession.agent.state.error);
+          const failure = errorMessage ? classifyOmpTurnFailure(errorMessage) : undefined;
           const turn = context.turns.find((candidate) => candidate.id === turnId);
           if (turn) turn.leafId = context.sessionManager.getLeafId();
-          if (errorMessage) {
+          if (errorMessage && failure?.state === "failed") {
             offerRuntimeError(context, {
               message: errorMessage,
               method: "session/event",
@@ -648,16 +1100,23 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
           offerRuntimeEvent({
             ...completionBase,
             type: "turn.completed",
-            payload: errorMessage
-              ? { state: "failed", stopReason: "error", errorMessage, usage: stats }
-              : { state: "completed", stopReason: null, usage: stats },
+            payload:
+              errorMessage && failure
+                ? {
+                    state: failure.state,
+                    stopReason: failure.stopReason,
+                    errorMessage,
+                    usage: stats,
+                  }
+                : { state: "completed", stopReason: null, usage: stats },
             raw,
           } satisfies ProviderRuntimeEvent);
           return;
         }
         default:
-          // Tool items, compaction/retry/notice surfaces, todo/goal extras land
-          // in M4 phase 3; ignoring them here never breaks the turn lifecycle.
+          // `ttsr_triggered`, `irc_message` and `goal_updated` have no canonical
+          // Synara surface yet (coverage map: "later"); ignoring them never
+          // breaks the turn lifecycle.
           return;
       }
     };
@@ -752,6 +1211,10 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
           activeTurn: undefined,
           activeAssistantItemId: undefined,
           activeReasoningItemId: undefined,
+          activeToolItems: new Map(),
+          pendingAsyncDelivery: false,
+          turnWatchdog: undefined,
+          turnActivityAt: Date.now(),
           stopped: false,
           lastKnownTokenUsage: undefined,
           unsubscribe: undefined,
@@ -854,6 +1317,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
         context.activeTurnId = turnId;
         context.turns.push({ id: turnId, items: [] });
         context.session = makeSessionSnapshot(context);
+        armTurnWatchdog(context);
         const harnessPolicy = takeSynaraHarnessPolicyForProviderSession(context, {
           provider: PROVIDER,
           scopedGatewayConnectionAvailable: false,
@@ -883,6 +1347,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
         if (!context.activeTurnId) {
           context.activeTurnId = turnId;
           context.turns.push({ id: turnId, items: [] });
+          armTurnWatchdog(context);
         }
         if (context.agentSession.isStreaming) {
           yield* Effect.tryPromise({
@@ -1002,7 +1467,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
     const listModels: NonNullable<OmpAdapterShape["listModels"]> = (input) =>
       Effect.tryPromise({
         try: async () => {
-          const sdk = await loadOmpCodingAgentModule();
+          const sdk = await loadSdkModule();
           const authStorage = await sdk.discoverAuthStorage(trimToUndefined(input.agentDir));
           const registry = new sdk.ModelRegistry(authStorage);
           // Enrich the catalog off the sync constructor path; offline falls

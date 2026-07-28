@@ -667,41 +667,41 @@
         {
           id: 3,
           name: "Phase 3 — Event mapping v1 + 2 risks",
-          st: "todo",
+          st: "done",
           goal: "Trải nghiệm ngang PiAdapter hiện tại + nền móng background tools (2 risk rows).",
           tasks: [
             {
               t: "Tool items: tool_execution_start/update/end → item lifecycle (port toolLifecycleData, toolDetailText từ PiAdapter)",
-              st: "todo",
+              st: "done",
             },
-            { t: "Reasoning items (phân biệt thinking blocks trong message payload)", st: "todo" },
+            { t: "Reasoning items (phân biệt thinking blocks trong message payload)", st: "done" },
             {
               t: "Token usage: getSessionStats() → normalizeTokenUsage (đối chiếu shape 17.x)",
-              st: "todo",
+              st: "done",
             },
             {
               t: "ompTurnFailure.ts — phân loại lỗi terminal (nhẹ hơn pi: auto-retry đã nằm trong engine)",
-              st: "todo",
+              st: "done",
             },
             {
               t: "Status items: auto_compaction_start/end (4 action), auto_retry_*, retry_fallback_*, notice, thinking_level_changed",
-              st: "todo",
+              st: "done",
             },
             {
               t: "todo_reminder / todo_auto_clear → runtimeTaskList.ts (concept có sẵn, không cần contract mới)",
-              st: "todo",
+              st: "done",
             },
             {
               t: "RISK #1: turn tự phát từ async delivery — verify providerRuntimeEventIngress + Reconciler không drop turn không do sendTurn khởi tạo",
-              st: "todo",
+              st: "done",
             },
             {
               t: "RISK #2: watchdog turn mới quanh isTerminal (thay thế logic agent_settled của pi, PI_TURN_INACTIVITY_TIMEOUT_MS pattern)",
-              st: "todo",
+              st: "done",
             },
           ],
           accept:
-            "<b>Kiểm tra:</b> trong thread OMP nhờ agent chạy <code>bash async:true</code> một lệnh ~20s rồi cứ để đó — khi job xong, một follow-up turn tự hiện trong UI với kết quả. Tool calls hiện title/detail/exit code như thread pi.",
+            "<b>Kiểm tra:</b> trong thread OMP nhờ agent chạy <code>bash async:true</code> một lệnh ~20s rồi cứ để đó — khi job xong, một follow-up turn tự hiện trong UI với kết quả. Tool calls hiện title/detail/exit code như thread pi. <b>ĐÃ CHẠY 2026-07-28:</b> UI thread OMP hiện <code>Completed command · sleep 30; echo ASYNC-DONE-42 · 0s elapsed</code> → <code>QUEUED</code> → <code>ASYNC-DONE-42</code> (0s elapsed = tool trả về ngay, job chạy nền thật). Probe engine <code>playground/omp-spike/async-followup.ts</code> in ra đúng chuỗi: tool_end 2ms → <code>agent_end isTerminal=false</code> (6.7s) → <code>agent_start</code> tự phát (17.7s) → <code>agent_end isTerminal=true</code> (21.9s). 6 test trong <code>OmpAdapter.turnLifecycle.test.ts</code> khoá cả 2 risk ở tầng adapter (giữ nguyên turnId qua async gap, mint turn tự phát, watchdog fail turn kẹt nhưng KHÔNG fail khi engine còn job).",
           unlock: [
             "Tool calls hiển thị đầy đủ như pi",
             "Background jobs: kết quả tự về thread (móng cho background tools của bạn)",
