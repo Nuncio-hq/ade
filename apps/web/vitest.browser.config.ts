@@ -15,6 +15,10 @@ export default mergeConfig(
       },
     },
     test: {
+      // Node unit tests install an in-memory localStorage stub via
+      // vite.config.ts setupFiles. Real Chromium already has localStorage —
+      // clear inheritance so browser runs don't redefine the browser global.
+      setupFiles: [],
       include: [
         "src/components/**/*.browser.tsx",
         "src/lib/**/*.browser.ts",
