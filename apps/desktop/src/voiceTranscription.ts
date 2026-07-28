@@ -9,18 +9,18 @@ import { app, ipcMain } from "electron";
 import type {
   ServerVoiceTranscriptionInput,
   ServerVoiceTranscriptionResult,
-} from "@synara/contracts";
-import { SERVER_VOICE_TRANSCRIPTION_MAX_AUDIO_BYTES } from "@synara/contracts";
+} from "@nuncio/contracts";
+import { SERVER_VOICE_TRANSCRIPTION_MAX_AUDIO_BYTES } from "@nuncio/contracts";
 import {
   CHATGPT_VOICE_TRANSCRIPTION_URL,
   requestChatGptVoiceTranscription,
-} from "@synara/shared/chatGptVoiceTranscription";
+} from "@nuncio/shared/chatGptVoiceTranscription";
 import {
   decodeOutboundJson,
   decodeOutboundText,
   type OutboundHttpResponse,
-} from "@synara/shared/outboundHttp";
-import { prepareWindowsSafeProcess } from "@synara/shared/windowsProcess";
+} from "@nuncio/shared/outboundHttp";
+import { prepareWindowsSafeProcess } from "@nuncio/shared/windowsProcess";
 import { SERVER_TRANSCRIBE_VOICE_CHANNEL } from "./ipcChannels";
 
 const MAX_VOICE_DURATION_MS = 120_000;
@@ -190,8 +190,8 @@ async function resolveDesktopVoiceAuth(
         method: "initialize",
         params: {
           clientInfo: {
-            name: "synara-desktop",
-            title: "Synara Desktop",
+            name: "nuncioade-desktop",
+            title: "NuncioADE Desktop",
             version: app.getVersion(),
           },
           capabilities: { experimentalApi: true },

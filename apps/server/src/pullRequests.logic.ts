@@ -5,10 +5,10 @@ import type {
   PullRequestMergeCapabilities,
   PullRequestMergeMethod,
   PullRequestState,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 
 import type { GitHubPullRequestListItem } from "./git/Services/GitHubCli.ts";
-export { isValidGitHubRepositoryNameWithOwner } from "@synara/shared/githubRepository";
+export { isValidGitHubRepositoryNameWithOwner } from "@nuncio/shared/githubRepository";
 
 export function pullRequestListCacheKey(
   repository: string,

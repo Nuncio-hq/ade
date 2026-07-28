@@ -3,11 +3,11 @@ import { randomUUID } from "node:crypto";
 import { Effect, FileSystem, Layer, Option, Path, Schema, Stream } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 
-import { DEFAULT_GIT_TEXT_GENERATION_MODEL } from "@synara/contracts";
-import { sanitizeGeneratedThreadTitle } from "@synara/shared/chatThreads";
-import { resolveCodexHome } from "@synara/shared/codexConfig";
-import { sanitizeBranchFragment, sanitizeFeatureBranchName } from "@synara/shared/git";
-import { prepareWindowsSafeProcess } from "@synara/shared/windowsProcess";
+import { DEFAULT_GIT_TEXT_GENERATION_MODEL } from "@nuncio/contracts";
+import { sanitizeGeneratedThreadTitle } from "@nuncio/shared/chatThreads";
+import { resolveCodexHome } from "@nuncio/shared/codexConfig";
+import { sanitizeBranchFragment, sanitizeFeatureBranchName } from "@nuncio/shared/git";
+import { prepareWindowsSafeProcess } from "@nuncio/shared/windowsProcess";
 
 import { resolveProviderAttachmentPath } from "../../provider/providerAttachmentPaths.ts";
 import { buildCodexProcessEnv } from "../../codexProcessEnv.ts";
@@ -152,7 +152,7 @@ const makeCodexTextGeneration = Effect.gen(function* () {
     prefix: string,
     content: string,
   ): Effect.Effect<string, TextGenerationError> => {
-    const filePath = path.join(tempDir, `synara-${prefix}-${process.pid}-${randomUUID()}.tmp`);
+    const filePath = path.join(tempDir, `nuncioade-${prefix}-${process.pid}-${randomUUID()}.tmp`);
     return fileSystem.writeFileString(filePath, content).pipe(
       Effect.mapError(
         (cause) =>
@@ -180,7 +180,7 @@ const makeCodexTextGeneration = Effect.gen(function* () {
       const sourceCodexHome = sourceHomePath?.trim() || resolveCodexHome(process.env);
       const isolatedHomePath = path.join(
         tempDir,
-        `synara-codex-home-${process.pid}-${randomUUID()}`,
+        `nuncioade-codex-home-${process.pid}-${randomUUID()}`,
       );
 
       yield* fileSystem.makeDirectory(isolatedHomePath, { recursive: true }).pipe(

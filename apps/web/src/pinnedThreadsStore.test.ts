@@ -3,7 +3,7 @@
 // Layer: UI state store test
 
 import { beforeEach, describe, expect, it } from "vitest";
-import { ThreadId } from "@synara/contracts";
+import { ThreadId } from "@nuncio/contracts";
 import { usePinnedThreadsStore } from "./pinnedThreadsStore";
 
 describe("usePinnedThreadsStore", () => {

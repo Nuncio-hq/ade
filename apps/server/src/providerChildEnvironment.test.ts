@@ -5,15 +5,15 @@ import { describe, expect, it } from "vitest";
 import { buildProviderChildEnvironment } from "./providerChildEnvironment";
 
 describe("buildProviderChildEnvironment", () => {
-  it("strips Synara control-plane and inherited native capabilities", () => {
+  it("strips NuncioADE control-plane and inherited native capabilities", () => {
     const env = buildProviderChildEnvironment({
       provider: "antigravity",
       baseEnv: {
         PATH: "/usr/bin",
         HOME: "/home/test",
         GEMINI_API_KEY: "provider-key",
-        SYNARA_AUTH_TOKEN: "control-plane-secret",
-        SYNARA_BROWSER_USE_PIPE_PATH: "/tmp/browser.sock",
+        NUNCIO_AUTH_TOKEN: "control-plane-secret",
+        NUNCIO_BROWSER_USE_PIPE_PATH: "/tmp/browser.sock",
         NODE_OPTIONS: "--require=/tmp/inject.js",
         NODE_REPL_SANDBOX_ALLOWED_UNIX_SOCKETS: "/tmp/other.sock",
       },
@@ -30,16 +30,16 @@ describe("buildProviderChildEnvironment", () => {
     const env = buildProviderChildEnvironment({
       provider: "codex",
       baseEnv: {
-        SYNARA_AUTH_TOKEN: "control-plane-secret",
-        SYNARA_BROWSER_USE_PIPE_PATH: "/tmp/browser.sock",
+        NUNCIO_AUTH_TOKEN: "control-plane-secret",
+        NUNCIO_BROWSER_USE_PIPE_PATH: "/tmp/browser.sock",
         NODE_REPL_SANDBOX_ALLOWED_UNIX_SOCKETS: "/tmp/browser.sock",
       },
-      inheritedSynaraKeys: ["SYNARA_BROWSER_USE_PIPE_PATH"],
+      inheritedNuncioADEKeys: ["NUNCIO_BROWSER_USE_PIPE_PATH"],
       inheritedNativeCapabilityKeys: ["NODE_REPL_SANDBOX_ALLOWED_UNIX_SOCKETS"],
     });
 
     expect(env).toEqual({
-      SYNARA_BROWSER_USE_PIPE_PATH: "/tmp/browser.sock",
+      NUNCIO_BROWSER_USE_PIPE_PATH: "/tmp/browser.sock",
       NODE_REPL_SANDBOX_ALLOWED_UNIX_SOCKETS: "/tmp/browser.sock",
     });
   });
@@ -50,7 +50,7 @@ describe("buildProviderChildEnvironment", () => {
       baseEnv: { PATH: "/usr/bin" },
       overrides: {
         OPENCODE_EXPERIMENTAL_WEBSOCKETS: "true",
-        SYNARA_AUTH_TOKEN: "overlaid-control-plane-secret",
+        NUNCIO_AUTH_TOKEN: "overlaid-control-plane-secret",
         NODE_OPTIONS: "--require=/tmp/inject.js",
       },
     });
@@ -106,11 +106,11 @@ describe("buildProviderChildEnvironment", () => {
       baseEnv: {
         XAI_API_KEY: "grok-secret",
         ANTHROPIC_API_KEY: "unrelated-secret",
-        SYNARA_AUTH_TOKEN: "control-plane-secret",
+        NUNCIO_AUTH_TOKEN: "control-plane-secret",
       },
     });
     const descendantScript =
-      "process.stdout.write(JSON.stringify({ xai: process.env.XAI_API_KEY, anthropic: process.env.ANTHROPIC_API_KEY, synara: process.env.SYNARA_AUTH_TOKEN }))";
+      "process.stdout.write(JSON.stringify({ xai: process.env.XAI_API_KEY, anthropic: process.env.ANTHROPIC_API_KEY, nuncioade: process.env.NUNCIO_AUTH_TOKEN }))";
     const parentScript = `const { spawnSync } = require("node:child_process"); const result = spawnSync(process.execPath, ["-e", ${JSON.stringify(descendantScript)}], { env: process.env, encoding: "utf8" }); process.stdout.write(result.stdout); process.stderr.write(result.stderr); process.exit(result.status ?? 1);`;
     const result = spawnSync(process.execPath, ["-e", parentScript], {
       env,

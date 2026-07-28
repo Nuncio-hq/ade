@@ -5,7 +5,7 @@
 // Layer: Web chat composer tests
 // Depends on: deriveWorkflowRunState
 
-import { EventId, type OrchestrationThreadActivity } from "@synara/contracts";
+import { EventId, type OrchestrationThreadActivity } from "@nuncio/contracts";
 import { describe, expect, it } from "vitest";
 
 import {

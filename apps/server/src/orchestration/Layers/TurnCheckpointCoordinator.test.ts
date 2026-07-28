@@ -1,4 +1,4 @@
-import { ThreadId } from "@synara/contracts";
+import { ThreadId } from "@nuncio/contracts";
 import { assert, it } from "@effect/vitest";
 import { Deferred, Effect, Fiber, Ref } from "effect";
 

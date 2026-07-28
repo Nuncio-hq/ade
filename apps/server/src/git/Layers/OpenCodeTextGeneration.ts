@@ -12,10 +12,10 @@ import type {
   OpenCodeModelSelection,
   OpenCodeModelOptions,
   ProviderStartOptions,
-} from "@synara/contracts";
-import { sanitizeGeneratedThreadTitle } from "@synara/shared/chatThreads";
-import { sanitizeBranchFragment, sanitizeFeatureBranchName } from "@synara/shared/git";
-import { getModelSelectionStringOptionValue } from "@synara/shared/model";
+} from "@nuncio/contracts";
+import { sanitizeGeneratedThreadTitle } from "@nuncio/shared/chatThreads";
+import { sanitizeBranchFragment, sanitizeFeatureBranchName } from "@nuncio/shared/git";
+import { getModelSelectionStringOptionValue } from "@nuncio/shared/model";
 
 import { resolveProviderAttachmentPath } from "../../provider/providerAttachmentPaths.ts";
 import { ServerConfig } from "../../config.ts";
@@ -388,7 +388,7 @@ const makeOpenCodeCompatibleTextGeneration = (config: OpenCodeCompatibleTextGene
               cliSpec: config.cliSpec,
             });
             const sessionCreateInput = {
-              title: `Synara ${input.operation}`,
+              title: `NuncioADE ${input.operation}`,
               model: {
                 providerID: providerId,
                 id: modelId,

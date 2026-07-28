@@ -8,4 +8,4 @@ export interface AutomationRunReactorShape {
 export class AutomationRunReactor extends ServiceMap.Service<
   AutomationRunReactor,
   AutomationRunReactorShape
->()("synara/automation/Services/AutomationRunReactor") {}
+>()("nuncioade/automation/Services/AutomationRunReactor") {}

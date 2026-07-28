@@ -138,7 +138,7 @@ function main(): void {
     ...findVisualBrandAssetViolations(trackedFiles),
   ];
   if (violations.length === 0) {
-    console.log("Synara identity check passed.");
+    console.log("NuncioADE identity check passed.");
     return;
   }
 

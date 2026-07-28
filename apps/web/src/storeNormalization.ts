@@ -11,10 +11,10 @@ import {
   type OrchestrationThreadActivity,
   type ProviderKind,
   ThreadId,
-} from "@synara/contracts";
-import { resolveThreadBranchRegressionGuard } from "@synara/shared/git";
-import { normalizeModelSlug } from "@synara/shared/model";
-import { deriveThreadSummaryMetadata } from "@synara/shared/threadSummary";
+} from "@nuncio/contracts";
+import { resolveThreadBranchRegressionGuard } from "@nuncio/shared/git";
+import { normalizeModelSlug } from "@nuncio/shared/model";
+import { deriveThreadSummaryMetadata } from "@nuncio/shared/threadSummary";
 
 import { isStalePendingRequestFailureDetail } from "./lib/pendingInteraction";
 import { toAttachmentPreviewUrl } from "./lib/wsHttpUrl";

@@ -6,8 +6,8 @@
  *
  * @module CursorAcpSupport
  */
-import { type CursorModelOptions, type ProviderModelDescriptor } from "@synara/contracts";
-import { formatModelDisplayName, parseCursorCliReasoningEffort } from "@synara/shared/model";
+import { type CursorModelOptions, type ProviderModelDescriptor } from "@nuncio/contracts";
+import { formatModelDisplayName, parseCursorCliReasoningEffort } from "@nuncio/shared/model";
 import { Effect, Layer, Schema, Scope, ServiceMap } from "effect";
 import { ChildProcessSpawner } from "effect/unstable/process";
 import * as AcpErrors from "./AcpErrors.ts";
@@ -414,7 +414,7 @@ export function parseCursorCliModelList(stdout: string): ReadonlyArray<ProviderM
 
 export const CURSOR_LIST_AVAILABLE_MODELS_METHOD = "cursor/list_available_models";
 
-// Cursor exposes "auto" as a `default` model id over ACP; keep Synara's "auto"
+// Cursor exposes "auto" as a `default` model id over ACP; keep NuncioADE's "auto"
 // slug so the picker and DEFAULT_MODEL_BY_PROVIDER stay consistent.
 const CURSOR_ACP_AUTO_MODEL_ID = "default";
 

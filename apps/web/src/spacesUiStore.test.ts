@@ -1,4 +1,4 @@
-import { ProjectId, SpaceId, ThreadId } from "@synara/contracts";
+import { ProjectId, SpaceId, ThreadId } from "@nuncio/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useSpacesUiStore } from "./spacesUiStore";

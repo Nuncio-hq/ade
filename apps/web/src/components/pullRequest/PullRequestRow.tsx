@@ -5,8 +5,8 @@
 // Layer: Pull request presentation
 // Exports: PullRequestRow
 
-import type { PullRequestListEntry } from "@synara/contracts";
-import { pullRequestListProjectContexts } from "@synara/shared/githubRepository";
+import type { PullRequestListEntry } from "@nuncio/contracts";
+import { pullRequestListProjectContexts } from "@nuncio/shared/githubRepository";
 
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { PinStatusIcon, pinActionLabel } from "~/lib/pin";

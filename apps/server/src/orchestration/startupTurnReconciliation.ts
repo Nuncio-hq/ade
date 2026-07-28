@@ -34,13 +34,13 @@ import type {
   OrchestrationSession,
   RuntimeMode,
   ThreadId,
-} from "@synara/contracts";
-import { CommandId, EventId } from "@synara/contracts";
+} from "@nuncio/contracts";
+import { CommandId, EventId } from "@nuncio/contracts";
 import {
   buildStalePendingRequestFailureDetail,
   derivePendingThreadRequestIds,
   type PendingThreadRequestKind,
-} from "@synara/shared/threadSummary";
+} from "@nuncio/shared/threadSummary";
 import { Effect, Option } from "effect";
 
 import {

@@ -11,13 +11,13 @@ import type {
   ProjectId,
   SpaceId,
   ThreadId,
-} from "@synara/contracts";
-import { THREAD_NOT_ARCHIVED_INVARIANT_MARKER } from "@synara/shared/errorMessages";
+} from "@nuncio/contracts";
+import { THREAD_NOT_ARCHIVED_INVARIANT_MARKER } from "@nuncio/shared/errorMessages";
 import {
   isLegacyHomeChatContainerRow as isSharedLegacyHomeChatContainerRow,
   isOrdinaryProjectRow as isSharedOrdinaryProjectRow,
-} from "@synara/shared/projectContainers";
-import { normalizeWorkspaceRootForComparison } from "@synara/shared/threadWorkspace";
+} from "@nuncio/shared/projectContainers";
+import { normalizeWorkspaceRootForComparison } from "@nuncio/shared/threadWorkspace";
 import { Effect } from "effect";
 
 import { OrchestrationCommandInvariantError } from "./Errors.ts";

@@ -1,9 +1,9 @@
 // FILE: AcpElicitationSupport.ts
-// Purpose: Bridges ACP form elicitation schemas to Synara's provider-neutral question UI.
+// Purpose: Bridges ACP form elicitation schemas to NuncioADE's provider-neutral question UI.
 // Layer: Provider ACP protocol mapping
 // Exports: question extraction and typed ACP response construction.
 
-import type { ProviderUserInputAnswers, UserInputQuestion } from "@synara/contracts";
+import type { ProviderUserInputAnswers, UserInputQuestion } from "@nuncio/contracts";
 import type * as Acp from "@agentclientprotocol/sdk";
 
 type FormElicitationRequest = Acp.ElicitationFormMode & {
@@ -79,7 +79,7 @@ function propertyOptions(property: ElicitationProperty): ReadonlyArray<{
   return [];
 }
 
-// Converts primitive ACP form fields into the question shape consumed by Synara's composer.
+// Converts primitive ACP form fields into the question shape consumed by NuncioADE's composer.
 export function elicitationQuestionsFromRequest(
   request: FormElicitationRequest,
 ): ReadonlyArray<UserInputQuestion> {

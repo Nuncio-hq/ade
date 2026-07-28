@@ -3,7 +3,7 @@ import { constants as NodeFsConstants } from "node:fs";
 import * as NodeFs from "node:fs/promises";
 import * as NodePath from "node:path";
 
-import { isLocalAbsolutePath } from "@synara/shared/path";
+import { isLocalAbsolutePath } from "@nuncio/shared/path";
 import { Effect, Layer, Path } from "effect";
 
 import { resolveLocalPreviewGrantRealPath } from "../../localImageFiles";

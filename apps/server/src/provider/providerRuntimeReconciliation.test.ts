@@ -4,7 +4,7 @@ import {
   TurnId,
   type OrchestrationThreadShell,
   type ProviderSession,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { describe, expect, it } from "vitest";
 
 import { planProviderRuntimeReconciliation } from "./providerRuntimeReconciliation.ts";

@@ -1,22 +1,22 @@
 import { assert, describe, it } from "@effect/vitest";
 
 import {
-  renderSynaraHarnessPolicy,
-  SYNARA_HARNESS_POLICY_MARKER,
-  takeSynaraHarnessPolicyForProviderSession,
-  takeSynaraHarnessPolicyTextPartForProviderSession,
-  takeSynaraHarnessPolicyForSession,
+  renderNuncioADEHarnessPolicy,
+  NUNCIO_HARNESS_POLICY_MARKER,
+  takeNuncioADEHarnessPolicyForProviderSession,
+  takeNuncioADEHarnessPolicyTextPartForProviderSession,
+  takeNuncioADEHarnessPolicyForSession,
 } from "./harnessPolicy.ts";
 
-describe("Synara harness policy", () => {
-  it("identifies Synara and explains exact batch coordination when MCP is available", () => {
-    const policy = renderSynaraHarnessPolicy({ gatewayControlAvailable: true });
-    assert.include(policy, SYNARA_HARNESS_POLICY_MARKER);
-    assert.include(policy, "Synara is the host and harness");
-    assert.include(policy, "one exact synara_create_threads plan");
+describe("NuncioADE harness policy", () => {
+  it("identifies NuncioADE and explains exact batch coordination when MCP is available", () => {
+    const policy = renderNuncioADEHarnessPolicy({ gatewayControlAvailable: true });
+    assert.include(policy, NUNCIO_HARNESS_POLICY_MARKER);
+    assert.include(policy, "NuncioADE is the host and harness");
+    assert.include(policy, "one exact nuncioade_create_threads plan");
     assert.include(policy, "before returning an operationId");
-    assert.include(policy, "synara_wait_for_threads");
-    assert.include(policy, "do not create Synara threads");
+    assert.include(policy, "nuncioade_wait_for_threads");
+    assert.include(policy, "do not create NuncioADE threads");
     assert.include(policy, "3–8 word outcome-oriented task label");
     assert.include(policy, "no assumed chat context");
     assert.include(policy, "notifying the user versus staying silent");
@@ -25,18 +25,18 @@ describe("Synara harness policy", () => {
   });
 
   it("never advertises gateway mutation to providers without scoped MCP", () => {
-    const policy = renderSynaraHarnessPolicy({ gatewayControlAvailable: false });
-    assert.include(policy, "Synara MCP control is unavailable");
-    assert.notInclude(policy, "one exact synara_create_threads plan");
+    const policy = renderNuncioADEHarnessPolicy({ gatewayControlAvailable: false });
+    assert.include(policy, "NuncioADE MCP control is unavailable");
+    assert.notInclude(policy, "one exact nuncioade_create_threads plan");
   });
 
   it("delivers a private host-context block once per provider session", () => {
     const state: { harnessPolicyDelivered?: boolean } = {};
     assert.include(
-      takeSynaraHarnessPolicyForSession(state, { gatewayControlAvailable: true }) ?? "",
-      "<synara_host_context>",
+      takeNuncioADEHarnessPolicyForSession(state, { gatewayControlAvailable: true }) ?? "",
+      "<nuncioade_host_context>",
     );
-    assert.isNull(takeSynaraHarnessPolicyForSession(state, { gatewayControlAvailable: true }));
+    assert.isNull(takeNuncioADEHarnessPolicyForSession(state, { gatewayControlAvailable: true }));
   });
 
   it("delivers once on fresh/load/fork sessions for every scoped MCP provider", () => {
@@ -44,14 +44,14 @@ describe("Synara harness policy", () => {
       for (const lifecycle of ["fresh", "load", "fork"] as const) {
         const state: { harnessPolicyDelivered?: boolean } = {};
         const first =
-          takeSynaraHarnessPolicyTextPartForProviderSession(state, {
+          takeNuncioADEHarnessPolicyTextPartForProviderSession(state, {
             provider,
             scopedGatewayConnectionAvailable: true,
           })?.text ?? "";
-        assert.include(first, SYNARA_HARNESS_POLICY_MARKER, `${provider}/${lifecycle}`);
-        assert.include(first, "Use the synara_* tools", `${provider}/${lifecycle}`);
+        assert.include(first, NUNCIO_HARNESS_POLICY_MARKER, `${provider}/${lifecycle}`);
+        assert.include(first, "Use the nuncioade_* tools", `${provider}/${lifecycle}`);
         assert.isNull(
-          takeSynaraHarnessPolicyForProviderSession(state, {
+          takeNuncioADEHarnessPolicyForProviderSession(state, {
             provider,
             scopedGatewayConnectionAvailable: true,
           }),
@@ -64,13 +64,13 @@ describe("Synara harness policy", () => {
   it("keeps OpenCode, Kilo, and Pi identity-only until scoped setup succeeds", () => {
     for (const provider of ["opencode", "kilo", "pi"] as const) {
       const text =
-        takeSynaraHarnessPolicyForProviderSession(
+        takeNuncioADEHarnessPolicyForProviderSession(
           {},
           { provider, scopedGatewayConnectionAvailable: false },
         ) ?? "";
-      assert.include(text, SYNARA_HARNESS_POLICY_MARKER, provider);
-      assert.include(text, "Synara MCP control is unavailable", provider);
-      assert.notInclude(text, "one exact synara_create_threads plan", provider);
+      assert.include(text, NUNCIO_HARNESS_POLICY_MARKER, provider);
+      assert.include(text, "NuncioADE MCP control is unavailable", provider);
+      assert.notInclude(text, "one exact nuncioade_create_threads plan", provider);
     }
   });
 });

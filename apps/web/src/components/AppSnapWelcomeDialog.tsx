@@ -27,7 +27,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 
-const APP_SNAP_WELCOME_STORAGE_KEY = "synara:appsnap-welcome:v1";
+const APP_SNAP_WELCOME_STORAGE_KEY = "nuncioade:appsnap-welcome:v1";
 
 const AppSnapWelcomeStorageSchema = Schema.Struct({
   acknowledged: Schema.Boolean,
@@ -115,7 +115,7 @@ export function AppSnapWelcomeDialog() {
 
           <DialogHeader className="gap-2 p-0">
             <DialogTitle className="text-[19px] leading-tight">
-              Synara AppSnaps are live!
+              NuncioADE AppSnaps are live!
             </DialogTitle>
             {/* Two lines at 378px wide is the reference sheet's proportion; longer copy
                 wraps to three and throws the whole vertical rhythm off. */}

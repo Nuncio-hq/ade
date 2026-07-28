@@ -1,4 +1,4 @@
-import { ThreadId, type OrchestrationThreadShell } from "@synara/contracts";
+import { ThreadId, type OrchestrationThreadShell } from "@nuncio/contracts";
 import { Effect, Option } from "effect";
 
 import type { ProjectionSnapshotQueryShape } from "../orchestration/Services/ProjectionSnapshotQuery.ts";
@@ -160,7 +160,7 @@ export function makeAgentGatewayMcpTransport(input: {
             return yield* Effect.fail(
               new GatewayToolError(
                 "caller_turn_inactive",
-                "This Synara write was rejected because no caller turn was active when the MCP request arrived.",
+                "This NuncioADE write was rejected because no caller turn was active when the MCP request arrived.",
                 { callerThreadId },
               ),
             );
@@ -169,7 +169,7 @@ export function makeAgentGatewayMcpTransport(input: {
             return yield* Effect.fail(
               new GatewayToolError(
                 "caller_session_inactive",
-                "This Synara write was rejected because its provider-session authority is no longer active.",
+                "This NuncioADE write was rejected because its provider-session authority is no longer active.",
                 { callerThreadId },
               ),
             );
@@ -181,7 +181,7 @@ export function makeAgentGatewayMcpTransport(input: {
                 (error) =>
                   new GatewayToolError(
                     "caller_turn_inactive",
-                    "This Synara write was rejected because the caller thread could no longer be verified.",
+                    "This NuncioADE write was rejected because the caller thread could no longer be verified.",
                     { callerThreadId, error: errorText(error) },
                   ),
               ),
@@ -193,7 +193,7 @@ export function makeAgentGatewayMcpTransport(input: {
             return yield* Effect.fail(
               new GatewayToolError(
                 "caller_turn_inactive",
-                "This Synara write was rejected because the turn that received this MCP request is no longer active. In-flight requests cannot inherit authority from a later turn.",
+                "This NuncioADE write was rejected because the turn that received this MCP request is no longer active. In-flight requests cannot inherit authority from a later turn.",
                 {
                   callerThreadId,
                   authorizedTurnId: callerWriteAuthority.turnId,

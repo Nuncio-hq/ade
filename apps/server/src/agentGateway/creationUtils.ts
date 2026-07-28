@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { CommandId, MessageId, ThreadId } from "@synara/contracts";
+import { CommandId, MessageId, ThreadId } from "@nuncio/contracts";
 
 export function slugifyAgentTask(value: string): string {
   return (

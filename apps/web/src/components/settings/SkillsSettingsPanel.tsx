@@ -1,10 +1,10 @@
 // FILE: SkillsSettingsPanel.tsx
 // Purpose: Settings → Skills panel. Lists every skill from the unified cross-provider
-// catalog (~/.synara/skills plus each provider's skills folder), shows which provider
+// catalog (~/.nuncioade/skills plus each provider's skills folder), shows which provider
 // a skill comes from, and lets the user enable/disable each one. Disabled skills are
 // hidden from the composer skill picker on every provider.
 
-import type { ProviderKind, ServerSettings } from "@synara/contracts";
+import type { ProviderKind, ServerSettings } from "@nuncio/contracts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ProviderIcon } from "~/components/ProviderIcon";
@@ -95,17 +95,17 @@ export function SkillsSettingsPanel() {
 
   const totalSkills = skillGroups.length;
   const enabledSkills = skillGroups.filter((group) => !disabledSkillNames.has(group.key)).length;
-  const synaraSkillsDir = catalogQuery.data?.synaraSkillsDir;
+  const nuncioadeSkillsDir = catalogQuery.data?.nuncioadeSkillsDir;
 
   return (
     <div className="space-y-8">
       <SettingsSection title="Portable skills">
         <SettingsRow
-          title="Synara skills folder"
-          description="Skills placed here are available on every provider. When a provider already ships its own copy of a skill, that copy is used; otherwise Synara's copy is the fallback."
+          title="NuncioADE skills folder"
+          description="Skills placed here are available on every provider. When a provider already ships its own copy of a skill, that copy is used; otherwise NuncioADE's copy is the fallback."
           status={
-            synaraSkillsDir ? (
-              <code className="break-all text-[11px] text-muted-foreground">{synaraSkillsDir}</code>
+            nuncioadeSkillsDir ? (
+              <code className="break-all text-[11px] text-muted-foreground">{nuncioadeSkillsDir}</code>
             ) : null
           }
           control={
@@ -122,7 +122,7 @@ export function SkillsSettingsPanel() {
         <SettingsSection title="Skills">
           <SettingsRow
             title="Skill discovery failed"
-            description="Synara could not scan the skill folders. Retry after checking that the server is running."
+            description="NuncioADE could not scan the skill folders. Retry after checking that the server is running."
           />
         </SettingsSection>
       ) : null}
@@ -131,7 +131,7 @@ export function SkillsSettingsPanel() {
         <SettingsSection title="Skills">
           <SettingsRow
             title="No skills found"
-            description="Add a skill folder containing a SKILL.md to the Synara skills folder above, or install skills for any supported provider."
+            description="Add a skill folder containing a SKILL.md to the NuncioADE skills folder above, or install skills for any supported provider."
           />
         </SettingsSection>
       ) : null}

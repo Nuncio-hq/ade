@@ -10,7 +10,7 @@ import { WebSocketServer } from "ws";
 export const MAX_WEBSOCKET_MESSAGE_BYTES = 2 * 1024 * 1024;
 
 /**
- * Owns the Node HTTP/WebSocket transport so Synara, rather than the platform
+ * Owns the Node HTTP/WebSocket transport so NuncioADE, rather than the platform
  * adapter's 100 MiB default, controls admission before a message is decoded.
  */
 export const makeBoundedNodeHttpServer = Effect.fnUntraced(function* (

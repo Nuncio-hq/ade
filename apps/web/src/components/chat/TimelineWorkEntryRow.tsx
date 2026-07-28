@@ -3,7 +3,7 @@
 // Layer: Web chat presentation component
 // Exports: TimelineWorkEntryRow, EditedFileRowContent, prefersCompactWorkEntryRow
 
-import type { TurnId } from "@synara/contracts";
+import type { TurnId } from "@nuncio/contracts";
 import {
   createElement,
   memo,
@@ -53,7 +53,7 @@ import { DiffStatLabel } from "./DiffStatLabel";
 import { type ExpandedImagePreview } from "./ExpandedImagePreview";
 import { LinkChipIcon } from "../LinkChipIcon";
 import { normalizeCompactToolLabel } from "./MessagesTimeline.logic";
-import { SynaraLogo } from "../SynaraLogo";
+import { NuncioADELogo } from "../NuncioADELogo";
 import { ToolCallDetailsContent } from "./ToolCallDetailsDialog";
 import { DisclosureChevron } from "../ui/DisclosureChevron";
 import { DisclosureRegion } from "../ui/DisclosureRegion";
@@ -65,12 +65,12 @@ import {
 } from "../../lib/toolArgumentSummary";
 import {
   deriveReadableCommandDisplay,
-  deriveSynaraMcpToolTitle,
+  deriveNuncioADEMcpToolTitle,
   extractWebFetchUrl,
   normalizeToolTextForComparison,
   resolveCommandVisualKind,
-  sanitizeSynaraMcpToolPreview,
-  type SynaraMcpToolStatus,
+  sanitizeNuncioADEMcpToolPreview,
+  type NuncioADEMcpToolStatus,
 } from "../../lib/toolCallLabel";
 import {
   formatLiveActivityMeta,
@@ -94,8 +94,8 @@ type TimelineWorkEntry = WorkLogEntry;
 
 const AgentTaskIcon: LucideIcon = (props) => <BotIcon {...props} />;
 
-const SynaraToolIcon: LucideIcon = ({ className, ...props }) => (
-  <SynaraLogo {...props} className={cn("text-current", className)} />
+const NuncioADEToolIcon: LucideIcon = ({ className, ...props }) => (
+  <NuncioADELogo {...props} className={cn("text-current", className)} />
 );
 
 function workToneIcon(tone: TimelineWorkEntry["tone"]): {
@@ -268,12 +268,12 @@ export function renderWorkEntryIcon(Icon: LucideIcon, className: string): ReactE
   return createElement(Icon, { className });
 }
 
-// The leading glyph for a tool row: provider-brand marks (GitHub, Synara, MCP)
+// The leading glyph for a tool row: provider-brand marks (GitHub, NuncioADE, MCP)
 // win over the kind-derived entry icon. Shared with the collapsed tool-group
 // summary row, which borrows its first entry's icon.
 export function workEntryLeftIcon(workEntry: TimelineWorkEntry): LucideIcon {
   if (isGitHubMcpToolCall(workEntry)) return GitHubIcon;
-  if (isSynaraToolCall(workEntry)) return SynaraToolIcon;
+  if (isNuncioADEToolCall(workEntry)) return NuncioADEToolIcon;
   if (workEntry.itemType === "mcp_tool_call") return McpIcon;
   return workEntryIcon(workEntry);
 }
@@ -283,21 +283,21 @@ function isGitHubMcpToolCall(workEntry: TimelineWorkEntry): boolean {
   return Boolean(toolName?.startsWith("mcp__codex_apps__github"));
 }
 
-// Synara's own agent-gateway tools (synara_list_threads, synara_create_thread,
-// ...) get the Synara mark instead of the generic MCP glyph. Providers report
-// the call differently: Claude prefixes the MCP server (mcp__synara__*), ACP
-// agents surface the bare tool name (synara_*), and Codex reports server/tool
-// pairs that the label humanizer renders as "Synara: ...".
-function toolWorkEntryStatus(workEntry: TimelineWorkEntry): SynaraMcpToolStatus {
+// NuncioADE's own agent-gateway tools (nuncioade_list_threads, nuncioade_create_thread,
+// ...) get the NuncioADE mark instead of the generic MCP glyph. Providers report
+// the call differently: Claude prefixes the MCP server (mcp__nuncioade__*), ACP
+// agents surface the bare tool name (nuncioade_*), and Codex reports server/tool
+// pairs that the label humanizer renders as "NuncioADE: ...".
+function toolWorkEntryStatus(workEntry: TimelineWorkEntry): NuncioADEMcpToolStatus {
   if (workEntry.toolStatus) return workEntry.toolStatus;
   return workEntry.activityKind !== undefined && workEntry.activityKind !== "tool.completed"
     ? "running"
     : "completed";
 }
 
-function isSynaraToolCall(workEntry: TimelineWorkEntry): boolean {
+function isNuncioADEToolCall(workEntry: TimelineWorkEntry): boolean {
   return (
-    deriveSynaraMcpToolTitle({
+    deriveNuncioADEMcpToolTitle({
       toolName: workEntry.toolName,
       title: workEntry.toolTitle,
       fallbackLabel: workEntry.label,
@@ -340,14 +340,14 @@ function capitalizePhrase(value: string): string {
 }
 
 function toolWorkEntryHeading(workEntry: TimelineWorkEntry): string {
-  const synaraTitle = deriveSynaraMcpToolTitle({
+  const nuncioadeTitle = deriveNuncioADEMcpToolTitle({
     toolName: workEntry.toolName,
     title: workEntry.toolTitle,
     fallbackLabel: workEntry.label,
     status: toolWorkEntryStatus(workEntry),
   });
-  if (synaraTitle) {
-    return synaraTitle;
+  if (nuncioadeTitle) {
+    return nuncioadeTitle;
   }
   if (!workEntry.toolTitle) {
     return capitalizePhrase(normalizeCompactToolLabel(workEntry.label));
@@ -462,23 +462,23 @@ export const TimelineWorkEntryRow = memo(function TimelineWorkEntryRow(props: {
   // Standard tool rows keep one discoverable left glyph. Codex status rows
   // deliberately skip it and reuse only the shared tool-label typography.
   const isGitHubToolRow = isGitHubMcpToolCall(workEntry);
-  const isSynaraToolRow = !isGitHubToolRow && isSynaraToolCall(workEntry);
+  const isNuncioADEToolRow = !isGitHubToolRow && isNuncioADEToolCall(workEntry);
   const isMcpToolRow =
-    workEntry.itemType === "mcp_tool_call" && !isGitHubToolRow && !isSynaraToolRow;
+    workEntry.itemType === "mcp_tool_call" && !isGitHubToolRow && !isNuncioADEToolRow;
   const LeftIcon = workEntryLeftIcon(workEntry);
   const leftIconKind = webFetchUrl
     ? "web-fetch"
     : isGitHubToolRow || EntryIcon === GitHubIcon
       ? "github"
-      : isSynaraToolRow
-        ? "synara"
+      : isNuncioADEToolRow
+        ? "nuncioade"
         : isMcpToolRow
           ? "mcp"
           : undefined;
   const heading = toolWorkEntryHeading(workEntry);
   const rawPreview = workEntryPreview(workEntry);
-  const preview = isSynaraToolRow
-    ? sanitizeSynaraMcpToolPreview({
+  const preview = isNuncioADEToolRow
+    ? sanitizeNuncioADEMcpToolPreview({
         preview: rawPreview,
         heading,
         status: toolWorkEntryStatus(workEntry),

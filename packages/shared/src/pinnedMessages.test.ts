@@ -1,5 +1,5 @@
-import type { PinnedMessage } from "@synara/contracts";
-import { MessageId, THREAD_NOTES_MAX_CHARS } from "@synara/contracts";
+import type { PinnedMessage } from "@nuncio/contracts";
+import { MessageId, THREAD_NOTES_MAX_CHARS } from "@nuncio/contracts";
 import { describe, expect, it } from "vitest";
 
 import {

@@ -7,9 +7,9 @@ import {
   type ProviderKind,
   type ServerProviderStatus,
   type ServerSettings,
-} from "@synara/contracts";
-import { PROVIDER_DESCRIPTORS } from "@synara/shared/providerMetadata";
-import { pluralize } from "@synara/shared/text";
+} from "@nuncio/contracts";
+import { PROVIDER_DESCRIPTORS } from "@nuncio/shared/providerMetadata";
+import { pluralize } from "@nuncio/shared/text";
 import {
   closestCenter,
   DndContext,
@@ -725,7 +725,7 @@ function ProviderToolRow(props: {
                       <code className="font-mono">{updateAdvisory.updateCommand}</code>
                     </>
                   ) : (
-                    "A newer version is available, but Synara could not identify a safe one-click update command for this installation."
+                    "A newer version is available, but NuncioADE could not identify a safe one-click update command for this installation."
                   )}
                 </div>
               ) : null}
@@ -914,7 +914,7 @@ export function ProvidersSettingsPanel({
 
           <SettingsRow
             title="Provider updates"
-            description="Review installed provider tools that Synara can safely update."
+            description="Review installed provider tools that NuncioADE can safely update."
             status={
               !settings.enableProviderUpdateChecks
                 ? "Automatic checks off"

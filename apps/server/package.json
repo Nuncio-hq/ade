@@ -1,5 +1,5 @@
 {
-  "name": "@synara/cli",
+  "name": "@nuncio/cli",
   "version": "0.6.2",
   "license": "MIT",
   "repository": {
@@ -8,8 +8,8 @@
     "directory": "apps/server"
   },
   "bin": {
-    "synara": "dist/index.mjs",
-    "synara-restore-migration-backup": "dist/restoreMigrationBackup.mjs"
+    "nuncioade": "dist/index.mjs",
+    "nuncioade-restore-migration-backup": "dist/restoreMigrationBackup.mjs"
   },
   "files": [
     "dist"
@@ -44,9 +44,9 @@
   "devDependencies": {
     "@effect/language-service": "catalog:",
     "@effect/vitest": "catalog:",
-    "@synara/contracts": "workspace:*",
-    "@synara/shared": "workspace:*",
-    "@synara/web": "workspace:*",
+    "@nuncio/contracts": "workspace:*",
+    "@nuncio/shared": "workspace:*",
+    "@nuncio/web": "workspace:*",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/ws": "^8.5.13",

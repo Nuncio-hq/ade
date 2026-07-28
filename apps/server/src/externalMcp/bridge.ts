@@ -10,7 +10,7 @@ import {
   EXTERNAL_MCP_DEFAULT_WAIT_MS,
   EXTERNAL_MCP_MAX_WAIT_MS,
   type ExternalMcpPairResult,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 
 import type { PersistedServerRuntimeState } from "../serverRuntimeState.ts";
 import { ensurePrivateDirectorySync } from "../privatePathPermissions.ts";
@@ -33,7 +33,7 @@ const WINDOWS_TRUSTED_RUNTIME_ACL_SIDS = new Set([
 ]);
 const WINDOWS_RUNTIME_ACL_SCRIPT = [
   "$ErrorActionPreference = 'Stop'",
-  "$target = $env:SYNARA_RUNTIME_ACL_TARGET",
+  "$target = $env:NUNCIO_RUNTIME_ACL_TARGET",
   "$item = Get-Item -LiteralPath $target -Force",
   "$acl = Get-Acl -LiteralPath $target",
   "$currentSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value",
@@ -58,7 +58,7 @@ export function makeWindowsRuntimeAclPowerShellInvocation(targetPath: string) {
       windowsHide: true,
       maxBuffer: 1024 * 1024,
       timeout: 5_000,
-      env: { ...process.env, SYNARA_RUNTIME_ACL_TARGET: targetPath },
+      env: { ...process.env, NUNCIO_RUNTIME_ACL_TARGET: targetPath },
     },
   };
 }
@@ -102,7 +102,7 @@ class ExternalMcpRequestCancelledError extends Error {
 
 class ExternalMcpRequestTimeoutError extends ExternalMcpBridgeError {
   constructor(timeoutMs: number) {
-    super(`Synara did not respond within ${timeoutMs} ms.`);
+    super(`NuncioADE did not respond within ${timeoutMs} ms.`);
     this.name = "ExternalMcpRequestTimeoutError";
   }
 }
@@ -128,8 +128,8 @@ export type ExternalMcpFetch = (
 ) => Promise<Response>;
 
 export function resolveExternalMcpBaseDir(homeDir?: string): string {
-  const configured = homeDir?.trim() || process.env.SYNARA_HOME?.trim();
-  if (!configured) return path.join(os.homedir(), ".synara");
+  const configured = homeDir?.trim() || process.env.NUNCIO_HOME?.trim();
+  if (!configured) return path.join(os.homedir(), ".nuncioade");
   if (configured === "~") return os.homedir();
   if (configured.startsWith(`~${path.sep}`) || configured.startsWith("~/")) {
     return path.resolve(os.homedir(), configured.slice(2));
@@ -171,7 +171,7 @@ function parseRuntimeState(raw: string, sourcePath: string): PersistedServerRunt
     }
     return state as PersistedServerRuntimeState;
   } catch (cause) {
-    throw new ExternalMcpBridgeError(`Invalid Synara runtime-state file: ${sourcePath}`, { cause });
+    throw new ExternalMcpBridgeError(`Invalid NuncioADE runtime-state file: ${sourcePath}`, { cause });
   }
 }
 
@@ -299,12 +299,12 @@ export function discoverExternalMcpRuntime(baseDir: string): {
   });
   if (candidates.length === 0) {
     throw new ExternalMcpBridgeError(
-      `No running Synara instance was found under ${baseDir}. Start Synara first or pass --home-dir for the intended instance.`,
+      `No running NuncioADE instance was found under ${baseDir}. Start NuncioADE first or pass --home-dir for the intended instance.`,
     );
   }
   if (candidates.length > 1) {
     throw new ExternalMcpBridgeError(
-      `Multiple running Synara instances were found under ${baseDir}: ${candidates.map((candidate) => candidate.state.origin).join(", ")}. Stop one instance or pass a distinct --home-dir.`,
+      `Multiple running NuncioADE instances were found under ${baseDir}: ${candidates.map((candidate) => candidate.state.origin).join(", ")}. Stop one instance or pass a distinct --home-dir.`,
     );
   }
   return candidates[0]!;
@@ -374,7 +374,7 @@ export function writeExternalMcpClientCredential(
     const existing = readExternalMcpClientCredential(baseDir, paired.integrationId);
     if (existing.credential !== paired.credential) {
       throw new ExternalMcpBridgeError(
-        `Integration ${paired.integrationId} already has a different stored credential. Revoke it in Synara before replacing the local secret.`,
+        `Integration ${paired.integrationId} already has a different stored credential. Revoke it in NuncioADE before replacing the local secret.`,
       );
     }
     return filePath;
@@ -407,8 +407,8 @@ export function readExternalMcpClientCredential(
   if (candidates.length === 0 || !fs.existsSync(candidates[0]!)) {
     throw new ExternalMcpBridgeError(
       integrationId
-        ? `No paired external MCP credential was found for integration ${integrationId}. Run its pairing command from Synara Settings.`
-        : `No paired external MCP credential was found under ${directory}. Create an integration in Synara Settings, then run its pairing command.`,
+        ? `No paired external MCP credential was found for integration ${integrationId}. Run its pairing command from NuncioADE Settings.`
+        : `No paired external MCP credential was found under ${directory}. Create an integration in NuncioADE Settings, then run its pairing command.`,
     );
   }
   if (candidates.length > 1) {
@@ -534,7 +534,7 @@ export async function readExternalMcpResponseText(
   const timeout = new Promise<never>((_resolve, reject) => {
     timer = setTimeout(() => {
       void reader.cancel().catch(() => undefined);
-      reject(new ExternalMcpBridgeError(`Synara response body stalled for ${timeoutMs} ms.`));
+      reject(new ExternalMcpBridgeError(`NuncioADE response body stalled for ${timeoutMs} ms.`));
     }, timeoutMs);
   });
   try {
@@ -575,7 +575,7 @@ export async function verifyExternalMcpRuntime(
     !runtimeProofsMatch(expected, body.proof)
   ) {
     throw new ExternalMcpBridgeError(
-      "The loopback endpoint did not prove it is the Synara process named by the private runtime-state file.",
+      "The loopback endpoint did not prove it is the NuncioADE process named by the private runtime-state file.",
     );
   }
 }
@@ -592,11 +592,11 @@ export function requestTimeoutForBody(body: string): number {
         params?: { name?: unknown; arguments?: { timeoutMs?: unknown } };
       };
       if (request.method !== "tools/call") continue;
-      if (request.params?.name === "synara_create_task") {
+      if (request.params?.name === "nuncioade_create_task") {
         serverWorkMs += EXTERNAL_MCP_CREATE_TIMEOUT_MS;
         continue;
       }
-      if (request.params?.name !== "synara_wait_for_task") continue;
+      if (request.params?.name !== "nuncioade_wait_for_task") continue;
       const requestedWaitMs = request.params.arguments?.timeoutMs;
       const waitMs =
         typeof requestedWaitMs === "number" && Number.isFinite(requestedWaitMs)
@@ -651,7 +651,7 @@ async function fetchWithRestartRecovery(input: {
     }
   } while (Date.now() < deadline);
   throw new ExternalMcpBridgeError(
-    "Could not authenticate and reconnect to Synara. Ensure exactly one intended instance is running.",
+    "Could not authenticate and reconnect to NuncioADE. Ensure exactly one intended instance is running.",
     { cause: lastCause },
   );
 }
@@ -693,7 +693,7 @@ export async function pairExternalMcpClient(input: {
   } while (Date.now() < deadline);
   if (!response) {
     throw new ExternalMcpBridgeError(
-      "Could not reconnect to Synara to complete pairing. The private pending credential was preserved for a safe retry.",
+      "Could not reconnect to NuncioADE to complete pairing. The private pending credential was preserved for a safe retry.",
       { cause: lastCause },
     );
   }
@@ -708,12 +708,12 @@ export async function pairExternalMcpClient(input: {
   if (!response.ok || !body || !("credential" in body)) {
     throw new ExternalMcpBridgeError(
       (body && "error" in body && body.error) ||
-        `Synara rejected external MCP pairing with HTTP ${response.status}.`,
+        `NuncioADE rejected external MCP pairing with HTTP ${response.status}.`,
     );
   }
   if (body.credential !== pending.value.credential) {
     throw new ExternalMcpBridgeError(
-      "Synara returned a different pairing credential; refusing it.",
+      "NuncioADE returned a different pairing credential; refusing it.",
     );
   }
   const storePath = writeExternalMcpClientCredential(input.baseDir, body);
@@ -837,7 +837,7 @@ export async function serveExternalMcpStdio(input: {
     } catch (cause) {
       if (cause instanceof ExternalMcpRequestCancelledError) return null;
       const message = cause instanceof Error ? cause.message : String(cause);
-      await emit(stderr, `[synara mcp] ${message}\n`);
+      await emit(stderr, `[nuncioade mcp] ${message}\n`);
       return localErrorResponse(line, -32603, message);
     }
     if (response.status === 202 || response.status === 204) return null;
@@ -846,13 +846,13 @@ export async function serveExternalMcpStdio(input: {
       responseText = await readExternalMcpResponseText(response);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : String(cause);
-      await emit(stderr, `[synara mcp] ${message}\n`);
+      await emit(stderr, `[nuncioade mcp] ${message}\n`);
       return localErrorResponse(line, -32603, message);
     }
     if (response.status === 401) {
       const message =
-        "Synara rejected the stored external MCP credential because it was revoked, expired, or replaced. Pair the integration again from Settings.";
-      await emit(stderr, `[synara mcp] ${message}\n`);
+        "NuncioADE rejected the stored external MCP credential because it was revoked, expired, or replaced. Pair the integration again from Settings.";
+      await emit(stderr, `[nuncioade mcp] ${message}\n`);
       return localErrorResponse(line, -32001, message);
     }
     if (!response.ok) {
@@ -864,8 +864,8 @@ export async function serveExternalMcpStdio(input: {
           // Fall through to a transport error that preserves request ids.
         }
       }
-      const message = `Synara external MCP request failed with HTTP ${response.status}.`;
-      await emit(stderr, `[synara mcp] ${message}\n`);
+      const message = `NuncioADE external MCP request failed with HTTP ${response.status}.`;
+      await emit(stderr, `[nuncioade mcp] ${message}\n`);
       return localErrorResponse(line, -32603, message);
     }
     return responseText.trim() || null;
@@ -921,7 +921,7 @@ export async function serveExternalMcpStdio(input: {
         if (Array.isArray(decoded)) responses.push(...decoded);
         else responses.push(decoded);
       } catch {
-        const fallback = localErrorResponse(entry.line, -32603, "Invalid Synara response");
+        const fallback = localErrorResponse(entry.line, -32603, "Invalid NuncioADE response");
         if (fallback) responses.push(JSON.parse(fallback) as unknown);
       }
     }

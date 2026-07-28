@@ -31,7 +31,7 @@ import {
 const temporaryRoots: Array<string> = [];
 
 function makeTemporaryRoot(): string {
-  const root = FS.mkdtempSync(Path.join(OS.tmpdir(), "synara-login-shell-"));
+  const root = FS.mkdtempSync(Path.join(OS.tmpdir(), "nuncioade-login-shell-"));
   temporaryRoots.push(root);
   return root;
 }
@@ -324,8 +324,8 @@ describe("createCachedLoginShellEnvironmentReader", () => {
   it("runs uncached when the home directory cannot be resolved", () => {
     const fixture = makeFixture();
     // Pointed at the fixture root, so a spy that failed to apply writes here (and fails the
-    // call-count assertion below) instead of touching the developer's real Synara home.
-    const env = { SYNARA_HOME: Path.dirname(Path.dirname(fixture.cachePath)) };
+    // call-count assertion below) instead of touching the developer's real NuncioADE home.
+    const env = { NUNCIO_HOME: Path.dirname(Path.dirname(fixture.cachePath)) };
     homeDirectoryFailure.active = true;
 
     try {
@@ -359,12 +359,12 @@ describe("createCachedLoginShellEnvironmentReader", () => {
 });
 
 describe("loginShellEnvironmentCachePath", () => {
-  it("anchors the cache in the Synara home both processes resolve", () => {
-    expect(loginShellEnvironmentCachePath({ env: { SYNARA_HOME: "/tmp/synara-home" } })).toBe(
-      Path.join("/tmp/synara-home", "cache", "login-shell-environment.json"),
+  it("anchors the cache in the NuncioADE home both processes resolve", () => {
+    expect(loginShellEnvironmentCachePath({ env: { NUNCIO_HOME: "/tmp/nuncioade-home" } })).toBe(
+      Path.join("/tmp/nuncioade-home", "cache", "login-shell-environment.json"),
     );
     expect(loginShellEnvironmentCachePath({ env: {}, homeDirectory: "/users/test" })).toBe(
-      Path.join("/users/test", ".synara", "cache", "login-shell-environment.json"),
+      Path.join("/users/test", ".nuncioade", "cache", "login-shell-environment.json"),
     );
   });
 });

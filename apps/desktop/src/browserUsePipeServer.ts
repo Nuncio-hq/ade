@@ -9,7 +9,7 @@ import * as Net from "node:net";
 import * as OS from "node:os";
 import * as Path from "node:path";
 
-import type { BrowserExecuteCdpInput, ThreadBrowserState, ThreadId } from "@synara/contracts";
+import type { BrowserExecuteCdpInput, ThreadBrowserState, ThreadId } from "@nuncio/contracts";
 
 import type { DesktopBrowserManager } from "./browserManager";
 
@@ -23,10 +23,10 @@ const BROWSER_USE_PANEL_READY_TIMEOUT_MS = 2_000;
 const BROWSER_USE_PANEL_READY_POLL_MS = 50;
 // The Browser plugin scans this fixed directory; OS.tmpdir() differs on macOS.
 const BROWSER_USE_DISCOVERY_DIR = "/tmp/codex-browser-use";
-const BROWSER_USE_PIPE_NAME_PREFIX = "synara-iab";
+const BROWSER_USE_PIPE_NAME_PREFIX = "nuncioade-iab";
 // Production Browser plugins reject IAB backends from another build flavor.
 const BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod";
-export const SYNARA_BROWSER_USE_PIPE_ENV = "SYNARA_BROWSER_USE_PIPE_PATH";
+export const NUNCIO_BROWSER_USE_PIPE_ENV = "NUNCIO_BROWSER_USE_PIPE_PATH";
 
 type BrowserUseRpcId = string | number;
 type BrowserUseWriteResult = "written" | "overflow" | "closed";
@@ -77,21 +77,21 @@ export function resolveConfiguredBrowserUsePipePath(
   platform = process.platform,
 ): string {
   if (platform === "win32") return "";
-  const configured = env[SYNARA_BROWSER_USE_PIPE_ENV]?.trim();
+  const configured = env[NUNCIO_BROWSER_USE_PIPE_ENV]?.trim();
   return configured || resolveDefaultBrowserUsePipePath(platform);
 }
 
-export const SYNARA_BROWSER_USE_PIPE_PATH = resolveConfiguredBrowserUsePipePath();
+export const NUNCIO_BROWSER_USE_PIPE_PATH = resolveConfiguredBrowserUsePipePath();
 
 export function resolveBrowserUsePipeBackendEnv(
   inheritedEnv: NodeJS.ProcessEnv,
   activePipePath: string | null | undefined,
 ): NodeJS.ProcessEnv {
   const backendEnv = { ...inheritedEnv };
-  delete backendEnv[SYNARA_BROWSER_USE_PIPE_ENV];
+  delete backendEnv[NUNCIO_BROWSER_USE_PIPE_ENV];
   const pipePath = activePipePath?.trim();
   if (pipePath) {
-    backendEnv[SYNARA_BROWSER_USE_PIPE_ENV] = pipePath;
+    backendEnv[NUNCIO_BROWSER_USE_PIPE_ENV] = pipePath;
   }
   return backendEnv;
 }
@@ -207,10 +207,10 @@ export class BrowserUsePipeServer {
 
   constructor(
     private readonly browserManager: DesktopBrowserManager,
-    options: BrowserUsePipeServerOptions | string = SYNARA_BROWSER_USE_PIPE_PATH,
+    options: BrowserUsePipeServerOptions | string = NUNCIO_BROWSER_USE_PIPE_PATH,
   ) {
     this.pipePath =
-      typeof options === "string" ? options : (options.pipePath ?? SYNARA_BROWSER_USE_PIPE_PATH);
+      typeof options === "string" ? options : (options.pipePath ?? NUNCIO_BROWSER_USE_PIPE_PATH);
     this.requestOpenPanel = typeof options === "string" ? undefined : options.requestOpenPanel;
     this.maxInFlightRequests =
       typeof options === "string"
@@ -370,7 +370,7 @@ export class BrowserUsePipeServer {
       case "getInfo": {
         const codexSessionId = bindCodexSessionId(client, params);
         return {
-          name: "Synara In-app Browser",
+          name: "NuncioADE In-app Browser",
           version: "0.1.0",
           type: "iab",
           metadata: {
@@ -498,7 +498,7 @@ export class BrowserUsePipeServer {
   }> {
     const snapshot = await this.waitForActiveBrowserHostState();
     if (!snapshot) {
-      throw new Error("No active Synara browser pane available");
+      throw new Error("No active NuncioADE browser pane available");
     }
     this.bindClientToThread(client, snapshot.threadId);
     const nextState = this.browserManager.newTab({

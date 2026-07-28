@@ -1,4 +1,4 @@
-import { type AutomationStreamEvent } from "@synara/contracts";
+import { type AutomationStreamEvent } from "@nuncio/contracts";
 import { Cause, Duration, Effect, Layer, Queue, Stream } from "effect";
 
 import { AutomationRepository } from "../../persistence/Services/AutomationRepository.ts";

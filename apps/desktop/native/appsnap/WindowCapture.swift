@@ -66,7 +66,7 @@ func selectFrontmostWindow(excludedBundleIdentifier: String) -> Result<SelectedW
         return .failure(
             AppSnapFailure(
                 code: "excluded_frontmost_application",
-                message: "Synara cannot capture its own window."
+                message: "NuncioADE cannot capture its own window."
             )
         )
     }
@@ -185,7 +185,7 @@ final class OneFrameWindowCapture: NSObject, SCStreamOutput, SCStreamDelegate {
 
     private let selectedWindow: SelectedWindow
     private let completion: Completion
-    private let outputQueue = DispatchQueue(label: "dev.synara.appsnap.stream-output")
+    private let outputQueue = DispatchQueue(label: "dev.nuncioade.appsnap.stream-output")
     private let completionLock = NSLock()
     private var stream: SCStream?
     private var completed = false
@@ -480,7 +480,7 @@ final class AppSnapCaptureCoordinator {
     private let outputDirectory: URL
     private let excludedBundleIdentifier: String
     private let captureFeedback = AppSnapCaptureFeedback()
-    private let queue = DispatchQueue(label: "dev.synara.appsnap.capture")
+    private let queue = DispatchQueue(label: "dev.nuncioade.appsnap.capture")
     private var activeCapture: OneFrameWindowCapture?
 
     init(

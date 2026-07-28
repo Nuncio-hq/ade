@@ -17,7 +17,7 @@ import { CheckpointInvariantError, type CheckpointStoreError } from "../Errors.t
 import { GitCommandError } from "../../git/Errors.ts";
 import { GitCore } from "../../git/Services/GitCore.ts";
 import { CheckpointStore, type CheckpointStoreShape } from "../Services/CheckpointStore.ts";
-import { CheckpointRef } from "@synara/contracts";
+import { CheckpointRef } from "@nuncio/contracts";
 
 const CHECKPOINT_DIFF_MAX_OUTPUT_BYTES = 10_000_000;
 
@@ -117,17 +117,17 @@ const makeCheckpointStore = Effect.gen(function* () {
       }
 
       yield* Effect.acquireUseRelease(
-        fs.makeTempDirectory({ prefix: "synara-fs-checkpoint-" }),
+        fs.makeTempDirectory({ prefix: "nuncioade-fs-checkpoint-" }),
         (tempDir) =>
           Effect.gen(function* () {
             const tempIndexPath = path.join(tempDir, `index-${randomUUID()}`);
             const commitEnv: NodeJS.ProcessEnv = {
               ...process.env,
               GIT_INDEX_FILE: tempIndexPath,
-              GIT_AUTHOR_NAME: "Synara",
-              GIT_AUTHOR_EMAIL: "synara@users.noreply.github.com",
-              GIT_COMMITTER_NAME: "Synara",
-              GIT_COMMITTER_EMAIL: "synara@users.noreply.github.com",
+              GIT_AUTHOR_NAME: "NuncioADE",
+              GIT_AUTHOR_EMAIL: "nuncioade@users.noreply.github.com",
+              GIT_COMMITTER_NAME: "NuncioADE",
+              GIT_COMMITTER_EMAIL: "nuncioade@users.noreply.github.com",
             };
 
             const headExists = yield* hasHeadCommit(input.cwd);
@@ -163,7 +163,7 @@ const makeCheckpointStore = Effect.gen(function* () {
               });
             }
 
-            const message = `Synara checkpoint ref=${input.checkpointRef}`;
+            const message = `NuncioADE checkpoint ref=${input.checkpointRef}`;
             const commitTreeResult = yield* git.execute({
               operation,
               cwd: input.cwd,
@@ -412,7 +412,7 @@ const makeCheckpointStore = Effect.gen(function* () {
       const affectedPaths = changedPaths.stdout.split("\0").filter((entry) => entry.length > 0);
 
       return yield* Effect.acquireUseRelease(
-        fs.makeTempDirectory({ prefix: "synara-checkpoint-undo-" }),
+        fs.makeTempDirectory({ prefix: "nuncioade-checkpoint-undo-" }),
         (tempDir) =>
           Effect.gen(function* () {
             const patchPath = path.join(tempDir, "turn.patch");

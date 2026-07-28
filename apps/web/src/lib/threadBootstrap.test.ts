@@ -1,4 +1,4 @@
-import { ProjectId, type ModelSelection, ThreadId } from "@synara/contracts";
+import { ProjectId, type ModelSelection, ThreadId } from "@nuncio/contracts";
 import { describe, expect, it } from "vitest";
 import { type ComposerThreadDraftState, type DraftThreadState } from "../composerDraftStore";
 import {
