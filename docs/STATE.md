@@ -10,9 +10,12 @@ NuncioADE (repo `Nuncio-hq/ade`, private) = Synara fork, **OMP-first** (since
 `OmpAdapter` over the `@oh-my-pi/pi-coding-agent` SDK (M4, docs-only so far);
 (2) harness via OMP extension points (`harness/extensions/`, skills/plugins),
 no engine source fork; (3) UI for extensions when the bridge needs it;
-(4) mobile (native, no PWA). Everything else — UI/UX, general features — is
-inherited from Synara upstream. Pi provider frozen: works, gets no investment.
-Synara code (`apps/`, `packages/`) is touched only to close bridge gaps.
+(4) mobile (native, no PWA); (5) **App Factory** — market research + app
+cloning section (M5, plan `plans/260728-1405-app-factory-p1/`; decided
+2026-07-28). Everything else — UI/UX, general features — is inherited from
+Synara upstream. Pi provider frozen: works, gets no investment.
+Synara code (`apps/`, `packages/`) is touched only to close bridge gaps
+(App Factory wiring points excepted — noted in its plan).
 All Synara providers are kept working.
 
 ## Milestones
@@ -38,6 +41,17 @@ All Synara providers are kept working.
       `agent_settled` gone → `agent_end.isTerminal`; async jobs inject
       self-initiated follow-up turns). Plan + tracker + coverage gộp một doc:
       `docs/plans/omp-integration.html`. Adapter code not started.
+- [~] **M5 App Factory** — sidebar section for app market research + cloning
+  (decided 2026-07-28, plan `plans/260728-1405-app-factory-p1/`).
+  P1 = research tool: screensdesign mirror (2,621 apps, free tier),
+  Discover/Rising/Watchlist/Data tabs, detail + compare — $0, engine-
+  independent, can run parallel to M4. **P1 backend data layer DONE
+  2026-07-28**: contracts, migration 088 (`af_*`), repository,
+  ScreensdesignClient (typed errors + 429 backoff), CatalogSync
+  (full/incremental/refreshApp, single-flight, crash resume),
+  AppFactoryService + 12 WS RPCs — 53 scoped tests green. Remaining P1:
+  web UI (tabs/detail/compare). P2: GetAppNiche enrich, media
+  download, clone handoff (facts pack + `/ade-app-clone` skill).
 
 ## In force
 
@@ -49,7 +63,9 @@ All Synara providers are kept working.
   PWA skipped.** Near-term: use REMOTE.md (Tailscale + auth token) to reach the
   web UI from the phone and collect real mobile requirements.
 - Naming: inherited code stays `@synara/*` / `SYNARA_*`; new code is `@nuncio/*` /
-  `NUNCIO_` / `ade_` tools. See AGENTS.md §Naming Convention.
+  `NUNCIO_` / `ade_` tools. First `@nuncio/*` package landed: `@nuncio/contracts`
+  (`packages/nuncio-contracts`, App Factory domain schemas). See AGENTS.md
+  §Naming Convention.
 - Versioning: ADE line = 0.0.x (currently 0.0.1), user-decided only, agents never
   bump/tag. Upstream base = `UPSTREAM-BASE` file (currently v0.6.2). See AGENTS.md
   §Versioning & Releases.

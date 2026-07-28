@@ -91,6 +91,24 @@ import {
 } from "./pullRequests";
 import { KeybindingRule } from "./keybindings";
 import {
+  AppFactoryAppDetail,
+  AppFactoryAppIdInput,
+  AppFactoryAppNotFoundError,
+  AppFactoryListAppsResult,
+  AppFactoryListSyncRunsResult,
+  AppFactorySetNoteInput,
+  AppFactorySetPinnedInput,
+  AppFactorySetTokenInput,
+  AppFactoryStatus,
+  AppFactorySyncInProgressError,
+  AppFactorySyncNowInput,
+  AppFactorySyncNowResult,
+  AppFactorySyncProgress,
+  AppFactoryTestTokenResult,
+  AppFactoryTokenInvalidError,
+  AppFactoryTokenNotConfiguredError,
+} from "@nuncio/contracts";
+import {
   ClientOrchestrationCommand,
   ORCHESTRATION_WS_METHODS,
   OrchestrationEvent,
@@ -537,6 +555,86 @@ export const WsPullRequestsSetPinnedRpc = Rpc.make(WS_METHODS.pullRequestsSetPin
   payload: PullRequestSetPinnedInput,
   success: PullRequestSetPinnedResult,
   error: WsRpcError,
+});
+
+const AppFactoryRpcError = Schema.Union([
+  AppFactoryTokenNotConfiguredError,
+  AppFactoryTokenInvalidError,
+  AppFactorySyncInProgressError,
+  AppFactoryAppNotFoundError,
+  WsRpcError,
+]);
+
+export const WsAppFactorySetTokenRpc = Rpc.make(WS_METHODS.appFactorySetToken, {
+  payload: AppFactorySetTokenInput,
+  success: Schema.Void,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactoryClearTokenRpc = Rpc.make(WS_METHODS.appFactoryClearToken, {
+  payload: Schema.Struct({}),
+  success: Schema.Void,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactoryTestTokenRpc = Rpc.make(WS_METHODS.appFactoryTestToken, {
+  payload: Schema.Struct({}),
+  success: AppFactoryTestTokenResult,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactoryGetStatusRpc = Rpc.make(WS_METHODS.appFactoryGetStatus, {
+  payload: Schema.Struct({}),
+  success: AppFactoryStatus,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactorySyncNowRpc = Rpc.make(WS_METHODS.appFactorySyncNow, {
+  payload: AppFactorySyncNowInput,
+  success: AppFactorySyncNowResult,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactorySyncStatusRpc = Rpc.make(WS_METHODS.appFactorySyncStatus, {
+  payload: Schema.Struct({}),
+  success: AppFactorySyncProgress,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactoryListSyncRunsRpc = Rpc.make(WS_METHODS.appFactoryListSyncRuns, {
+  payload: Schema.Struct({}),
+  success: AppFactoryListSyncRunsResult,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactoryRefreshAppRpc = Rpc.make(WS_METHODS.appFactoryRefreshApp, {
+  payload: AppFactoryAppIdInput,
+  success: Schema.Void,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactoryListAppsRpc = Rpc.make(WS_METHODS.appFactoryListApps, {
+  payload: Schema.Struct({}),
+  success: AppFactoryListAppsResult,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactoryGetAppDetailRpc = Rpc.make(WS_METHODS.appFactoryGetAppDetail, {
+  payload: AppFactoryAppIdInput,
+  success: AppFactoryAppDetail,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactorySetPinnedRpc = Rpc.make(WS_METHODS.appFactorySetPinned, {
+  payload: AppFactorySetPinnedInput,
+  success: Schema.Void,
+  error: AppFactoryRpcError,
+});
+
+export const WsAppFactorySetNoteRpc = Rpc.make(WS_METHODS.appFactorySetNote, {
+  payload: AppFactorySetNoteInput,
+  success: Schema.Void,
+  error: AppFactoryRpcError,
 });
 
 export const WsGitListBranchesRpc = Rpc.make(WS_METHODS.gitListBranches, {
@@ -1027,6 +1125,18 @@ export const WsFeatureRpcGroup = RpcGroup.make(
   WsPullRequestsActionRpc,
   WsPullRequestsCommentRpc,
   WsPullRequestsSetPinnedRpc,
+  WsAppFactorySetTokenRpc,
+  WsAppFactoryClearTokenRpc,
+  WsAppFactoryTestTokenRpc,
+  WsAppFactoryGetStatusRpc,
+  WsAppFactorySyncNowRpc,
+  WsAppFactorySyncStatusRpc,
+  WsAppFactoryListSyncRunsRpc,
+  WsAppFactoryRefreshAppRpc,
+  WsAppFactoryListAppsRpc,
+  WsAppFactoryGetAppDetailRpc,
+  WsAppFactorySetPinnedRpc,
+  WsAppFactorySetNoteRpc,
   WsGitListBranchesRpc,
   WsGitCreateWorktreeRpc,
   WsGitCreateDetachedWorktreeRpc,

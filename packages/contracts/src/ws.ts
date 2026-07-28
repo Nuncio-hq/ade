@@ -121,6 +121,13 @@ import {
   PullRequestsListInput,
 } from "./pullRequests";
 import {
+  AppFactoryAppIdInput,
+  AppFactorySetNoteInput,
+  AppFactorySetPinnedInput,
+  AppFactorySetTokenInput,
+  AppFactorySyncNowInput,
+} from "@nuncio/contracts";
+import {
   ExternalMcpCreateIntegrationInput,
   ExternalMcpRefreshPairingInput,
   ExternalMcpRevokeIntegrationInput,
@@ -185,6 +192,20 @@ export const WS_METHODS = {
   pullRequestsAction: "pullRequests.action",
   pullRequestsComment: "pullRequests.comment",
   pullRequestsSetPinned: "pullRequests.setPinned",
+
+  // App Factory methods
+  appFactorySetToken: "appFactory.setToken",
+  appFactoryClearToken: "appFactory.clearToken",
+  appFactoryTestToken: "appFactory.testToken",
+  appFactoryGetStatus: "appFactory.getStatus",
+  appFactorySyncNow: "appFactory.syncNow",
+  appFactorySyncStatus: "appFactory.syncStatus",
+  appFactoryListSyncRuns: "appFactory.listSyncRuns",
+  appFactoryRefreshApp: "appFactory.refreshApp",
+  appFactoryListApps: "appFactory.listApps",
+  appFactoryGetAppDetail: "appFactory.getAppDetail",
+  appFactorySetPinned: "appFactory.setPinned",
+  appFactorySetNote: "appFactory.setNote",
 
   // Terminal methods
   terminalOpen: "terminal.open",
@@ -359,6 +380,20 @@ const WebSocketRequestBody = Schema.Union([
   tagRequestBody(WS_METHODS.pullRequestsAction, PullRequestActionInput),
   tagRequestBody(WS_METHODS.pullRequestsComment, PullRequestCommentInput),
   tagRequestBody(WS_METHODS.pullRequestsSetPinned, PullRequestSetPinnedInput),
+
+  // App Factory
+  tagRequestBody(WS_METHODS.appFactorySetToken, AppFactorySetTokenInput),
+  tagRequestBody(WS_METHODS.appFactoryClearToken, Schema.Struct({})),
+  tagRequestBody(WS_METHODS.appFactoryTestToken, Schema.Struct({})),
+  tagRequestBody(WS_METHODS.appFactoryGetStatus, Schema.Struct({})),
+  tagRequestBody(WS_METHODS.appFactorySyncNow, AppFactorySyncNowInput),
+  tagRequestBody(WS_METHODS.appFactorySyncStatus, Schema.Struct({})),
+  tagRequestBody(WS_METHODS.appFactoryListSyncRuns, Schema.Struct({})),
+  tagRequestBody(WS_METHODS.appFactoryRefreshApp, AppFactoryAppIdInput),
+  tagRequestBody(WS_METHODS.appFactoryListApps, Schema.Struct({})),
+  tagRequestBody(WS_METHODS.appFactoryGetAppDetail, AppFactoryAppIdInput),
+  tagRequestBody(WS_METHODS.appFactorySetPinned, AppFactorySetPinnedInput),
+  tagRequestBody(WS_METHODS.appFactorySetNote, AppFactorySetNoteInput),
 
   // Terminal methods
   tagRequestBody(WS_METHODS.terminalOpen, TerminalOpenInput),

@@ -1,3 +1,4 @@
+export * from "@nuncio/contracts";
 export * from "./auth";
 export * from "./automation";
 export * from "./baseSchemas";

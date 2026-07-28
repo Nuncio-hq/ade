@@ -1,0 +1,257 @@
+{
+  "count": 2621,
+  "next": "https://api.screensdesign.com/v1/apps/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": 2688,
+      "slug": "scroll-the-bible",
+      "name": "Scroll The Bible",
+      "shortname": "Swipe Through Scripture",
+      "icon": "https://media.screensdesign.com/appicon-thumbs/65ca009be6264dd590e9fa1bdce5645e.webp",
+      "developer": {
+        "id": 2620,
+        "name": "Gabriel Jacobson",
+        "slug": "gabriel-jacobson"
+      },
+      "avs": {
+        "id": 3665,
+        "url": null,
+        "screens": [],
+        "paywall_type": "Free Trial - Soft Paywall",
+        "onboarding_step_count": 6,
+        "has_onboarding_with_quiz": null
+      },
+      "revenue": 45000,
+      "revenue_list": [
+        {
+          "year": 2026,
+          "month": 6,
+          "revenue": 40000
+        }
+      ],
+      "downloads": 45000,
+      "rating_value": "4.80",
+      "advertised": false,
+      "released": "2025-12-17",
+      "updated": "2026-07-15",
+      "featured": false,
+      "latest_appvideo_id": 3665
+    },
+    {
+      "id": 2687,
+      "slug": "from-bible-bible-widgets",
+      "name": "From Bible: Bible Widgets",
+      "shortname": "Daily Bible Verses for You",
+      "icon": "https://media.screensdesign.com/appicon-thumbs/e552853f1a094b418040679e9977c78f.webp",
+      "developer": {
+        "id": 2639,
+        "name": "Prizmaly",
+        "slug": "prizmaly"
+      },
+      "avs": {
+        "id": 3667,
+        "url": null,
+        "screens": [],
+        "paywall_type": "No Free Trial - Soft Paywall",
+        "onboarding_step_count": 26,
+        "has_onboarding_with_quiz": null
+      },
+      "revenue": 25000,
+      "revenue_list": [
+        {
+          "year": 2026,
+          "month": 6,
+          "revenue": 35000
+        },
+        {
+          "year": 2026,
+          "month": 5,
+          "revenue": 0
+        }
+      ],
+      "downloads": 40000,
+      "rating_value": "4.80",
+      "advertised": false,
+      "released": "2026-03-11",
+      "updated": "2026-07-04",
+      "featured": false,
+      "latest_appvideo_id": 3667
+    },
+    {
+      "id": 2686,
+      "slug": "scout-health-analysis",
+      "name": "Scout - Health Analysis",
+      "shortname": "Healthy alternatives",
+      "icon": "https://media.screensdesign.com/appicon-thumbs/ae14117addd845b39eac481f606996bb.webp",
+      "developer": {
+        "id": 2638,
+        "name": "Wise Concepts LLC",
+        "slug": "wise-concepts-llc"
+      },
+      "avs": {
+        "id": 3668,
+        "url": null,
+        "screens": [],
+        "paywall_type": "Free Trial - Hard Paywall",
+        "onboarding_step_count": 13,
+        "has_onboarding_with_quiz": null
+      },
+      "revenue": 55000,
+      "revenue_list": [
+        {
+          "year": 2026,
+          "month": 6,
+          "revenue": 65000
+        },
+        {
+          "year": 2026,
+          "month": 5,
+          "revenue": 30000
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "revenue": 0
+        },
+        {
+          "year": 2026,
+          "month": 3,
+          "revenue": 0
+        }
+      ],
+      "downloads": 55000,
+      "rating_value": "4.80",
+      "advertised": false,
+      "released": "2025-12-03",
+      "updated": "2026-07-10",
+      "featured": false,
+      "latest_appvideo_id": 3668
+    },
+    {
+      "id": 2685,
+      "slug": "lumy-ai-photo-editor",
+      "name": "Lumy AI - Photo Editor",
+      "shortname": "AI Photo Enhancer & Art Editor",
+      "icon": "https://media.screensdesign.com/appicon-thumbs/fed5eb90ac8749c9aec59177034ce28a.webp",
+      "developer": {
+        "id": 1594,
+        "name": "Ocean Float Mobile",
+        "slug": "ocean-float-mobile"
+      },
+      "avs": {
+        "id": 3666,
+        "url": null,
+        "screens": [],
+        "paywall_type": "No Free Trial - Soft Paywall",
+        "onboarding_step_count": 4,
+        "has_onboarding_with_quiz": null
+      },
+      "revenue": 55000,
+      "revenue_list": [
+        {
+          "year": 2026,
+          "month": 6,
+          "revenue": 55000
+        },
+        {
+          "year": 2026,
+          "month": 5,
+          "revenue": 15000
+        }
+      ],
+      "downloads": 35000,
+      "rating_value": "4.60",
+      "advertised": true,
+      "released": "2026-04-20",
+      "updated": "2026-06-04",
+      "featured": false,
+      "latest_appvideo_id": 3666
+    },
+    {
+      "id": 2684,
+      "slug": "hairify-ai-hairstyle-try-on",
+      "name": "Hairify - AI Hairstyle Try On",
+      "shortname": "Face Shape Haircut Hair Color",
+      "icon": "https://media.screensdesign.com/appicon-thumbs/1d4b75851ed94f64ac431c7b61a64a1c.webp",
+      "developer": {
+        "id": 2637,
+        "name": "Techbot Co., Limited",
+        "slug": "techbot-co-limited"
+      },
+      "avs": {
+        "id": 3664,
+        "url": null,
+        "screens": [],
+        "paywall_type": "Free Trial - Soft Paywall",
+        "onboarding_step_count": 1,
+        "has_onboarding_with_quiz": null
+      },
+      "revenue": 45000,
+      "revenue_list": [
+        {
+          "year": 2026,
+          "month": 6,
+          "revenue": 35000
+        },
+        {
+          "year": 2026,
+          "month": 5,
+          "revenue": 0
+        },
+        {
+          "year": 2026,
+          "month": 4,
+          "revenue": 0
+        }
+      ],
+      "downloads": 40000,
+      "rating_value": "4.60",
+      "advertised": true,
+      "released": "2026-02-12",
+      "updated": "2026-06-26",
+      "featured": false,
+      "latest_appvideo_id": 3664
+    },
+    {
+      "id": 2683,
+      "slug": "craftbook-crochet-made-easy",
+      "name": "CraftBook: Crochet Made Easy",
+      "shortname": "Patterns & Step by Step Videos",
+      "icon": "https://media.screensdesign.com/appicon-thumbs/8e10e3d1be3c4438889510d1769d5b1a.webp",
+      "developer": {
+        "id": 2636,
+        "name": "Tofa llc",
+        "slug": "tofa-llc"
+      },
+      "avs": {
+        "id": 3658,
+        "url": null,
+        "screens": [],
+        "paywall_type": "Free Trial - Soft Paywall",
+        "onboarding_step_count": 11,
+        "has_onboarding_with_quiz": null
+      },
+      "revenue": 35000,
+      "revenue_list": [
+        {
+          "year": 2026,
+          "month": 6,
+          "revenue": 25000
+        },
+        {
+          "year": 2026,
+          "month": 5,
+          "revenue": 13000
+        }
+      ],
+      "downloads": 25000,
+      "rating_value": "4.70",
+      "advertised": true,
+      "released": "2026-03-30",
+      "updated": "2026-07-15",
+      "featured": false,
+      "latest_appvideo_id": 3658
+    }
+  ]
+}

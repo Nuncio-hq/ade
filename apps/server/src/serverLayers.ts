@@ -49,6 +49,9 @@ import { ProviderRuntimeEventRepositoryLive } from "./persistence/Layers/Provide
 import { ThreadDiagnosticsQueryLive } from "./diagnostics/Layers/ThreadDiagnosticsQuery";
 import { ManagedAttachmentCleanupLive } from "./managedAttachmentCleanup";
 import { PullRequestServiceLive } from "./pullRequests/Layers/PullRequestService";
+import { AppFactoryRepositoryLive } from "./persistence/Layers/AppFactoryRepository";
+import { ScreensdesignClientLive } from "./appFactory/Layers/ScreensdesignClient";
+import { AppFactoryServiceLive } from "./appFactory/Layers/AppFactoryService";
 import { ProviderHealthLive } from "./provider/Layers/ProviderHealth";
 import { makeServerProviderLayer } from "./provider/runtimeLayer";
 
@@ -180,6 +183,11 @@ export function makeServerRuntimeServicesLayer(
     Layer.provideMerge(ProjectPullRequestPinsLive),
     Layer.provideMerge(OrchestrationLayerLive),
   );
+  const appFactoryServiceLayer = AppFactoryServiceLive.pipe(
+    Layer.provideMerge(AppFactoryRepositoryLive),
+    Layer.provideMerge(ScreensdesignClientLive.pipe(Layer.provide(ServerSecretStoreLive))),
+    Layer.provideMerge(ServerSecretStoreLive),
+  );
 
   return Layer.mergeAll(
     agentGatewayCredentialsLayer,
@@ -196,6 +204,7 @@ export function makeServerRuntimeServicesLayer(
     providerHealthLayer,
     ProjectPullRequestPinsLive,
     pullRequestServiceLayer,
+    appFactoryServiceLayer,
     orchestrationReactorLayer,
     providerCommandReactorLayer,
     threadDeletionReactorLayer,

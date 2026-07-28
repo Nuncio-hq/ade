@@ -13,6 +13,10 @@ import {
   WsFeatureRpcGroup,
   WsRpcError,
   PullRequestsUnavailableError,
+  AppFactoryAppNotFoundError,
+  AppFactorySyncInProgressError,
+  AppFactoryTokenInvalidError,
+  AppFactoryTokenNotConfiguredError,
   type GitActionProgressEvent,
   type OrchestrationCommand,
   type OrchestrationEvent,
@@ -121,6 +125,7 @@ import { bufferLiveUiStream, type LiveUiStreamDropReport } from "./wsStreamBackp
 import { makeCursorSafeSnapshotLiveStream } from "./wsSnapshotLiveStream";
 import { PullRequestService } from "./pullRequests/Services/PullRequestService";
 import { resolveGitHubRepository } from "./pullRequests/repositoryResolution";
+import { AppFactoryService } from "./appFactory/Services/AppFactoryService";
 
 export function canManageExternalMcp(role: "owner" | "client"): boolean {
   return role === "owner";
@@ -309,6 +314,7 @@ const makeWsRpcHandlersLayer = () =>
       const providerCommandReactor = yield* ProviderCommandReactor;
       const path = yield* Path.Path;
       const pullRequests = yield* PullRequestService;
+      const appFactory = yield* AppFactoryService;
       const profileStatsQuery = yield* ProfileStatsQuery;
       const projectionReadModelQuery = yield* ProjectionSnapshotQuery;
       const providerAdapterRegistry = yield* ProviderAdapterRegistry;
@@ -735,6 +741,20 @@ const makeWsRpcHandlersLayer = () =>
 
       const rpcEffect = <A, E, R>(effect: Effect.Effect<A, E, R>, fallbackMessage: string) =>
         effect.pipe(Effect.mapError((cause) => toWsRpcError(cause, fallbackMessage)));
+
+      // Typed App Factory errors are part of the RPC contract — pass them
+      // through untouched; everything unexpected becomes a generic WsRpcError.
+      const appFactoryEffect = <A, E, R>(effect: Effect.Effect<A, E, R>, fallbackMessage: string) =>
+        effect.pipe(
+          Effect.mapError((cause) =>
+            cause instanceof AppFactoryTokenNotConfiguredError ||
+            cause instanceof AppFactoryTokenInvalidError ||
+            cause instanceof AppFactorySyncInProgressError ||
+            cause instanceof AppFactoryAppNotFoundError
+              ? cause
+              : toWsRpcError(cause, fallbackMessage),
+          ),
+        );
 
       const requireOwner = Effect.gen(function* () {
         if (!canManageExternalMcp(yield* CurrentWsSessionRole)) {
@@ -1665,6 +1685,31 @@ const makeWsRpcHandlersLayer = () =>
               Stream.mapError((cause) => toWsRpcError(cause, "Automation event stream failed")),
             ),
           ),
+
+        [WS_METHODS.appFactorySetToken]: (input) =>
+          appFactoryEffect(appFactory.setToken(input), "Failed to store the Screensdesign token"),
+        [WS_METHODS.appFactoryClearToken]: () =>
+          appFactoryEffect(appFactory.clearToken(), "Failed to clear the Screensdesign token"),
+        [WS_METHODS.appFactoryTestToken]: () =>
+          appFactoryEffect(appFactory.testToken(), "Failed to validate the Screensdesign token"),
+        [WS_METHODS.appFactoryGetStatus]: () =>
+          appFactoryEffect(appFactory.getStatus(), "Failed to load App Factory status"),
+        [WS_METHODS.appFactorySyncNow]: (input) =>
+          appFactoryEffect(appFactory.syncNow(input), "Failed to start the catalog sync"),
+        [WS_METHODS.appFactorySyncStatus]: () =>
+          appFactoryEffect(appFactory.syncStatus(), "Failed to load sync progress"),
+        [WS_METHODS.appFactoryListSyncRuns]: () =>
+          appFactoryEffect(appFactory.listSyncRuns(), "Failed to list sync runs"),
+        [WS_METHODS.appFactoryRefreshApp]: (input) =>
+          appFactoryEffect(appFactory.refreshApp(input), "Failed to refresh the app"),
+        [WS_METHODS.appFactoryListApps]: () =>
+          appFactoryEffect(appFactory.listApps(), "Failed to list App Factory apps"),
+        [WS_METHODS.appFactoryGetAppDetail]: (input) =>
+          appFactoryEffect(appFactory.getAppDetail(input), "Failed to load app detail"),
+        [WS_METHODS.appFactorySetPinned]: (input) =>
+          appFactoryEffect(appFactory.setPinned(input), "Failed to update the pin"),
+        [WS_METHODS.appFactorySetNote]: (input) =>
+          appFactoryEffect(appFactory.setNote(input), "Failed to update the note"),
       });
     }),
   );

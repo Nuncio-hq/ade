@@ -1,0 +1,33 @@
+{
+  "count": 1,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 3665,
+      "slug": "scroll-the-bible-video-3665",
+      "label": "Jul 2026",
+      "video": "https://player.mediadelivery.net/embed/624624/cfbe281e-ef1a-43b8-b851-d5dbf8e4aa0f",
+      "blur_starts_at": 26.0,
+      "app": {
+        "id": 2688,
+        "store_id": "6756558351",
+        "name": "Scroll The Bible",
+        "shortname": "Swipe Through Scripture",
+        "slug": "scroll-the-bible",
+        "icon": "https://media.screensdesign.com/appicon-thumbs/65ca009be6264dd590e9fa1bdce5645e.webp",
+        "revenue": 45000,
+        "downloads": 45000
+      },
+      "app_version": {
+        "id": 62269,
+        "version": "1.15",
+        "size": 83141632,
+        "updated": "2026-07-15",
+        "whatsnew": "This update comes straight from your feedback. We've focused on making the whole experience smoother and faster, so your feed flows better and feels more seamless every time you open the app. We also tracked down the bugs you reported and fixed them. On top of that, we polished the design throughout to keep your time in the Word clean and free of distractions.\n\nThank you for being part of this. Scroll the Bible is built for you, and every piece of feedback genuinely shapes where we take it next. Keep it coming, because we read all of it.\n\nHappy reading."
+      },
+      "recording_date": "2026-07-14",
+      "duration_seconds": 502
+    }
+  ]
+}
