@@ -1,5 +1,8 @@
 # NuncioADE
 
+NuncioADE is a personal fork of [Synara](https://github.com/Emanuele-web04/synara) with an OMP-first
+engine direction; the inherited surface keeps tracking upstream releases.
+
 NuncioADE is now an MCP-native agent harness in two directions: supported agents running inside NuncioADE
 automatically receive tools to coordinate NuncioADE tasks and automations, while Codex, Claude, and
 other local MCP clients can connect through a scoped integration to launch and follow NuncioADE work.
@@ -27,7 +30,7 @@ It brings chats, terminals, browser previews, diffs, branches, provider sessions
 > [!WARNING]
 > You need to have [Codex CLI](https://github.com/openai/codex) installed and authorized for Codex sessions to work.
 
-Install the [desktop app from the Releases page](https://github.com/Emanuele-web04/Synara/releases), or download it from [trysynara.com](https://www.trysynara.com/).
+Install the [desktop app from the Releases page](https://github.com/Nuncio-hq/ade/releases).
 
 You can also run NuncioADE locally while the project is still early:
 
@@ -52,4 +55,4 @@ Focused issues and PRs are welcome, especially bug fixes, reliability fixes, and
 
 Read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening an issue or PR.
 
-Need support? [Open a GitHub issue](https://github.com/Emanuele-web04/synara/issues).
+Need support? [Open a GitHub issue](https://github.com/Nuncio-hq/ade/issues).
