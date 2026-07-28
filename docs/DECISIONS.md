@@ -132,3 +132,31 @@
   CI finalize auto-bump stays disabled. Rationale for the split: we focus on Pi;
   the non-Pi platform is effectively outsourced to Synara upstream, and its
   version is an "engine version", not our product version.
+
+- **2026-07-28 — OMP (oh-my-pi) adopted as first-class engine; Pi frozen.** After
+  hands-on time with both, `@oh-my-pi/pi-coding-agent` (npm, 17.x) becomes the
+  primary runtime and investment target. Supersedes the Pi-first framing
+  (2026-07-26) and the "port OMP ideas as pi extensions" strategy (2026-07-27).
+  Sub-decisions: (1) integration = new `OmpAdapter` via direct SDK
+  (`createAgentSession`/`SessionManager`/`ModelRegistry`) — same first-class bar
+  set for pi, no CLI/ACP wrapper; PiAdapter untouched, pi provider keeps working
+  but gets no new investment; bisect moves `pi` TUI → `omp` CLI once OmpAdapter
+  lands. (2) Consume OMP npm releases, never fork its source — custom behavior
+  via OMP extension points (extensions/skills/plugins/hooks); reaffirms the
+  no-source-fork principle. (3) Verified de-risking facts: OMP ships legacy
+  `@earendil-works/*` shims (existing `harness/extensions/` run on it); SDK is
+  public on npm; API diverged from pi 0.8x (`createAgentSessionRuntime` gone),
+  so a new adapter, not a package swap; OMP uses its own dirs (`~/.omp/agent/`,
+  project `.omp/`). Docs-only decision — no code yet.
+
+- **2026-07-28 — Delegation: OMP-native model routing first; harness-bridge
+  agents banned.** Sessions run on OMP, whose `modelRoles`
+  (`~/.omp/agent/config.yml`) reach every subscription natively (Fable/Opus,
+  `openai-codex/gpt-5.6-sol`, `devin/swe-1-7`, Cursor grok/composer) with
+  usage-aware fallback and `subagent: inherit`. Never spawn `codex-rescue` or
+  other Claude-Code-plugin bridge agents from OMP — lossy double-hop, zero
+  gain. Route by context capability and performance: in-session
+  subagents/completion tiers for work sharing current context; external
+  engines (Synara provider threads, Devin CLI/Cloud) only where they win —
+  isolated parallel worktrees, Claude Code harness inheritance, visual-proof
+  async runs. Recorded as DELEGATION.md §0.

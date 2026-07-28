@@ -5,12 +5,15 @@
 
 ## Direction
 
-NuncioADE (repo `Nuncio-hq/ade`, private) = Synara fork, Pi-first. Current scope:
-(1) Pi harness **via extensions only** (`harness/extensions/`), no fork of pi's source;
-(2) UI for Pi extensions when the bridge needs it; (3) mobile (native, no PWA).
-Everything else — UI/UX, general features — is inherited from Synara upstream.
-Synara code (`apps/`, `packages/`) is touched only to close `ExtensionUIContext`
-bridge gaps. All Synara providers are kept working.
+NuncioADE (repo `Nuncio-hq/ade`, private) = Synara fork, **OMP-first** (since
+2026-07-28; was Pi-first). Current scope: (1) OMP as first-class engine — new
+`OmpAdapter` over the `@oh-my-pi/pi-coding-agent` SDK (M4, docs-only so far);
+(2) harness via OMP extension points (`harness/extensions/`, skills/plugins),
+no engine source fork; (3) UI for extensions when the bridge needs it;
+(4) mobile (native, no PWA). Everything else — UI/UX, general features — is
+inherited from Synara upstream. Pi provider frozen: works, gets no investment.
+Synara code (`apps/`, `packages/`) is touched only to close bridge gaps.
+All Synara providers are kept working.
 
 ## Milestones
 
@@ -19,12 +22,22 @@ bridge gaps. All Synara providers are kept working.
       loads and is callable end-to-end (TUI + SDK path verified).
 - [~] **M1 Harness v0** — real extensions in `harness/extensions/` (current).
   Shipped: AskUserQuestion (structured, notes + custom answers, E2E verified).
-  Next: Devin provider extension (research OMP's devin-agent impl first).
+  Next: paused — revisit after M4 (OMP ships its own devin-agent).
 - [~] **M2 Bridge gaps** — first bridge extension landed: `extension/ui/askUserQuestion`
   in PiAdapter + `allowNotes`/`allowCustomAnswer` on UserInputQuestion + notes UI.
 - [~] **M3 Daily driver** — STARTED: NuncioADE.app branded, built, installed;
   DB migrated from Synara (sqlite .backup snapshot); user works in NuncioADE.
   Remaining: signed builds + no-script auto-update via GitHub releases.
+- [ ] **M4 OMP engine** — `OmpAdapter` in `apps/server` (direct SDK:
+      `createAgentSession`/`SessionManager`/`ModelRegistry` from
+      `@oh-my-pi/pi-coding-agent` 17.x), models from OMP's registry,
+      `harness/extensions/` verified under OMP (legacy `@earendil-works/*`
+      shims), bisect tool switches `pi` TUI → `omp` CLI. Spike PASSED
+      2026-07-28 (`playground/omp-spike`, SDK 17.1.6 under Bun: session 132ms;
+      `abort()` reaps bash children natively — no process supervisor needed;
+      `agent_settled` gone → `agent_end.isTerminal`; async jobs inject
+      self-initiated follow-up turns). Plan + tracker + coverage gộp một doc:
+      `docs/plans/omp-integration.html`. Adapter code not started.
 
 ## In force
 
@@ -42,15 +55,20 @@ bridge gaps. All Synara providers are kept working.
   §Versioning & Releases.
 - Upstream = `Emanuele-web04/synara`, remote `upstream`; **sync on release tags only** (base: v0.6.2, synced), cherry-pick once diverged.
 - Origin = `https://github.com/Nuncio-hq/ade` (private), `main` pushed and tracking.
-- Extensions dev is project-local first (`.pi/extensions` symlink → `harness/extensions`);
-  promote to `~/.pi/agent/extensions/` (global) only when stable.
-- Pi TUI is the bisect tool, not the primary dev target; ADE is the primary target.
-- Version skew watch: `pi` CLI 0.82.x vs `@earendil-works/pi-*` ^0.81.1 in
-  `apps/server/package.json` — bump when convenient.
+- Extensions dev is project-local first, promote to global only when stable
+  (pi: `.pi/extensions` → `~/.pi/agent/extensions/`; OMP: `.omp/extensions` →
+  `~/.omp/agent/extensions/`). Symlinks point at `harness/extensions`.
+- Bisect tool: `omp` CLI after M4 (pi TUI for the frozen pi provider); ADE
+  stays the primary dev target.
+- Engine watch: OMP releases fast (local tarball 17.1.3 vs npm 17.1.6 on
+  2026-07-28); pin exact `@oh-my-pi/*` versions when OmpAdapter lands. Old pi
+  skew (CLI 0.82.x vs ^0.81.1) is moot — pi frozen.
 
 ## Deprecated / do not revive
 
-- (none yet)
+- Pi-first direction (2026-07-26→28) — superseded by OMP-first. The pi
+  provider itself is NOT deprecated: frozen, must keep working.
+- "Port OMP ideas as pi extensions" strategy — OMP is the engine now.
 
 ## Known issues
 
@@ -64,6 +82,6 @@ bridge gaps. All Synara providers are kept working.
 
 ## Reference material
 
-- `../claude-oauth-pi/pkg-src/` — pi tarballs 0.82.1 (docs + examples), OMP fork
-  (oh-my-pi 17.1.3): port ideas as extensions; skip source-fork-only features.
+- `../claude-oauth-pi/pkg-src/` — OMP tarball 17.1.3 (engine source, offline
+  reading; npm canonical) + pi tarballs 0.82.1 (frozen provider reference).
 - Old Synara snapshot at `~/Documents/Codex/2026-06-24/ba/work/synara` (v0.3.0, stale).

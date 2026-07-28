@@ -28,8 +28,8 @@
 ## Harness (open source)
 
 - **Codex CLI** (openai/codex) — OpenAI's harness; protocol/app-server design.
-- **pi** (@earendil-works, tarballs in `../claude-oauth-pi/pkg-src/`) — our base harness; extension API is our platform.
-- **OMP / oh-my-pi** (can1357/oh-my-pi) — heavily upgraded pi fork; user liked it in practice. Richest source of "what to build next" for our harness (port as extensions).
+- **pi** (@earendil-works, tarballs in `../claude-oauth-pi/pkg-src/`) — origin of the engine lineage; frozen provider in ADE; its extension API remains the compat baseline (OMP ships legacy shims for it).
+- **OMP / oh-my-pi** (can1357/oh-my-pi; npm `@oh-my-pi/pi-coding-agent`) — **the engine** since 2026-07-28 (see DECISIONS.md), no longer just a reference: consumed from npm, customized via extensions/skills/plugins. Tarball in `pkg-src/` for offline source reading.
 - **Grok Build** (xAI) — harness reference.
 - **Kilo Code** (Kilo-Org/kilocode) — exemplary fork lineage: Cline → Roo Code → Kilo, building on top instead of rewriting; a model for how we treat Synara.
 - **Cline** (cline/cline) — origin of that lineage; plan/act mode pattern at the source.

@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-**NuncioADE** (repo `Nuncio-hq/ade`, private) is a personal agentic development environment, forked from [Synara](https://github.com/Emanuele-web04/synara) (itself a fork of T3Code). It inherits Synara's full architecture and keeps every provider working, but its product direction is **Pi-first**: the Pi provider (`@earendil-works/pi-*` SDK) is the primary, deeply-integrated runtime and gets new investment first. Nothing from Synara is removed. UI/UX and general features are inherited from upstream; our own investment goes to the Pi harness, extension UI where needed, and mobile.
+**NuncioADE** (repo `Nuncio-hq/ade`, private) is a personal agentic development environment, forked from [Synara](https://github.com/Emanuele-web04/synara) (itself a fork of T3Code). It inherits Synara's full architecture and keeps every provider working, but its product direction is **OMP-first**: OMP (oh-my-pi, `@oh-my-pi/*` npm SDK) is the first-class engine and gets new investment first — consumed as npm releases, customized through its extension points, integrated via direct SDK (see §Engine Focus). The original Pi provider (`@earendil-works/pi-*`) stays working but is frozen. Nothing from Synara is removed. UI/UX and general features are inherited from upstream; our own investment goes to the OMP harness, extension UI where needed, and mobile.
 
 ## Naming Convention (inherited vs ours)
 
@@ -15,7 +15,7 @@ Anything NEW and ours gets our namespace from the first commit — never `synara
 
 - New workspace packages (e.g. mobile, harness-as-package): scope `@nuncio/*`.
 - New env vars / config keys we introduce: prefix `NUNCIO_`.
-- Pi extension tools/commands: prefix `ade_` tools, `/ade-*` commands.
+- Harness extension tools/commands (OMP or pi): prefix `ade_` tools, `/ade-*` commands.
 
 This avoids a future refactor: our code never needs renaming, inherited code never causes merge conflicts.
 
@@ -54,7 +54,7 @@ Trunk-based. `main` is the only long-lived branch and must always be green (`bun
 
 All work happens on short-lived branches cut from `main`, merged back when green, deleted after merge. Name them by area prefix:
 
-- `harness/<feature>` — Pi extensions and harness work (e.g. `harness/permission-gate`)
+- `harness/<feature>` — OMP harness work: extensions/skills/plugins (e.g. `harness/permission-gate`)
 - `app/<feature>` — Synara-side work: server, web, desktop, bridge (e.g. `app/bridge-custom-widgets`)
 - `mobile/<feature>` — mobile client work (e.g. `mobile/spike-expo-shell`)
 - `sync/upstream-<version>` — upstream merges: merge the chosen upstream **release tag** here (never upstream HEAD; see Upstream Workflow), resolve conflicts (keep our `AGENTS.md`/`CLAUDE.md`; refresh `SYNARA-*.md` from upstream), verify, then merge to `main`
@@ -71,7 +71,7 @@ Rules:
 ADE has its OWN version line (currently 0.0.x), independent of Synara's. The
 Synara release our main is based on lives in the `UPSTREAM-BASE` file at the repo
 root — our "engine version". Think of it as: ADE version = our product; upstream
-base = the outsourced platform underneath (we focus on Pi; everything else is
+base = the outsourced platform underneath (we focus on the OMP harness; everything else is
 effectively outsourced to Synara upstream).
 
 Hard rules:
@@ -89,7 +89,7 @@ Hard rules:
   `git tag vX.Y.Z && git push --tags` — CI does the rest.
 - After an upstream sync lands, update `UPSTREAM-BASE` to the merged Synara tag
   in the same commit. Keeping the base fresh IS part of maintaining ADE: the
-  non-Pi surface improves only through these syncs.
+  non-harness surface improves only through these syncs.
 
 ## Upstream Workflow
 
@@ -107,25 +107,25 @@ Nuncio/
 ├── ade/                      # this repo = the product (Synara fork)
 │   ├── apps/{server,web,desktop} # inherited from Synara — modify minimally
 │   ├── packages/                 # inherited from Synara — modify minimally
-│   └── harness/                  # ★ ours — Pi harness, does not exist upstream
-│       ├── extensions/           #   Pi extensions (the core deliverable)
-│       ├── skills/ prompts/      #   optional Pi resources
+│   └── harness/                  # ★ ours — OMP harness, does not exist upstream
+│       ├── extensions/           #   extensions (core deliverable; pi-API compatible, run on OMP via its legacy shims)
+│       ├── skills/ prompts/      #   optional engine resources
 │       └── README.md             #   docs per extension
 ├── playground/               # disposable guinea-pig repo for agent testing (not in git)
-└── claude-oauth-pi/          # reference only: pi tarballs + docs, oh-my-pi (OMP) source
+└── claude-oauth-pi/          # engine source snapshots: OMP + pi tarballs (docs/examples), for offline reading
 ```
 
 Boundary rules:
 
-- **`harness/`** is our own ground: change freely, never conflicts with upstream merges. Extensions are wired into Pi by symlinking into `~/.pi/agent/extensions/` (real use) or a project's `.pi/extensions/` (dev/testing).
-- **`apps/` + `packages/`** are Synara ground: only touch them when a harness extension needs it — primarily extending the `ExtensionUIContext` bridge in `apps/server/src/provider/Layers/PiAdapter.ts` (Synara ignores TUI-only widgets and editor hooks) plus matching web UI. Keep each change small and note it in the commit message to ease upstream conflict resolution.
+- **`harness/`** is our own ground: change freely, never conflicts with upstream merges. Extensions are wired in by symlinking into the engine's agent dir — OMP: `~/.omp/agent/extensions/` (real use) or a project's `.omp/extensions/` (dev/testing); the frozen pi provider still reads `~/.pi/agent/extensions/` / `.pi/extensions/`.
+- **`apps/` + `packages/`** are Synara ground: only touch them when a harness extension needs it — primarily extending the `ExtensionUIContext` bridge in `apps/server/src/provider/Layers/PiAdapter.ts` (and `OmpAdapter` once it lands; Synara ignores TUI-only widgets and editor hooks) plus matching web UI. Keep each change small and note it in the commit message to ease upstream conflict resolution.
 - An extension that depends on a bridge change must land in the same commit/PR as that bridge change.
-- **`claude-oauth-pi/pkg-src`** holds reference material: `@earendil-works/pi-coding-agent` tarballs (with `docs/` and `examples/extensions|hooks`) and the OMP fork (`oh-my-pi`), a heavily upgraded pi worth studying. Port OMP ideas as extensions when possible; skip features that required forking pi's source.
+- **`claude-oauth-pi/pkg-src`** holds engine source snapshots: the OMP tarball (`@oh-my-pi/pi-coding-agent` — read here for SDK/extension APIs; npm is canonical) and `@earendil-works/pi-coding-agent` tarballs (frozen provider reference, with `docs/` and `examples/extensions|hooks`).
 
 ## Dev Workflow (dev → product)
 
-1. **Dev loop**: run an isolated ADE instance (see Local Dev Instance Isolation), edit extensions in `harness/extensions/`, hot-reload via the Pi reload command in-app, test against `playground/`.
-2. **Bisect**: if an extension misbehaves in ADE, run the same extension in the `pi` TUI. TUI-works/ADE-fails ⇒ bridge gap in Synara code; both-fail ⇒ extension bug. Watch for version skew between the `pi` CLI and `@earendil-works/pi-*` pinned in `apps/server/package.json`.
+1. **Dev loop**: run an isolated ADE instance (see Local Dev Instance Isolation), edit extensions in `harness/extensions/`, hot-reload via the engine's reload command in-app, test against `playground/`.
+2. **Bisect**: if an extension misbehaves in ADE, run the same extension in the engine CLI (`omp`; `pi` TUI for the frozen pi provider). CLI-works/ADE-fails ⇒ bridge gap in Synara code; both-fail ⇒ extension bug. Watch for version skew between the `omp` CLI and `@oh-my-pi/*` pinned in `apps/server/package.json` (once OmpAdapter lands).
 3. **Ship**: `bun run build:desktop` → install and use ADE as the daily driver; feedback loops back into `harness/`.
 
 ## Task Completion Requirements
@@ -143,15 +143,13 @@ Boundary rules:
 
 If a tradeoff is required, choose correctness and robustness over short-term convenience.
 
-## Pi Focus
+## Engine Focus (OMP-first)
 
-- Pi is the only provider integrated via direct SDK (no CLI/ACP wrapper). Key files:
-  - `apps/server/src/provider/Layers/PiAdapter.ts` — main adapter over `@earendil-works/pi-coding-agent` (`SessionManager`, `ModelRegistry`, `createAgentSessionRuntime`).
-  - `apps/server/src/provider/Services/PiAdapter.ts` — service tag/contract.
-  - `apps/server/src/provider/piTurnFailure.ts` — Pi turn failure classification.
-- Pi is intentionally an unopinionated harness: do not add permission or plan-mode semantics on top of it.
-- Pi has no static default model (`getDefaultModel("pi")` returns `null`); models come dynamically from Pi's `ModelRegistry`.
-- When touching provider-generic code, verify Pi paths first; other providers second. All providers must keep working — Pi-first does not mean Pi-only.
+- **OMP (oh-my-pi) is the primary engine**, integrated via direct SDK (no CLI/ACP wrapper): a new `OmpAdapter` over `@oh-my-pi/pi-coding-agent` (npm 17.x; SDK exports `createAgentSession`, `SessionManager`, `ModelRegistry`). Decided 2026-07-28, docs-only so far — status and milestone live in `docs/STATE.md`.
+- **Consume OMP from npm, never fork its source.** Custom behavior goes through OMP's extension points (extensions, skills, plugins, hooks). OMP ships legacy `@earendil-works/*` shims, so pi-written extensions in `harness/extensions/` run on OMP.
+- **The pi provider is frozen**: keeps working through upstream syncs, gets no new investment. Key files: `apps/server/src/provider/Layers/PiAdapter.ts`, `apps/server/src/provider/Services/PiAdapter.ts`, `apps/server/src/provider/piTurnFailure.ts`. Do not retarget PiAdapter to `@oh-my-pi/*` — the APIs diverged (`createAgentSessionRuntime` does not exist in OMP); OMP integration is a separate adapter.
+- Both engines are intentionally unopinionated harnesses: do not add permission or plan-mode semantics on top of them. Pi has no static default model (`getDefaultModel("pi")` returns `null`); models come dynamically from the engine's `ModelRegistry` — same policy for OmpAdapter.
+- When touching provider-generic code, verify the engine adapter paths first (`OmpAdapter` once it lands; `PiAdapter` today — it exercises the same extension bridge), other providers second. All providers must keep working — OMP-first does not mean OMP-only.
 
 ## Package Roles
 

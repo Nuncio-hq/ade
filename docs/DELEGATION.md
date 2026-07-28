@@ -16,6 +16,34 @@
 | Review/planning (2nd opinion)           | Claude Fable 5                         | Opus 5                                 |
 | Async end-to-end task with visual proof | Devin Cloud handoff (fusion)           | —                                      |
 
+## 0) First hop: OMP-native routing (before any external engine)
+
+Sessions here run ON OMP, which already reaches every subscription natively
+through `modelRoles` in `~/.omp/agent/config.yml` (cross-vendor, usage-aware
+fallback, `subagent: inherit`):
+
+| Role                | Model                              | Use                          |
+| ------------------- | ---------------------------------- | ---------------------------- |
+| `default`/`advisor` | `anthropic/claude-fable-5:xhigh`   | main session, reviews        |
+| `slow` + `smol`     | `openai-codex/gpt-5.6-sol:xhigh`   | backend impl/review oneshots |
+| `plan`              | `anthropic/claude-opus-5:max`      | planning                     |
+| `task`              | `devin/swe-1-7`                    | mechanical subagent work     |
+| `tiny`              | `cursor/cursor-grok-4.5-high-fast` | trivial lookups              |
+| `commit`            | `cursor/composer-2.5-fast`         | commit messages              |
+| `vision`/`designer` | `anthropic/claude-opus-5`          | UI/design                    |
+
+Rules:
+
+- **NEVER spawn `codex-rescue`** (or any harness-bridge agent discovered from
+  `~/.claude/plugins/`): those exist so Claude Code can reach Codex. OMP has
+  native `openai-codex/*` access — the bridge is a lossy double-hop.
+- **Route by context capability + performance, not habit.** Work that shares
+  the current session context → in-session subagents / completion tiers (they
+  inherit the roles above). Delegate to an external engine (Synara provider
+  threads §1–3, Devin CLI §4) only when it wins: isolated parallel
+  implementations in own worktrees, Claude Code harness inheritance
+  (`claudeAgent`), or Devin Cloud visual-proof runs.
+
 ## 1) Claude Max (`claudeAgent` provider)
 
 The Claude Code harness on the user's Claude Max subscription.
@@ -25,7 +53,7 @@ The Claude Code harness on the user's Claude Max subscription.
 - **Fable safeguards caveat**: Fable 5 has strong safety guardrails and can
   refuse or derail on network/security-adjacent work (pentesting-flavored tasks,
   auth internals, proxies). For those reviews use Opus 5 or `gpt-5.6-sol` instead.
-- Note: our own Pi threads also run Fable 5, but through pi's harness. Spawning
+- Note: our own engine threads (pi now, OMP after OmpAdapter) also run Fable 5, through the engine's own harness. Spawning
   `claudeAgent` is how you inherit the Claude Code harness (hooks, skills, plan mode).
 
 ## 2) Codex (`codex` provider)
@@ -57,7 +85,7 @@ interactive/ACP). Weekly limit — spend on what Devin is uniquely good at.
   and cost" — Fable brainstorms/plans, a cheaper model executes) and
   **recordings/screenshots after implementation**. Use for tasks where visual
   proof of the result matters. (This record-and-screenshot idea is on our own
-  roadmap for pi.)
+  roadmap for the OMP harness.)
 
 ## Checking quota before delegating
 
