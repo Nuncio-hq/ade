@@ -6,9 +6,10 @@ import {
   ProjectId,
   ThreadId,
   TurnId,
+  type OrchestrationCommand,
   type OrchestrationEvent,
-} from "@nuncio/contracts";
-import { Effect, Layer, ManagedRuntime, Queue, Stream } from "effect";
+} from "@synara/contracts";
+import { Effect, Layer, ManagedRuntime, Option, Queue, Stream } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import { PersistenceSqlError } from "../../persistence/Errors.ts";
@@ -30,6 +31,25 @@ import {
 } from "../Services/ProjectionPipeline.ts";
 import { ServerConfig } from "../../config.ts";
 import * as NodeServices from "@effect/platform-node/NodeServices";
+
+/**
+ * Command ids whose fingerprinting throws synchronously, standing in for any
+ * synchronous defect raised while the worker builds a command's pipeline.
+ */
+const fingerprintPoison = vi.hoisted(() => new Set<string>());
+
+vi.mock("../commandFingerprint.ts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../commandFingerprint.ts")>();
+  return {
+    ...actual,
+    fingerprintOrchestrationCommand: (command: OrchestrationCommand) => {
+      if (fingerprintPoison.has(command.commandId)) {
+        throw new TypeError("poisoned command fingerprint");
+      }
+      return actual.fingerprintOrchestrationCommand(command);
+    },
+  };
+});
 
 const asProjectId = (value: string): ProjectId => ProjectId.makeUnsafe(value);
 const asMessageId = (value: string): MessageId => MessageId.makeUnsafe(value);
@@ -62,7 +82,7 @@ const asTurnId = (value: string): TurnId => TurnId.makeUnsafe(value);
 const asCheckpointRef = (value: string): CheckpointRef => CheckpointRef.makeUnsafe(value);
 
 const TestServerConfigLayer = ServerConfig.layerTest(process.cwd(), {
-  prefix: "nuncioade-orchestration-engine-test-",
+  prefix: "synara-orchestration-engine-test-",
 });
 
 async function createOrchestrationSystem() {
@@ -137,6 +157,32 @@ describe("OrchestrationEngine", () => {
           commandId: CommandId.makeUnsafe("cmd-engine-quiesce-normal"),
           threadId,
           title: "Rejected after quiesce",
+        }),
+      ),
+    ).rejects.toMatchObject({
+      _tag: "OrchestrationCommandAdmissionError",
+      reason: "stopped",
+    });
+
+    // A turn start takes the priority `user` lane, but priority is not
+    // admissibility: the WebSocket keeps serving while the engine quiesces, and
+    // starting a provider turn here would spawn a session the shutdown fences
+    // moments later, orphaning the turn.
+    await expect(
+      system.run(
+        system.engine.dispatch({
+          type: "thread.turn.start",
+          commandId: CommandId.makeUnsafe("cmd-engine-quiesce-turn-start"),
+          threadId,
+          message: {
+            messageId: MessageId.makeUnsafe("msg-engine-quiesce-turn-start"),
+            role: "user",
+            text: "Rejected after quiesce",
+            attachments: [],
+          },
+          interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
+          runtimeMode: "approval-required",
+          createdAt,
         }),
       ),
     ).rejects.toMatchObject({
@@ -591,7 +637,7 @@ describe("OrchestrationEngine", () => {
         threadId: ThreadId.makeUnsafe("thread-turn-diff"),
         turnId: asTurnId("turn-1"),
         completedAt: createdAt,
-        checkpointRef: asCheckpointRef("refs/nuncioade/checkpoints/thread-turn-diff/turn/1"),
+        checkpointRef: asCheckpointRef("refs/synara/checkpoints/thread-turn-diff/turn/1"),
         status: "ready",
         files: [],
         checkpointTurnCount: 1,
@@ -606,7 +652,7 @@ describe("OrchestrationEngine", () => {
       {
         turnId: asTurnId("turn-1"),
         checkpointTurnCount: 1,
-        checkpointRef: asCheckpointRef("refs/nuncioade/checkpoints/thread-turn-diff/turn/1"),
+        checkpointRef: asCheckpointRef("refs/synara/checkpoints/thread-turn-diff/turn/1"),
         status: "ready",
         files: [],
         assistantMessageId: null,
@@ -1399,7 +1445,7 @@ describe("OrchestrationEngine", () => {
         projectId: asProjectId("project-studio"),
         kind: "studio",
         title: "Studio",
-        workspaceRoot: "/tmp/nuncioade-studio",
+        workspaceRoot: "/tmp/synara-studio",
         defaultModelSelection: null,
         createdAt,
       }),
@@ -1413,7 +1459,7 @@ describe("OrchestrationEngine", () => {
           projectId: asProjectId("project-studio-duplicate"),
           kind: "studio",
           title: "Studio",
-          workspaceRoot: "/tmp/nuncioade-studio",
+          workspaceRoot: "/tmp/synara-studio",
           defaultModelSelection: null,
           createdAt,
         }),
@@ -1435,7 +1481,7 @@ describe("OrchestrationEngine", () => {
         projectId: asProjectId("project-cross-kind-studio"),
         kind: "studio",
         title: "Studio",
-        workspaceRoot: "/tmp/nuncioade-cross-kind-studio",
+        workspaceRoot: "/tmp/synara-cross-kind-studio",
         defaultModelSelection: null,
         createdAt,
       }),
@@ -1447,7 +1493,7 @@ describe("OrchestrationEngine", () => {
         projectId: asProjectId("project-cross-kind-app"),
         kind: "project",
         title: "App",
-        workspaceRoot: "/tmp/nuncioade-cross-kind-app",
+        workspaceRoot: "/tmp/synara-cross-kind-app",
         defaultModelSelection: null,
         createdAt,
       }),
@@ -1463,7 +1509,7 @@ describe("OrchestrationEngine", () => {
           projectId: asProjectId("project-on-studio-root"),
           kind: "project",
           title: "Studio folder",
-          workspaceRoot: "/tmp/nuncioade-cross-kind-studio",
+          workspaceRoot: "/tmp/synara-cross-kind-studio",
           defaultModelSelection: null,
           createdAt,
         }),
@@ -1479,7 +1525,7 @@ describe("OrchestrationEngine", () => {
           projectId: asProjectId("project-studio-on-project-root"),
           kind: "studio",
           title: "Studio",
-          workspaceRoot: "/tmp/nuncioade-cross-kind-app",
+          workspaceRoot: "/tmp/synara-cross-kind-app",
           defaultModelSelection: null,
           createdAt,
         }),
@@ -1493,7 +1539,7 @@ describe("OrchestrationEngine", () => {
           type: "project.meta.update",
           commandId: CommandId.makeUnsafe("cmd-cross-kind-project-root-update"),
           projectId: asProjectId("project-cross-kind-app"),
-          workspaceRoot: "/tmp/nuncioade-cross-kind-studio",
+          workspaceRoot: "/tmp/synara-cross-kind-studio",
         }),
       ),
     ).rejects.toThrow("already uses workspace root");
@@ -1514,7 +1560,7 @@ describe("OrchestrationEngine", () => {
           commandId: CommandId.makeUnsafe("cmd-cross-kind-pinned-kind-change"),
           projectId: asProjectId("project-cross-kind-app"),
           kind: "studio",
-          workspaceRoot: "/tmp/nuncioade-cross-kind-pinned-studio",
+          workspaceRoot: "/tmp/synara-cross-kind-pinned-studio",
         }),
       ),
     ).rejects.toThrow("Only projects can be pinned.");
@@ -1528,7 +1574,7 @@ describe("OrchestrationEngine", () => {
         projectId: asProjectId("project-cross-kind-chat"),
         kind: "chat",
         title: "Home",
-        workspaceRoot: "/tmp/nuncioade-cross-kind-studio",
+        workspaceRoot: "/tmp/synara-cross-kind-studio",
         defaultModelSelection: null,
         createdAt,
       }),
@@ -1559,7 +1605,7 @@ describe("OrchestrationEngine", () => {
         projectId: asProjectId("project-studio-source"),
         kind: "studio",
         title: "Studio",
-        workspaceRoot: "/tmp/nuncioade-studio-source",
+        workspaceRoot: "/tmp/synara-studio-source",
         defaultModelSelection: null,
         createdAt,
       }),
@@ -1571,7 +1617,7 @@ describe("OrchestrationEngine", () => {
         projectId: asProjectId("project-studio-target"),
         kind: "studio",
         title: "Studio",
-        workspaceRoot: "/tmp/nuncioade-studio-target",
+        workspaceRoot: "/tmp/synara-studio-target",
         defaultModelSelection: null,
         createdAt,
       }),
@@ -1583,7 +1629,7 @@ describe("OrchestrationEngine", () => {
           type: "project.meta.update",
           commandId: CommandId.makeUnsafe("cmd-studio-target-root-update"),
           projectId: asProjectId("project-studio-target"),
-          workspaceRoot: "/tmp/nuncioade-studio-source",
+          workspaceRoot: "/tmp/synara-studio-source",
         }),
       ),
     ).rejects.toThrow("already uses workspace root");
@@ -1652,5 +1698,61 @@ describe("OrchestrationEngine", () => {
     ).rejects.toThrow("already exists");
 
     await system.dispose();
+  });
+
+  it("keeps the worker alive when a command throws while its pipeline is built", async () => {
+    const system = await createOrchestrationSystem();
+    const createdAt = now();
+    const poisonedCommandId = CommandId.makeUnsafe("cmd-engine-poison");
+    fingerprintPoison.add(poisonedCommandId);
+
+    try {
+      const poisonedOutcome = await system.run(
+        Effect.result(
+          system.engine.dispatch({
+            type: "project.create",
+            commandId: poisonedCommandId,
+            projectId: asProjectId("project-engine-poison"),
+            title: "Poisoned",
+            workspaceRoot: "/tmp/engine-poison",
+            defaultModelSelection: null,
+            createdAt,
+          }),
+        ).pipe(Effect.timeoutOption("5 seconds")),
+      );
+
+      // The defect fails this command immediately instead of leaving the caller to
+      // wait out the dispatch timeout.
+      expect(Option.isSome(poisonedOutcome)).toBe(true);
+      const outcome = Option.getOrThrow(poisonedOutcome);
+      expect(outcome._tag).toBe("Failure");
+      if (outcome._tag === "Failure") {
+        expect(outcome.failure).toMatchObject({ _tag: "OrchestrationCommandInternalError" });
+      }
+
+      // The worker survived: the next command still runs.
+      await expect(
+        system.run(
+          system.engine.dispatch({
+            type: "project.create",
+            commandId: CommandId.makeUnsafe("cmd-engine-poison-next"),
+            projectId: asProjectId("project-engine-poison-next"),
+            title: "After poison",
+            workspaceRoot: "/tmp/engine-poison-next",
+            defaultModelSelection: null,
+            createdAt,
+          }),
+        ),
+      ).resolves.toMatchObject({ sequence: expect.any(Number) });
+
+      // The poisoned envelope was still finished, so `outstanding` did not leak.
+      const drained = await system.run(
+        Effect.timeoutOption(system.engine.drain, "5 seconds").pipe(Effect.map(Option.isSome)),
+      );
+      expect(drained).toBe(true);
+    } finally {
+      fingerprintPoison.delete(poisonedCommandId);
+      await system.dispose();
+    }
   });
 });

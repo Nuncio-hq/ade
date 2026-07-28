@@ -1,6 +1,6 @@
 {
-  "name": "@nuncio/desktop",
-  "version": "0.6.2",
+  "name": "@synara/desktop",
+  "version": "0.6.3",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
@@ -19,13 +19,13 @@
     "electron-updater": "^6.6.2"
   },
   "devDependencies": {
-    "@nuncio/contracts": "workspace:*",
-    "@nuncio/shared": "workspace:*",
+    "@synara/contracts": "workspace:*",
+    "@synara/shared": "workspace:*",
     "@types/node": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "wait-on": "^8.0.2"
   },
-  "productName": "NuncioADE"
+  "productName": "Synara"
 }
