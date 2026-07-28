@@ -144,7 +144,7 @@ describe("agent gateway MCP injection", () => {
       configHasTomlTableHeader("['mcp_servers'.'nuncioade']", "[mcp_servers.nuncioade]"),
     );
     assert.isTrue(
-      configHasTomlTableHeader('[mcp_servers."syn\\u0061ra"]', "[mcp_servers.nuncioade]"),
+      configHasTomlTableHeader('[mcp_servers."nun\\u0063ioade"]', "[mcp_servers.nuncioade]"),
     );
     assert.isTrue(
       configHasTomlTableHeader('["shell_environment_policy"]', "[shell_environment_policy]"),
@@ -153,7 +153,7 @@ describe("agent gateway MCP injection", () => {
       configHasTomlTableHeader('["mcp_servers.nuncioade"]', "[mcp_servers.nuncioade]"),
     );
     assert.isFalse(
-      configHasTomlTableHeader('[mcp_servers."syn\\qara"]', "[mcp_servers.nuncioade]"),
+      configHasTomlTableHeader('[mcp_servers."nun\\qioade"]', "[mcp_servers.nuncioade]"),
     );
     // A commented-out example block must not count as the table being present.
     assert.isFalse(

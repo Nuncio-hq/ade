@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./automation";
+export * from "./appFactory";
 export * from "./baseSchemas";
 export * from "./ipc";
 export * from "./terminal";

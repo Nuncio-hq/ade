@@ -795,6 +795,19 @@ function isPiReloadCommand(text: string): boolean {
   return /^\/reload(?:\s|$)/iu.test(text.trim());
 }
 
+// An overflow compaction means the context window was exceeded; surfacing the
+// reason separates it from a routine threshold pass or a manual /compact.
+function piCompactionTitle(reason: "manual" | "threshold" | "overflow"): string {
+  switch (reason) {
+    case "manual":
+      return "Compacting context (requested)";
+    case "overflow":
+      return "Compacting context (context window exceeded)";
+    default:
+      return "Compacting context";
+  }
+}
+
 function classifyPiRuntimeError(
   message: string,
 ): "provider_error" | "transport_error" | "permission_error" | "validation_error" | "unknown" {
@@ -2439,10 +2452,14 @@ const makePiAdapter = (options?: PiAdapterLiveOptions) =>
           session,
           turns: [],
           activeTurnId: undefined,
+          activeTurn: undefined,
           activeAssistantItemId: undefined,
           activeReasoningItemId: undefined,
           activeToolItems: new Map(),
           pendingUserInputs: new Map(),
+          pendingTurnOutcome: undefined,
+          turnWatchdog: undefined,
+          turnActivityAt: Date.now(),
           stopped: false,
           lastKnownTokenUsage: undefined,
           unsubscribe: undefined,

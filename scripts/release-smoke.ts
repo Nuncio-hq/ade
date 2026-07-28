@@ -95,12 +95,13 @@ function verifyCanonicalIdentity(): void {
     throw new Error(`Expected CLI package @nuncio/cli, got ${serverPackage.name ?? "<missing>"}.`);
   }
   const expectedBinaries = {
+    ade: "dist/index.mjs",
     nuncioade: "dist/index.mjs",
     "nuncioade-restore-migration-backup": "dist/restoreMigrationBackup.mjs",
   };
   if (JSON.stringify(serverPackage.bin ?? {}) !== JSON.stringify(expectedBinaries)) {
     throw new Error(
-      "Expected the CLI to expose only the NuncioADE entry point and migration recovery binary.",
+      "Expected the CLI to expose only the NuncioADE entry points (nuncioade + ade alias) and migration recovery binary.",
     );
   }
   if (NUNCIO_PRODUCTION_BUNDLE_ID !== "com.nuncio.ade") {

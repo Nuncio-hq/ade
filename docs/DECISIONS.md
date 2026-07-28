@@ -161,6 +161,57 @@
   isolated parallel worktrees, Claude Code harness inheritance, visual-proof
   async runs. Recorded as DELEGATION.md §0.
 
+- **2026-07-28 — App Factory: new product direction (market research + app
+  cloning), scope item (5).** A first-class sidebar section in ADE to find
+  iOS apps worth cloning and study their UX/monetization. Sub-decisions:
+  (1) Data = screensdesign API mirrored locally (catalog 2,621 apps; API
+  probed live 2026-07-28: token works, free tier — Pro-gated filters bypassed
+  by local mirror; screens blurred from paywall onward on free tier).
+  GetAppNiche (5,000 API credits/mo, 1 credit = up to 100 search rows) is P2
+  for estimates beyond the catalog; iTunes Lookup free enrichment later. No
+  Sensor-Tower-class paid data. (2) Subscription strategy = sprint-based:
+  P1 costs $0; later screensdesign Weekly $19 for clone sprints (no free
+  trial exists), GetAppNiche 3-day trial → monthly. Cache-forever in SQLite
+  with `fetched_at` provenance; snapshot mode keeps data browsable after
+  lapse. (3) UX locked with user: table-first, dense, 4 tabs
+  (Discover/Rising/Watchlist/Data), compare view (2-3 apps) in P1.
+  (4) Clone execution deferred (P2+); when built, handoff = deterministic
+  facts pack assembled by server code + `/ade-app-clone` skill in `harness/`
+  — the OMP session itself does vision/spec synthesis; no server-side LLM
+  calls, engine-agnostic via existing thread creation. (5) Secrets in
+  `ServerSecretStore`, never env/localStorage. Plan:
+  `plans/260728-1405-app-factory-p1/`.
+
+- **2026-07-28 — App Factory P1 backend data layer landed (TDD).** Contracts
+  (`packages/contracts/src/appFactory.ts`), migration 088 (`af_apps`,
+  `af_app_revenue`, `af_videos`, `af_screens`, `af_watchlist`, `af_sync_runs`,
+  `af_state`), `AppFactoryRepository`, `ScreensdesignClient` (typed errors,
+  429 `Retry-After` backoff), `CatalogSync` (full/incremental/refreshApp,
+  single-flight via in-memory ref, crash recovery + cursor resume; resumed
+  full syncs skip removed-marking), `AppFactoryService` facade + 12 WS RPCs.
+  Sub-decisions: (1) media (videos/screens) mirrored lazily on first detail
+  view, then cache-forever — catalog sync stays cheap. (2) Sync token stored
+  in `ServerSecretStore` as `screensdesign.api-token`; account email/isPro
+  cached in `af_state`. (3) Sync runs in a detached fiber; progress readable
+  via `appFactory.syncStatus`; 401 mid-sync finishes the run as
+  `token_invalid` without touching local data. (4) Removed apps keep revenue
+  history (`removed_at` flag, never deleted). 53 scoped tests green; full
+  server suite 2996 green. Pre-existing at HEAD (not ours): 2 PiAdapter
+  typecheck errors + 36 web test failures.
+
+- **2026-07-28 — First `@nuncio/*` package: `@nuncio/contracts`.** App Factory
+  domain schemas extracted from `@synara/contracts` into
+  `packages/nuncio-contracts` (own `baseSchemas` atoms — no dependency on
+  Synara code, one-way `@synara/contracts` → `@nuncio/contracts` import).
+  `@synara/contracts` re-exports it from `index.ts`, so existing
+  `from "@synara/contracts"` imports keep working unchanged. WS protocol
+  registration (`WS_METHODS`, `WebSocketRequestBody`, RPC group) stays in
+  Synara ground — it is the shared socket registry. Server implementation
+  (`apps/server/src/appFactory/`) intentionally stays in `apps/server`:
+  extracting it would make a package depend back on app internals (secret
+  store, persistence infra) — wrong direction. Future Nuncio cross-app
+  contracts (mobile, harness-as-package) live in `@nuncio/contracts`.
+
 - **2026-07-28 — Maximum rebrand Synara→NuncioADE; supersedes the no-rename naming
   law.** The "inherited code keeps its Synara identity — do NOT rename" rule
   (2026-07-26) is reversed: the whole tree now carries the NuncioADE identity
@@ -185,3 +236,39 @@
   the full retired identity and wired into CI to prevent regressions;
   (4) `trysynara.com` feedback/changelog endpoints intentionally still point at
   upstream infra — revisit when we host our own.
+
+- **2026-07-28 — App Factory contracts folded into the rebranded
+  `@nuncio/contracts`; supersedes "First `@nuncio/*` package" (same day).**
+  The maximum rebrand renamed `packages/contracts` itself to
+  `@nuncio/contracts`, claiming the name the App Factory schemas package had
+  taken hours earlier — and removed the separation rationale (keep our
+  schemas out of Synara ground), since the whole tree is now `@nuncio/*`.
+  App Factory schemas live directly in `packages/contracts/src/appFactory.ts`;
+  `packages/nuncio-contracts` is deleted. Same merge collision, different
+  kind: upstream v0.6.3 shipped migration 088 (`ExternalMcpAudienceIdentity`),
+  so the App Factory migrations renumber to 089 (`af_*` tables) and 090
+  (`detail_fetched_at`). Also on this branch — pre-existing main breakage
+  that blocked CI green, fixed here so the PR could merge: (1) restored
+  `PiAdapter` pieces dropped by checkpoint merges (`piCompactionTitle`,
+  four `PiSessionContext` fields); (2) release smoke now expects the
+  deliberate `ade` CLI bin alias; (3) rebrand codemod fallout: the v0.6.3
+  sync re-imported `@synara/contracts` into `035_...test.ts` (brand-exempt
+  dir, so brand:check missed it — typecheck caught it); service tags
+  renamed `synara/...`→`nuncioade/...`; ACP log redactor's entry-name set
+  used a non-existent lowercase name (`nuncioade_agent_gateway_token`) and
+  now redacts both real identities; TOML escape-decode fixtures re-pinned
+  to the current managed table name; 077 fresh-install test seeds the
+  post-088 audience value; (4) web store tests were broken by Node >= 22's
+  unbacked `localStorage` global (zustand persist resolves storage once at
+  store creation) — fixed with a vitest setup file installing a writable
+  in-memory localStorage for all web tests.
+
+- **2026-07-28 — Local CI mirror scripts (`ci:local*`) are the agent pre-push
+  gate.** GitHub CI (upstream-inherited quality job) always runs on every PR and
+  every push to `main` with no path filters; the browser step alone budgets 20
+  minutes. Agents must not use the runner as a debug loop. Added
+  `scripts/ci-local.ts` + package scripts `ci:local:fast` / `ci:local` /
+  `ci:local:web` / `ci:local:full` (fail-fast, cheapest first, order aligned with
+  `.github/workflows/ci.yml`). Runbook for agents: `docs/CI-LOCAL.md`; law
+  pointer in `AGENTS.md` §Dev Workflow + Task Completion. `ci:local:web` is
+  required when the diff touches web vite/vitest/browser harness.

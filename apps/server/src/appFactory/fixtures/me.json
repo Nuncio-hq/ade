@@ -1,0 +1,46 @@
+{
+  "id": 14840,
+  "username": "dev@example.com",
+  "email": "dev@example.com",
+  "first_name": "",
+  "last_name": "",
+  "profile_picture": null,
+  "pass_usable": true,
+  "email_verified": false,
+  "organizations": [
+    {
+      "uuid": "7f3b0a6f-728d-445d-8414-e3457337c881",
+      "name": "lildev.lehuu@gmail.com",
+      "subscription_product_name": "Pro",
+      "subscription_status": "incomplete_expired",
+      "billing_state": "unlock",
+      "role": "owner",
+      "active": true,
+      "is_pro": false,
+      "has_subscription": true,
+      "has_stripe_customer": true,
+      "was_pro_via_pass": false,
+      "beta_access": false,
+      "seats": 3,
+      "included_seats": 3,
+      "paid_extra_seats": 0,
+      "used_seats": 1,
+      "available_seats": 2,
+      "subscription_quantity": 1,
+      "generation_credits": 0.0,
+      "generation_credits_free": 0.0,
+      "generation_credits_non_free": 0.0,
+      "af_verified": false
+    }
+  ],
+  "total_apps_hidden": 0,
+  "generation_operation_credits": {
+    "create_screen": 1.0,
+    "update_screen": 0.5,
+    "create_image": 0.3,
+    "asset_generator_image": 0.5,
+    "app_store_screenshot": 1.0,
+    "mascot_batch": 2.0,
+    "logo_batch": 2.0
+  }
+}

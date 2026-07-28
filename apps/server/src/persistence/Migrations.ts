@@ -104,6 +104,8 @@ import Migration0085 from "./Migrations/085_AutomationSettings.ts";
 import Migration0086 from "./Migrations/086_NormalizeStudioThreadWorkspaces.ts";
 import Migration0087 from "./Migrations/087_DropUnusedOrchestrationEventIndexes.ts";
 import Migration0088 from "./Migrations/088_ExternalMcpAudienceIdentity.ts";
+import Migration0089 from "./Migrations/089_AppFactory.ts";
+import Migration0090 from "./Migrations/090_AppFactoryDetailFetchedAt.ts";
 
 /**
  * Migration loader with all migrations defined inline.
@@ -207,6 +209,8 @@ export const migrationEntries = [
   [86, "NormalizeStudioThreadWorkspaces", Migration0086],
   [87, "DropUnusedOrchestrationEventIndexes", Migration0087],
   [88, "ExternalMcpAudienceIdentity", Migration0088],
+  [89, "AppFactory", Migration0089],
+  [90, "AppFactoryDetailFetchedAt", Migration0090],
 ] as const;
 
 export const makeMigrationLoader = (throughId?: number) =>

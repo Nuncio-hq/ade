@@ -1,0 +1,68 @@
+{
+  "id": 1796,
+  "slug": "ai-chatbot-ask-ai-anything",
+  "store_id": "1671071139",
+  "name": "AI Chatbot - Ask AI Anything",
+  "shortname": "Chatbot, Music, Art, Pdf, Math",
+  "description": "Welcome to AI Chatbot - Ask AI Anything, your ultimate AI toolkit designed to meet all your AI needs in one convenient location! Our app offers a diverse range of powerful features to enhance your daily tasks and creativity:\n\n1. AI Chat: Engage with our intelligent chat feature, complete with curated AI scenario presets and character presets for tailored interactions.\n2. AI Image Generation: Effortlessly extract keywords from images or text, allowing you to create unique visual content with just a few taps.\n3. AI Music: Generate catchy and captivating AI songs that will elevate your playlists and inspire your musical journey.\n4. AI PDF Recognition: Summarize lengthy documents and extract key information quickly and easily, saving you valuable time.\n5. AI Math Calculations: Solve complex mathematical problems and equations with our intuitive AI calculator.\n6. AI Movie Summaries: Get concise summaries of your favorite films, helping you decide what to watch next.\n7. YouTube Video Summaries: Easily digest video content with quick summaries of YouTube videos, perfect for busy schedules.\n8. AI Playlist Recommendations: Discover new music tailored to your taste with our personalized playlist recommendations.\n9. And More: Explore additional fun and practical AI features that enhance your everyday tasks.\n\nJoin us and experience the future of productivity and creativity with AI Chatbot - Ask AI Anything!\n\nMEMBERSHIP SUBSCRIPTION\nYou can subscribe for unlimited access to all features in the app.\nTwo subscription options: weekly and annually plans.\n\nPayment will be charged to iTunes Account at confirmation of purchase.\nSubscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period.\nAccount will be charged for renewal within 24-hours prior to the end of the current period. The cost depends on the selected plan.\nSubscriptions may be managed by the user and auto-renewal may be turned off by going to the user's Account Settings after purchase.\nAny unused portion of the free trial will be forfeited when the user purchases a subscription.\n\n\nPrivacy policy: https://www.digitallifetech.net/chatbot/privacyPolicy.html\nTerms of use: https://www.digitallifetech.net/chatbot/termsofuse.html",
+  "developer": {
+    "id": 1492,
+    "name": "DIGITALLIFE TECHNOLOGY CO., LIMITED",
+    "slug": "digitallife-technology-co-limited"
+  },
+  "appstore_link": "https://apps.apple.com/us/app/id1671071139",
+  "revenue": 0,
+  "revenue_list": [
+    {
+      "year": 2026,
+      "month": 2,
+      "revenue": 0
+    },
+    {
+      "year": 2026,
+      "month": 1,
+      "revenue": 0
+    },
+    {
+      "year": 2025,
+      "month": 12,
+      "revenue": 6000
+    },
+    {
+      "year": 2025,
+      "month": 11,
+      "revenue": 6000
+    },
+    {
+      "year": 2025,
+      "month": 10,
+      "revenue": 6000
+    },
+    {
+      "year": 2025,
+      "month": 9,
+      "revenue": 11000
+    }
+  ],
+  "downloads": 0,
+  "rating_value": "4.50",
+  "icon": "https://media.screensdesign.com/appicon-thumbs/3049823278fa432c92fbee6aad88babe.webp",
+  "updated": "2025-02-24",
+  "advertised": true,
+  "released": "2023-02-16",
+  "featured": false,
+  "category_primary": {
+    "id": 11,
+    "name": "PRODUCTIVITY"
+  },
+  "avs": {
+    "id": 1774,
+    "url": null,
+    "screens": [],
+    "paywall_type": "Free Trial - Soft Paywall",
+    "onboarding_step_count": 0,
+    "has_onboarding_with_quiz": false
+  },
+  "latest_appvideo_id": 1774,
+  "latest_appobvideo_id": null
+}
