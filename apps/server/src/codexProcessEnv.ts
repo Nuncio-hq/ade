@@ -240,17 +240,30 @@ export function appendCodexConfigSection(config: string, section: string): strin
 export const NUNCIO_MANAGED_CODEX_CONFIG_BEGIN = "# >>> nuncioade managed config >>>";
 export const NUNCIO_MANAGED_CODEX_CONFIG_END = "# <<< nuncioade managed config <<<";
 
+// Marker pair written by the pre-rebrand identity into overlay config.toml
+// files on disk; recognized so old blocks self-heal instead of being orphaned
+// and duplicated. rebrand-exempt pins the literals.
+export const LEGACY_MANAGED_CODEX_CONFIG_BEGIN = "# >>> synara managed config >>>"; // rebrand-exempt
+export const LEGACY_MANAGED_CODEX_CONFIG_END = "# <<< synara managed config <<<"; // rebrand-exempt
+
+export function normalizeLegacyManagedCodexConfigMarkers(config: string): string {
+  return config
+    .replaceAll(LEGACY_MANAGED_CODEX_CONFIG_BEGIN, NUNCIO_MANAGED_CODEX_CONFIG_BEGIN)
+    .replaceAll(LEGACY_MANAGED_CODEX_CONFIG_END, NUNCIO_MANAGED_CODEX_CONFIG_END);
+}
+
 export function extractManagedCodexConfigSection(config: string): string | undefined {
-  const begin = config.indexOf(NUNCIO_MANAGED_CODEX_CONFIG_BEGIN);
+  const normalizedConfig = normalizeLegacyManagedCodexConfigMarkers(config);
+  const begin = normalizedConfig.indexOf(NUNCIO_MANAGED_CODEX_CONFIG_BEGIN);
   if (begin === -1) {
     return undefined;
   }
   const contentStart = begin + NUNCIO_MANAGED_CODEX_CONFIG_BEGIN.length;
-  const end = config.indexOf(NUNCIO_MANAGED_CODEX_CONFIG_END, contentStart);
+  const end = normalizedConfig.indexOf(NUNCIO_MANAGED_CODEX_CONFIG_END, contentStart);
   if (end === -1) {
     return undefined;
   }
-  const content = config.slice(contentStart, end).trim();
+  const content = normalizedConfig.slice(contentStart, end).trim();
   return content.length > 0 ? content : undefined;
 }
 
@@ -517,15 +530,16 @@ export function mergeShellEnvPolicyExclude(config: string, envVarName: string): 
 }
 
 function appendManagedCodexConfigSection(config: string, section: string): string {
+  const normalizedConfig = normalizeLegacyManagedCodexConfigMarkers(config);
   const tables = splitTomlTables(section.trim()).filter((table) => {
     const header = table.split("\n")[0]?.trim();
-    return header === undefined || !configHasTomlTableHeader(config, header);
+    return header === undefined || !configHasTomlTableHeader(normalizedConfig, header);
   });
   if (tables.length === 0) {
-    return config;
+    return normalizedConfig;
   }
   return appendCodexConfigSection(
-    config,
+    normalizedConfig,
     `${NUNCIO_MANAGED_CODEX_CONFIG_BEGIN}\n${tables.join("\n\n")}\n${NUNCIO_MANAGED_CODEX_CONFIG_END}`,
   );
 }
