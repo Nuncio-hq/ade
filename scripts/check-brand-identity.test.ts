@@ -22,7 +22,68 @@ describe("brand identity guard", () => {
   it("does not match ordinary numeric type names or canonical NuncioADE text", () => {
     expect(
       findBrandIdentityViolations([
-        { path: "source.ts", contents: "const value = new Uint32Array(); // NuncioADE" },
+        {
+          path: "source.ts",
+          contents: [
+            "const value = new Uint32Array(); // NuncioADE",
+            'import { git } from "@nuncio/shared/git";',
+            "process.env.NUNCIO_HOME",
+            '"nuncioade.editor.viewStateByThreadId"',
+          ].join("\n"),
+        },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("flags the pre-rebrand identity across scopes, env vars and prose", () => {
+    const violations = findBrandIdentityViolations([
+      {
+        path: "source.ts",
+        contents: [
+          'import { x } from "@synara/shared";',
+          "process.env.SYNARA_HOME",
+          "export function SynaraLogo() {}",
+          'localStorage.getItem("synara.editor.chatPaneWidth")',
+        ].join("\n"),
+      },
+    ]);
+    expect(violations).toHaveLength(4);
+  });
+
+  it("honors the codemod protections for upstream references", () => {
+    expect(
+      findBrandIdentityViolations([
+        {
+          path: "README.md",
+          contents: [
+            "forked from [Synara](https://github.com/Emanuele-web04/synara) upstream",
+            "https://github.com/Emanuele-web04/synara/releases",
+            'const SYNARA_DOCS_URL = "https://trysynara.com/docs";',
+          ].join("\n"),
+        },
+      ]),
+    ).toEqual([
+      {
+        path: "README.md",
+        line: 3,
+        text: 'const SYNARA_DOCS_URL = "https://trysynara.com/docs";',
+      },
+    ]);
+  });
+
+  it("skips rebrand-exempt lines and codemod-exempt paths", () => {
+    expect(
+      findBrandIdentityViolations([
+        {
+          path: "apps/server/src/codexProcessEnv.ts",
+          contents: 'const legacy = "# >>> synara managed config >>>"; // rebrand-exempt',
+        },
+        {
+          path: "apps/server/src/persistence/Migrations/074_ExternalMcpIntegrations.ts",
+          contents: "audience TEXT NOT NULL CHECK (audience = 'synara.external-mcp')",
+        },
+        { path: "SYNARA-AGENTS.md", contents: "Synara agent docs" },
+        { path: "plans/006-make-synara-the-agent-harness.md", contents: "synara" },
       ]),
     ).toEqual([]);
   });

@@ -5,6 +5,8 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
+import { EXEMPT_MARKER, isExemptPath, PROTECTIONS, REBRAND_RULES } from "./rebrand-identity.ts";
+
 const characters = (...codes: number[]): string => String.fromCharCode(...codes);
 const retiredShortName = characters(116, 51);
 const retiredFirstName = `${retiredShortName}${characters(99, 111, 100, 101)}`;
@@ -40,6 +42,9 @@ const forbiddenPatterns = [
     "i",
   ),
   new RegExp(escapeRegExp(incorrectBundleDomain), "i"),
+  // The pre-rebrand identity is forbidden too: the exact tokens the codemod
+  // renames, so this guard and scripts/rebrand-identity.ts can never drift.
+  ...REBRAND_RULES.map((rule) => rule.pattern),
 ] as const;
 
 // Raster images cannot be searched for embedded text. Keep the user-facing
@@ -76,17 +81,30 @@ function containsForbiddenIdentity(value: string): boolean {
   return forbiddenPatterns.some((pattern) => pattern.test(value));
 }
 
+function withProtections(contents: string): string {
+  let result = contents;
+  for (const pattern of PROTECTIONS) {
+    result = result.replace(pattern, (match) => "@".repeat(match.length));
+  }
+  return result;
+}
+
 export function findBrandIdentityViolations(
   files: readonly BrandIdentityFile[],
 ): BrandIdentityViolation[] {
   const violations: BrandIdentityViolation[] = [];
   for (const file of files) {
+    if (isExemptPath(file.path)) continue;
     if (containsForbiddenIdentity(file.path)) {
       violations.push({ path: file.path, line: null, text: file.path });
     }
-    for (const [index, line] of file.contents.split(/\r?\n/).entries()) {
-      if (!containsForbiddenIdentity(line)) continue;
-      violations.push({ path: file.path, line: index + 1, text: line.trim() });
+    const originalLines = file.contents.split(/\r?\n/);
+    const maskedLines = withProtections(file.contents).split(/\r?\n/);
+    for (const [index, maskedLine] of maskedLines.entries()) {
+      const originalLine = originalLines[index] ?? maskedLine;
+      if (originalLine.includes(EXEMPT_MARKER)) continue;
+      if (!containsForbiddenIdentity(maskedLine)) continue;
+      violations.push({ path: file.path, line: index + 1, text: originalLine.trim() });
     }
   }
   return violations;

@@ -26,8 +26,9 @@ export const EXEMPT_MARKER = "rebrand-exempt";
 // Strings that must survive verbatim: upstream repository references and the
 // upstream hosted site (docs/changelog/feedback endpoints we still point at).
 // The markdown-link entry must come first so its link text is protected before
-// the bare URL pattern can match inside it.
-const PROTECTIONS: readonly RegExp[] = [
+// the bare URL pattern can match inside it. Exported so the brand identity
+// guard honors the exact same protections.
+export const PROTECTIONS: readonly RegExp[] = [
   /\[Synara\]\(https:\/\/github\.com\/Emanuele-web04\/synara\)/g,
   /Emanuele-web04\/synara/gi,
   /trysynara/gi,
@@ -44,6 +45,8 @@ const EXEMPT_PATHS = new Set([
   // old tokens they match against.
   "scripts/rebrand-identity.ts",
   "scripts/rebrand-identity.test.ts",
+  // Brand-guard fixtures contain forbidden tokens on purpose.
+  "scripts/check-brand-identity.test.ts",
 ]);
 
 // Migration files are immutable history: their SQL was applied to real
