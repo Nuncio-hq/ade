@@ -29,14 +29,14 @@ All Synara-inherited providers are kept working.
   DB migrated from the old Synara install (sqlite .backup snapshot); user works
   in NuncioADE. Remaining: signed builds + no-script auto-update via GitHub releases.
 - [x] **Rebrand** (2026-07-28, branch `app/rebrand-nuncioade`) — maximum rebrand
-  Synara→NuncioADE across the whole tree via `scripts/rebrand-identity.ts`
-  (deterministic, idempotent); supersedes the old no-rename law. Shipped:
-  `nuncioade` CLI (+ `ade` alias), browser storage-key migration, managed
-  codex-config marker normalization, external-MCP legacy prefix acceptance +
-  frozen hash salt, DB migration 088 (audience constraint), `brand:check`
-  guard extended + CI-enforced, `sync/rebranded-upstream` shadow branch for
-  near-zero-conflict upstream syncs (rehearsed on v0.6.2: merged tree
-  byte-identical). Left upstream: `trysynara.com` feedback/changelog endpoints.
+      Synara→NuncioADE across the whole tree via `scripts/rebrand-identity.ts`
+      (deterministic, idempotent); supersedes the old no-rename law. Shipped:
+      `nuncioade` CLI (+ `ade` alias), browser storage-key migration, managed
+      codex-config marker normalization, external-MCP legacy prefix acceptance +
+      frozen hash salt, DB migration 088 (audience constraint), `brand:check`
+      guard extended + CI-enforced, `sync/rebranded-upstream` shadow branch for
+      near-zero-conflict upstream syncs (rehearsed on v0.6.2: merged tree
+      byte-identical). Left upstream: `trysynara.com` feedback/changelog endpoints.
 - [ ] **M4 OMP engine** — `OmpAdapter` in `apps/server` (direct SDK:
       `createAgentSession`/`SessionManager`/`ModelRegistry` from
       `@oh-my-pi/pi-coding-agent` 17.x), models from OMP's registry,
@@ -62,7 +62,7 @@ All Synara-inherited providers are kept working.
 - Naming: post-rebrand the whole tree is `@nuncio/*` / `NUNCIO_*` / `nuncioade` /
   `ade_` tools. Retired `synara` tokens survive only in attribution, exempt
   history, and `// rebrand-exempt` compat shims — enforced by `bun run
-  brand:check` in CI. See AGENTS.md §Naming & Identity.
+brand:check` in CI. See AGENTS.md §Naming & Identity.
 - Versioning: ADE line = 0.0.x (currently 0.0.1), user-decided only, agents never
   bump/tag. Upstream base = `UPSTREAM-BASE` file (currently v0.6.2). See AGENTS.md
   §Versioning & Releases.
