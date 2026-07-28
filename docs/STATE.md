@@ -28,7 +28,7 @@ All Synara-inherited providers are kept working.
 - [~] **M3 Daily driver** — STARTED: NuncioADE.app branded, built, installed;
   DB migrated from the old Synara install (sqlite .backup snapshot); user works
   in NuncioADE. Remaining: signed builds + no-script auto-update via GitHub releases.
-- [x] **Rebrand** (2026-07-28, branch `app/rebrand-nuncioade`) — maximum rebrand
+- [x] **Rebrand** (2026-07-28, merged to `main`) — maximum rebrand
       Synara→NuncioADE across the whole tree via `scripts/rebrand-identity.ts`
       (deterministic, idempotent); supersedes the old no-rename law. Shipped:
       `nuncioade` CLI (+ `ade` alias), browser storage-key migration, managed
