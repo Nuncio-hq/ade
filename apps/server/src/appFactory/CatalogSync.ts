@@ -117,7 +117,9 @@ export const runCatalogSync = (
             : page.results;
         for (const item of items) {
           const fetchedAt = now();
-          yield* repo.upsertApp(toAppUpsert(item, fetchedAt));
+          // Catalog rows come from list payloads: detail-only columns are
+          // preserved on conflict (see upsertCatalogApp).
+          yield* repo.upsertCatalogApp(toAppUpsert(item, fetchedAt));
           yield* repo.replaceRevenue({ appId: item.id, points: toRevenuePoints(item) });
           if (options.mode === "full") {
             seenAppIds.push(item.id);
@@ -163,6 +165,7 @@ export const refreshApp = (deps: CatalogSyncDeps, appId: number): Effect.Effect<
     const fetchedAt = now();
     yield* repo.upsertApp(toAppUpsert(detail, fetchedAt));
     yield* repo.replaceRevenue({ appId, points: toRevenuePoints(detail) });
+    yield* repo.markDetailFetched(appId, fetchedAt);
 
     const videos = yield* collectPages(
       () => client.fetchVideosPage(appId, null),

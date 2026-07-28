@@ -1687,9 +1687,15 @@ const makeWsRpcHandlersLayer = () =>
           ),
 
         [WS_METHODS.appFactorySetToken]: (input) =>
-          appFactoryEffect(appFactory.setToken(input), "Failed to store the Screensdesign token"),
+          appFactoryEffect(
+            requireOwner.pipe(Effect.andThen(appFactory.setToken(input))),
+            "Failed to store the Screensdesign token",
+          ),
         [WS_METHODS.appFactoryClearToken]: () =>
-          appFactoryEffect(appFactory.clearToken(), "Failed to clear the Screensdesign token"),
+          appFactoryEffect(
+            requireOwner.pipe(Effect.andThen(appFactory.clearToken())),
+            "Failed to clear the Screensdesign token",
+          ),
         [WS_METHODS.appFactoryTestToken]: () =>
           appFactoryEffect(appFactory.testToken(), "Failed to validate the Screensdesign token"),
         [WS_METHODS.appFactoryGetStatus]: () =>

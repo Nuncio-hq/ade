@@ -73,6 +73,77 @@ layer("AppFactoryRepository", (it) => {
     }),
   );
 
+  it.effect("catalog upsert updates list columns but preserves mirrored detail columns", () =>
+    Effect.gen(function* () {
+      const repo = yield* AppFactoryRepository;
+      yield* repo.upsertApp(appUpsert());
+
+      // List payloads never carry the detail-only fields: mapped to null.
+      yield* repo.upsertCatalogApp(
+        appUpsert({
+          categoryPrimary: null,
+          description: null,
+          appstoreLink: null,
+          storeId: null,
+          latestAppobvideoId: null,
+          revenue: 777,
+          fetchedAt: LATER,
+        }),
+      );
+
+      const row = yield* repo.getAppRow(1001);
+      assert.strictEqual(row?.revenue, 777);
+      assert.strictEqual(row?.fetchedAt, LATER);
+      assert.strictEqual(row?.description, "A demo app");
+      assert.strictEqual(row?.appstoreLink, "https://apps.apple.com/us/app/id1");
+      assert.strictEqual(row?.storeId, "1");
+      assert.strictEqual(row?.categoryPrimary, "PRODUCTIVITY");
+    }),
+  );
+
+  it.effect("catalog upsert of a new row still stores detail fields when present", () =>
+    Effect.gen(function* () {
+      const repo = yield* AppFactoryRepository;
+      yield* repo.upsertCatalogApp(appUpsert({ appId: 2002 }));
+
+      const row = yield* repo.getAppRow(2002);
+      assert.strictEqual(row?.description, "A demo app");
+      assert.strictEqual(row?.storeId, "1");
+      assert.isNull(row?.detailFetchedAt);
+    }),
+  );
+
+  it.effect("markDetailFetched stamps the row and upserts never clear the stamp", () =>
+    Effect.gen(function* () {
+      const repo = yield* AppFactoryRepository;
+      yield* repo.upsertCatalogApp(appUpsert({ description: null }));
+      const before = yield* repo.getAppRow(1001);
+      assert.isNull(before?.detailFetchedAt);
+
+      yield* repo.markDetailFetched(1001, LATER);
+      const stamped = yield* repo.getAppRow(1001);
+      assert.strictEqual(stamped?.detailFetchedAt, LATER);
+
+      yield* repo.upsertApp(appUpsert({ fetchedAt: NOW }));
+      yield* repo.upsertCatalogApp(appUpsert({ description: null, fetchedAt: NOW }));
+      const after = yield* repo.getAppRow(1001);
+      assert.strictEqual(after?.detailFetchedAt, LATER);
+    }),
+  );
+
+  it.effect("empty removal pass is a no-op (guards against anomalous empty upstream pages)", () =>
+    Effect.gen(function* () {
+      const repo = yield* AppFactoryRepository;
+      yield* repo.upsertApp(appUpsert({ appId: 11, slug: "guard-a", name: "Guard A" }));
+      yield* repo.upsertApp(appUpsert({ appId: 12, slug: "guard-b", name: "Guard B" }));
+
+      yield* repo.markAppsRemovedExcept([], NOW);
+
+      assert.isNull((yield* repo.getAppRow(11))?.removedAt);
+      assert.isNull((yield* repo.getAppRow(12))?.removedAt);
+    }),
+  );
+
   it.effect("replaceRevenue fully replaces months (stale months disappear)", () =>
     Effect.gen(function* () {
       const repo = yield* AppFactoryRepository;

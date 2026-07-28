@@ -294,6 +294,7 @@ layer("CatalogSync", (it) => {
       const row = yield* repo.getAppRow(9301);
       assert.strictEqual(row?.categoryPrimary, "PRODUCTIVITY");
       assert.strictEqual(row?.storeId, "10301");
+      assert.isNotNull(row?.detailFetchedAt);
       const videos = yield* repo.listVideoRows(9301);
       assert.strictEqual(videos.length, 1);
       assert.strictEqual(videos[0]?.appVersion, "2.0");
@@ -303,6 +304,39 @@ layer("CatalogSync", (it) => {
         screens.map((s) => ({ screenId: s.screenId, timestamp: s.timestamp, labels: s.labels })),
         [{ screenId: 777, timestamp: 3.5, labels: ["paywall"] }],
       );
+    }),
+  );
+
+  it.effect("full sync preserves detail fields and stamp mirrored by an earlier refreshApp", () =>
+    Effect.gen(function* () {
+      const repo = yield* AppFactoryRepository;
+      const { client: refreshClient } = makeFakeClient({
+        pages: {},
+        details: {
+          9501: sdDetail(9501, {
+            description: "Mirrored detail",
+            appstore_link: "https://apps.apple.com/us/app/id9501",
+          }),
+        },
+      });
+      yield* refreshApp(makeDeps(refreshClient, repo), 9501);
+      const before = yield* repo.getAppRow(9501);
+      assert.strictEqual(before?.description, "Mirrored detail");
+      assert.isNotNull(before?.detailFetchedAt);
+
+      const { client: syncClient } = makeFakeClient({
+        pages: { [FIRST]: { count: 1, next: null, results: [sdApp(9501)] } },
+      });
+      const scheduler = yield* makeCatalogSyncScheduler(makeDeps(syncClient, repo));
+      yield* scheduler.start("full");
+      yield* scheduler.awaitIdle();
+
+      const after = yield* repo.getAppRow(9501);
+      assert.strictEqual(after?.description, "Mirrored detail");
+      assert.strictEqual(after?.appstoreLink, "https://apps.apple.com/us/app/id9501");
+      assert.strictEqual(after?.storeId, "10501");
+      assert.strictEqual(after?.categoryPrimary, "PRODUCTIVITY");
+      assert.strictEqual(after?.detailFetchedAt, before?.detailFetchedAt);
     }),
   );
 

@@ -158,6 +158,62 @@ const makeAppFactoryRepository = Effect.gen(function* () {
     `,
   });
 
+  // List payloads never carry the detail-only fields, so a catalog sync keeps
+  // whatever refreshApp mirrored; detail payloads (upsertApp) overwrite fully.
+  const upsertCatalogAppRow = SqlSchema.void({
+    Request: AppFactoryAppUpsert,
+    execute: (row) => sql`
+      INSERT INTO af_apps (
+        sd_id, slug, name, shortname, icon_url, developer_name, developer_slug,
+        category_primary, description, appstore_link, store_id, revenue, downloads,
+        rating_value, advertised, featured, released, updated, paywall_type,
+        onboarding_step_count, has_onboarding_with_quiz, latest_appvideo_id,
+        latest_appobvideo_id, fetched_at, removed_at
+      ) VALUES (
+        ${row.appId}, ${row.slug}, ${row.name}, ${row.shortname}, ${row.iconUrl},
+        ${row.developerName}, ${row.developerSlug}, ${row.categoryPrimary},
+        ${row.description}, ${row.appstoreLink}, ${row.storeId}, ${row.revenue},
+        ${row.downloads}, ${row.ratingValue}, ${row.advertised ? 1 : 0},
+        ${row.featured ? 1 : 0}, ${row.released}, ${row.updated}, ${row.paywallType},
+        ${row.onboardingStepCount},
+        ${row.hasOnboardingWithQuiz === null ? null : row.hasOnboardingWithQuiz ? 1 : 0},
+        ${row.latestAppvideoId}, ${row.latestAppobvideoId}, ${row.fetchedAt}, NULL
+      )
+      ON CONFLICT (sd_id) DO UPDATE SET
+        slug = excluded.slug,
+        name = excluded.name,
+        shortname = excluded.shortname,
+        icon_url = excluded.icon_url,
+        developer_name = excluded.developer_name,
+        developer_slug = excluded.developer_slug,
+        category_primary = COALESCE(excluded.category_primary, af_apps.category_primary),
+        description = COALESCE(excluded.description, af_apps.description),
+        appstore_link = COALESCE(excluded.appstore_link, af_apps.appstore_link),
+        store_id = COALESCE(excluded.store_id, af_apps.store_id),
+        revenue = excluded.revenue,
+        downloads = excluded.downloads,
+        rating_value = excluded.rating_value,
+        advertised = excluded.advertised,
+        featured = excluded.featured,
+        released = excluded.released,
+        updated = excluded.updated,
+        paywall_type = excluded.paywall_type,
+        onboarding_step_count = excluded.onboarding_step_count,
+        has_onboarding_with_quiz = excluded.has_onboarding_with_quiz,
+        latest_appvideo_id = excluded.latest_appvideo_id,
+        latest_appobvideo_id = COALESCE(excluded.latest_appobvideo_id, af_apps.latest_appobvideo_id),
+        fetched_at = excluded.fetched_at,
+        removed_at = NULL
+    `,
+  });
+
+  const markDetailFetchedRow = SqlSchema.void({
+    Request: Schema.Struct({ appId: Schema.Number, detailFetchedAt: Schema.String }),
+    execute: ({ appId, detailFetchedAt }) => sql`
+      UPDATE af_apps SET detail_fetched_at = ${detailFetchedAt} WHERE sd_id = ${appId}
+    `,
+  });
+
   const listAppRowEntries = SqlSchema.findAll({
     Request: Schema.Struct({}),
     Result: AppRowDb,
@@ -188,6 +244,7 @@ const makeAppFactoryRepository = Effect.gen(function* () {
         a.latest_appobvideo_id AS "latestAppobvideoId",
         a.fetched_at AS "fetchedAt",
         a.removed_at AS "removedAt",
+        a.detail_fetched_at AS "detailFetchedAt",
         CASE WHEN w.sd_id IS NULL THEN 0 ELSE 1 END AS "isPinned",
         w.note
       FROM af_apps a
@@ -226,6 +283,7 @@ const makeAppFactoryRepository = Effect.gen(function* () {
         a.latest_appobvideo_id AS "latestAppobvideoId",
         a.fetched_at AS "fetchedAt",
         a.removed_at AS "removedAt",
+        a.detail_fetched_at AS "detailFetchedAt",
         CASE WHEN w.sd_id IS NULL THEN 0 ELSE 1 END AS "isPinned",
         w.note
       FROM af_apps a
@@ -594,6 +652,9 @@ const makeAppFactoryRepository = Effect.gen(function* () {
 
   return {
     upsertApp: (input) => upsertAppRow(input).pipe(Effect.mapError(mapError)),
+    upsertCatalogApp: (input) => upsertCatalogAppRow(input).pipe(Effect.mapError(mapError)),
+    markDetailFetched: (appId, detailFetchedAt) =>
+      markDetailFetchedRow({ appId, detailFetchedAt }).pipe(Effect.mapError(mapError)),
     replaceRevenue,
     listAppRows: () => listAppRowEntries({}).pipe(Effect.mapError(mapError)),
     getAppRow: (appId) =>

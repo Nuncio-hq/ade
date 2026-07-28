@@ -214,9 +214,10 @@ export const AppFactoryServiceLive = Layer.effect(
     const loadVideoWithScreens = (
       video: AppFactoryVideoRow,
       fetchedAt: string,
+      canFetch: boolean,
     ): Effect.Effect<AppFactoryVideo, unknown> =>
       Effect.gen(function* () {
-        if (!video.screensFetched) {
+        if (!video.screensFetched && canFetch) {
           const screens = yield* collectScreens(client, video.videoId);
           yield* repo.replaceScreens({
             videoId: video.videoId,
@@ -234,31 +235,38 @@ export const AppFactoryServiceLive = Layer.effect(
           appVersion: video.appVersion,
           recordingDate: video.recordingDate,
           durationSeconds: video.durationSeconds,
-          screens: screens.map((screen) => ({
-            screenId: screen.screenId,
-            screenUrl: screen.screenUrl,
-            timestamp: screen.timestamp,
-            isBlurry: screen.isBlurry,
-            labels: screen.labels,
-          })),
+          // null = frames not mirrored yet (no token, or fetch not triggered)
+          screens:
+            screens.length === 0 && !video.screensFetched
+              ? null
+              : screens.map((screen) => ({
+                  screenId: screen.screenId,
+                  screenUrl: screen.screenUrl,
+                  timestamp: screen.timestamp,
+                  isBlurry: screen.isBlurry,
+                  labels: screen.labels,
+                })),
         };
       });
 
     const getAppDetail: AppFactoryServiceShape["getAppDetail"] = ({ appId }) =>
       Effect.gen(function* () {
-        const row = yield* repo.getAppRow(appId);
+        let row = yield* repo.getAppRow(appId);
         if (row === null) {
           return yield* new AppFactoryAppNotFoundError({ appId });
         }
-        let videos = yield* repo.listVideoRows(appId);
-        if (videos.length === 0 && row.latestAppvideoId !== null) {
+        // Lazy detail mirror: requires a configured token; without one we
+        // serve the local cache as-is (detail fields null, screens unmirrored).
+        const token = yield* readToken();
+        if (token !== null && token !== "" && row.detailFetchedAt === null) {
           yield* refreshAppInCatalog(syncDeps, appId);
-          videos = yield* repo.listVideoRows(appId);
+          row = (yield* repo.getAppRow(appId)) ?? row;
         }
+        const videos = yield* repo.listVideoRows(appId);
         const now = new Date().toISOString();
         const videoDtos: AppFactoryVideo[] = [];
         for (const video of videos) {
-          videoDtos.push(yield* loadVideoWithScreens(video, now));
+          videoDtos.push(yield* loadVideoWithScreens(video, now, token !== null && token !== ""));
         }
         const revenueRows = (yield* repo.listRevenueRows()).filter(
           (point) => point.appId === appId,

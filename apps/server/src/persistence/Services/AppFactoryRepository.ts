@@ -102,6 +102,7 @@ export type AppFactoryScreensReplace = typeof AppFactoryScreensReplace.Type;
 export const AppFactoryAppRow = Schema.Struct({
   ...AppFactoryAppUpsert.fields,
   removedAt: Schema.NullOr(IsoDateTime),
+  detailFetchedAt: Schema.NullOr(IsoDateTime),
   isPinned: Schema.Boolean,
   note: Schema.NullOr(Schema.String),
 });
@@ -160,6 +161,22 @@ export interface AppFactoryRepositoryShape {
     input: AppFactoryAppUpsert,
   ) => Effect.Effect<void, AppFactoryRepositoryError>;
 
+  /**
+   * Catalog-page upsert: overwrites list-payload columns only. Detail-only
+   * columns (description, App Store link, store id, primary category,
+   * onboarding video id) are preserved when the list payload lacks them, so
+   * a sync never erases fields previously mirrored by `refreshApp`.
+   */
+  readonly upsertCatalogApp: (
+    input: AppFactoryAppUpsert,
+  ) => Effect.Effect<void, AppFactoryRepositoryError>;
+
+  /** Stamp that the detail payload for one app has been mirrored. */
+  readonly markDetailFetched: (
+    appId: number,
+    detailFetchedAt: string,
+  ) => Effect.Effect<void, AppFactoryRepositoryError>;
+
   /** Replace all revenue months for one app (server payload is authoritative). */
   readonly replaceRevenue: (
     input: AppFactoryRevenueReplace,
@@ -204,7 +221,12 @@ export interface AppFactoryRepositoryShape {
     removedAt: string,
   ) => Effect.Effect<void, AppFactoryRepositoryError>;
 
-  /** After a full sync: mark every app absent from `seenAppIds` as removed. */
+  /**
+   * After a full sync: mark every app absent from `seenAppIds` as removed.
+   * An empty list is a no-op: a completed sync that saw zero apps is far more
+   * likely an upstream glitch than a genuinely empty catalog, so we refuse to
+   * mass-mark everything removed.
+   */
   readonly markAppsRemovedExcept: (
     seenAppIds: ReadonlyArray<number>,
     removedAt: string,

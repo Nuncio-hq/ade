@@ -336,3 +336,136 @@ catalogLayer("AppFactoryService (read model)", (it) => {
     }),
   );
 });
+
+// --- Lazy detail mirror: list payloads never carry detail fields ---
+
+const LIST_ONLY_ITEM = {
+  id: 9101,
+  slug: "quiet-ledger",
+  name: "Quiet Ledger",
+  shortname: null,
+  icon: null,
+  developer: null,
+  avs: null,
+  revenue: 8000,
+  revenue_list: [{ year: 2026, month: 6, revenue: 8000 }],
+  downloads: 12_000,
+  rating_value: 4.2,
+  advertised: false,
+  released: "2025-03-01",
+  updated: "2026-06-15",
+  featured: false,
+  latest_appvideo_id: null, // no recordings at all
+};
+
+const DETAIL_9101 = {
+  ...LIST_ONLY_ITEM,
+  appstore_link: "https://apps.apple.com/app/id9101",
+  category_primary: { id: 22, name: "FINANCE" },
+  description: "Detail-only description",
+  store_id: 9101,
+  latest_appobvideo_id: null,
+} as unknown as SdAppDetail;
+
+const lazyDetailLayer = (() => {
+  const { layer, calls } = makeServiceLayer({
+    pages: {
+      __first__: { count: 1, next: null, results: [LIST_ONLY_ITEM] },
+    },
+    details: { 9101: DETAIL_9101 },
+  });
+  return { layer: it.layer(layer), calls };
+})();
+
+lazyDetailLayer.layer("AppFactoryService (lazy detail mirror)", (it) => {
+  it.effect(
+    "first detail view fetches detail even without recordings and returns fresh fields",
+    () =>
+      Effect.gen(function* () {
+        const service = yield* AppFactoryService;
+        const { calls } = lazyDetailLayer;
+        yield* service.setToken({ token: "sds_test_token" });
+        yield* service.syncNow({ mode: "full" });
+        yield* waitForSyncToSettle;
+
+        const repo = yield* AppFactoryRepository;
+        assert.isNull((yield* repo.getAppRow(9101))?.detailFetchedAt);
+
+        const detail = yield* service.getAppDetail({ appId: 9101 });
+        assert.strictEqual(detail.description, "Detail-only description");
+        assert.strictEqual(detail.appstoreLink, "https://apps.apple.com/app/id9101");
+        assert.strictEqual(detail.storeId, "9101");
+        assert.strictEqual(detail.categoryPrimary, "FINANCE");
+        assert.strictEqual(calls.fetchAppDetail, 1);
+        assert.isNotNull((yield* repo.getAppRow(9101))?.detailFetchedAt);
+
+        // Second view: fully cached, no further upstream calls.
+        yield* service.getAppDetail({ appId: 9101 });
+        assert.strictEqual(calls.fetchAppDetail, 1);
+      }),
+  );
+});
+
+// --- No token: detail view serves the local cache without upstream calls ---
+
+const noTokenLayer = (() => {
+  const { layer, calls } = makeServiceLayer({});
+  return { layer: it.layer(layer), calls };
+})();
+
+noTokenLayer.layer("AppFactoryService (no token)", (it) => {
+  it.effect("getAppDetail without a token serves local cache; unmirrored screens stay null", () =>
+    Effect.gen(function* () {
+      const service = yield* AppFactoryService;
+      const repo = yield* AppFactoryRepository;
+      const NOW = "2026-07-28T04:00:00.000Z";
+      yield* repo.upsertCatalogApp({
+        appId: 9201,
+        slug: "cached-app",
+        name: "Cached App",
+        shortname: null,
+        iconUrl: null,
+        developerName: null,
+        developerSlug: null,
+        categoryPrimary: null,
+        description: "Cached description",
+        appstoreLink: null,
+        storeId: null,
+        revenue: 5000,
+        downloads: 9000,
+        ratingValue: null,
+        advertised: false,
+        featured: false,
+        released: null,
+        updated: null,
+        paywallType: null,
+        onboardingStepCount: null,
+        hasOnboardingWithQuiz: null,
+        latestAppvideoId: 555,
+        latestAppobvideoId: null,
+        fetchedAt: NOW,
+      });
+      yield* repo.upsertVideo({
+        videoId: 555,
+        appId: 9201,
+        slug: "cached-app-video",
+        label: "Jul 2026",
+        videoUrl: "https://player.mediadelivery.net/embed/a/b",
+        blurStartsAt: null,
+        appVersion: null,
+        recordingDate: null,
+        durationSeconds: null,
+        fetchedAt: NOW,
+      });
+
+      const detail = yield* service.getAppDetail({ appId: 9201 });
+      assert.strictEqual(detail.description, "Cached description");
+      assert.strictEqual(detail.videos.length, 1);
+      assert.isNull(detail.videos[0]?.screens);
+
+      const { calls } = noTokenLayer;
+      assert.strictEqual(calls.fetchAppDetail, 0);
+      assert.strictEqual(calls.fetchScreensPage, 0);
+    }),
+  );
+});
