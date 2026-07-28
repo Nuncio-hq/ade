@@ -13,7 +13,7 @@ import {
   WS_PROTOCOL_MAX_REVISION,
   WS_PROTOCOL_MIN_REVISION,
   WsCompatibilityError,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 
 import {
   shouldKeepServerLifecycleStream,

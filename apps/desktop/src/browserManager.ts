@@ -29,15 +29,15 @@ import type {
   BrowserThreadInput,
   ThreadBrowserState,
   ThreadId,
-} from "@synara/contracts";
-import { isBrowserCopyLinkChord } from "@synara/shared/browserShortcuts";
+} from "@nuncio/contracts";
+import { isBrowserCopyLinkChord } from "@nuncio/shared/browserShortcuts";
 import {
   BROWSER_BLANK_URL as ABOUT_BLANK_URL,
   classifyBrowserWindowOpen,
   isBlankBrowserTabUrl,
   normalizeBrowserUrlInput as normalizeUrlInput,
   resolveCopyableBrowserTabUrl,
-} from "@synara/shared/browserSession";
+} from "@nuncio/shared/browserSession";
 import { BROWSER_SESSION_PARTITION, BrowserSessionPolicy } from "./browserSessionPolicy";
 
 export { BROWSER_SESSION_PARTITION } from "./browserSessionPolicy";

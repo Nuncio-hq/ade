@@ -3,8 +3,8 @@
 // Depends on: git React Query helpers, native API mutations, and toolbar selection rules.
 // Note: the "Create branch" footer row uses raw <button> because it is a
 // menu-item-style affordance inside a ComboboxPopup, not a generic action.
-import type { GitBranch, GitStashInfoResult, GitStatusResult, NativeApi } from "@synara/contracts";
-import { pluralize } from "@synara/shared/text";
+import type { GitBranch, GitStashInfoResult, GitStatusResult, NativeApi } from "@nuncio/contracts";
+import { pluralize } from "@nuncio/shared/text";
 import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDownIcon, PlusIcon } from "~/lib/icons";
@@ -268,7 +268,7 @@ function handleCheckoutError(
                   type: "warning",
                   title: "Changes saved, but not reapplied.",
                   description:
-                    "Synara switched branches and kept your changes in a stash because they could not be restored onto this branch cleanly.",
+                    "NuncioADE switched branches and kept your changes in a stash because they could not be restored onto this branch cleanly.",
                   data: { copyText: toBranchActionErrorMessage(stashError) },
                   actionProps: {
                     children: "Discard stash",

@@ -18,10 +18,10 @@ export const WS_STREAM_LIMITS = {
 } as const;
 
 export const WS_COMPATIBILITY_QUERY = {
-  clientBuild: "x-synara-client-build",
-  protocolEpoch: "x-synara-protocol-epoch",
-  protocolRevision: "x-synara-protocol-revision",
-  serverInstanceId: "x-synara-server-instance",
+  clientBuild: "x-nuncioade-client-build",
+  protocolEpoch: "x-nuncioade-protocol-epoch",
+  protocolRevision: "x-nuncioade-protocol-revision",
+  serverInstanceId: "x-nuncioade-server-instance",
 } as const;
 
 export const WS_SERVER_CAPABILITIES = [

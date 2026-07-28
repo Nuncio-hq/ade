@@ -1,13 +1,13 @@
 // FILE: appSnapShortcut.ts
-// Purpose: Detect AppSnap shortcut overlap with Synara's renderer keybindings.
+// Purpose: Detect AppSnap shortcut overlap with NuncioADE's renderer keybindings.
 
 import type {
   DesktopAppSnapKeyChord,
   KeybindingCommand,
   KeybindingShortcut,
   ResolvedKeybindingsConfig,
-} from "@synara/contracts";
-import { appSnapShortcutKeyLabel } from "@synara/shared/appSnapShortcut";
+} from "@nuncio/contracts";
+import { appSnapShortcutKeyLabel } from "@nuncio/shared/appSnapShortcut";
 
 import { DEFAULT_SHORTCUT_FALLBACKS } from "./keybindings";
 

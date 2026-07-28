@@ -1,4 +1,4 @@
-import type { DesktopRuntimeArch, DesktopRuntimeInfo } from "@synara/contracts";
+import type { DesktopRuntimeArch, DesktopRuntimeInfo } from "@nuncio/contracts";
 
 interface ResolveDesktopRuntimeInfoInput {
   readonly platform: NodeJS.Platform;

@@ -94,12 +94,12 @@ describe("trustedOrigins", () => {
     const remoteConfig = {
       ...config,
       host: "0.0.0.0",
-      publicUrl: new URL("https://synara.example.test/"),
+      publicUrl: new URL("https://nuncioade.example.test/"),
     };
     expect(
       isTrustedAppOrigin({
-        origin: "https://synara.example.test",
-        requestOrigin: "http://synara.example.test",
+        origin: "https://nuncioade.example.test",
+        requestOrigin: "http://nuncioade.example.test",
         config: remoteConfig,
       }),
     ).toBe(true);
@@ -194,7 +194,7 @@ describe("trustedOrigins", () => {
       requiresWebSocketAuthentication({
         host: "127.0.0.1",
         authToken: undefined,
-        publicUrl: new URL("https://synara.example.test/"),
+        publicUrl: new URL("https://nuncioade.example.test/"),
       }),
     ).toBe(true);
   });

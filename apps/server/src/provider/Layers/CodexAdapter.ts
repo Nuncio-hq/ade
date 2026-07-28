@@ -29,7 +29,7 @@ import {
   ProviderItemId,
   ThreadId,
   TurnId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import {
   Cause,
   Effect,
@@ -72,7 +72,7 @@ import { ServerConfig } from "../../config.ts";
 import { makeRuntimeTaskListItem } from "../runtimeTaskList.ts";
 import { extractProposedPlanMarkdown } from "../planMode.ts";
 import { appendFileAttachmentsPromptBlock } from "../attachmentProjection.ts";
-import { synaraSkillsDir } from "../skillsCatalog.ts";
+import { nuncioadeSkillsDir } from "../skillsCatalog.ts";
 import { makeBoundedCallbackIngress } from "../boundedCallbackIngress.ts";
 import { assignDerivedProviderRuntimeEventIds } from "../providerRuntimeEventIdentity.ts";
 import {
@@ -105,7 +105,7 @@ function compactCodexNativeEventForIngress(event: ProviderEvent): ProviderEvent 
   return {
     ...event,
     payload: {
-      synaraTruncated: true,
+      nuncioadeTruncated: true,
       reason: "Codex native event exceeded the callback ingress size limit",
       originalBytes,
     },
@@ -1679,7 +1679,7 @@ const makeCodexAdapter = (options?: CodexAdapterLiveOptions) =>
     const fileSystem = yield* FileSystem.FileSystem;
     const serverConfig = yield* Effect.service(ServerConfig);
     // Optional so adapter tests can run without the gateway layer; when
-    // present, every session gets the synara_* MCP tools.
+    // present, every session gets the nuncioade_* MCP tools.
     const agentGatewayCredentials = Option.getOrUndefined(
       yield* Effect.serviceOption(AgentGatewayCredentials),
     );
@@ -1700,7 +1700,7 @@ const makeCodexAdapter = (options?: CodexAdapterLiveOptions) =>
         return (
           options?.makeManager?.(services) ??
           new CodexAppServerManager(services, {
-            synaraSkillsDir: synaraSkillsDir(serverConfig.baseDir),
+            nuncioadeSkillsDir: nuncioadeSkillsDir(serverConfig.baseDir),
             ...(agentGatewayCredentials
               ? {
                   agentGatewayMcp: {

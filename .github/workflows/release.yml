@@ -21,7 +21,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: synara-desktop-release
+  group: nuncioade-desktop-release
   cancel-in-progress: false
 
 jobs:
@@ -137,7 +137,7 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Verify Synara identity
+      - name: Verify NuncioADE identity
         run: bun run brand:check
 
       - name: Lint
@@ -212,8 +212,8 @@ jobs:
           AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE_NAME }}
           AZURE_TRUSTED_SIGNING_PUBLISHER_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_PUBLISHER_NAME }}
           AZURE_TRUSTED_SIGNING_SUBJECT_DN: ${{ secrets.AZURE_TRUSTED_SIGNING_SUBJECT_DN }}
-          SYNARA_PUBLISH_RELEASE: ${{ needs.preflight.outputs.publish_release }}
-          ALLOW_UNSIGNED_WINDOWS_PUBLICATION: ${{ vars.SYNARA_ALLOW_UNSIGNED_WINDOWS_RELEASE == needs.preflight.outputs.version }}
+          NUNCIO_PUBLISH_RELEASE: ${{ needs.preflight.outputs.publish_release }}
+          ALLOW_UNSIGNED_WINDOWS_PUBLICATION: ${{ vars.NUNCIO_ALLOW_UNSIGNED_WINDOWS_RELEASE == needs.preflight.outputs.version }}
           SOURCE_COMMIT: ${{ needs.preflight.outputs.source_commit }}
           SOURCE_TAG: ${{ needs.preflight.outputs.source_tag }}
           LOCKFILE_SHA256: ${{ needs.preflight.outputs.lockfile_sha256 }}
@@ -250,7 +250,7 @@ jobs:
               echo "macOS signing enabled."
               signed=true
               args+=(--signed)
-            elif [[ "$SYNARA_PUBLISH_RELEASE" == "true" ]]; then
+            elif [[ "$NUNCIO_PUBLISH_RELEASE" == "true" ]]; then
               echo "Publishing macOS artifacts requires every signing and notarization secret."
               exit 1
             else
@@ -269,7 +269,7 @@ jobs:
               echo "Windows signing enabled (Azure Trusted Signing)."
               signed=true
               args+=(--signed)
-            elif [[ "$SYNARA_PUBLISH_RELEASE" == "true" && "$ALLOW_UNSIGNED_WINDOWS_PUBLICATION" != "true" ]]; then
+            elif [[ "$NUNCIO_PUBLISH_RELEASE" == "true" && "$ALLOW_UNSIGNED_WINDOWS_PUBLICATION" != "true" ]]; then
               echo "Publishing Windows artifacts requires every Azure Trusted Signing secret."
               exit 1
             else
@@ -339,7 +339,7 @@ jobs:
           LOCKFILE_SHA256: ${{ needs.preflight.outputs.lockfile_sha256 }}
           PUBLISH_RELEASE: ${{ needs.preflight.outputs.publish_release }}
           SIGNED_ARTIFACT: ${{ steps.build_artifact.outputs.signed }}
-          ALLOW_UNSIGNED_WINDOWS_PUBLICATION: ${{ vars.SYNARA_ALLOW_UNSIGNED_WINDOWS_RELEASE == needs.preflight.outputs.version }}
+          ALLOW_UNSIGNED_WINDOWS_PUBLICATION: ${{ vars.NUNCIO_ALLOW_UNSIGNED_WINDOWS_RELEASE == needs.preflight.outputs.version }}
         run: |
           node scripts/write-release-artifact-provenance.ts \
             --assets-dir release-publish \
@@ -375,7 +375,7 @@ jobs:
 
   publish_cli:
     name: Publish CLI to npm
-    if: ${{ needs.preflight.outputs.publish_release == 'true' && vars.SYNARA_PUBLISH_CLI == '1' }}
+    if: ${{ needs.preflight.outputs.publish_release == 'true' && vars.NUNCIO_PUBLISH_CLI == '1' }}
     needs: [preflight, build]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -402,7 +402,7 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Build CLI package
-        run: bun run build --filter=@synara/web --filter=@synara/cli
+        run: bun run build --filter=@nuncio/web --filter=@nuncio/cli
 
       - name: Publish CLI package
         run: node apps/server/scripts/cli.ts publish --tag latest --app-version "${{ needs.preflight.outputs.version }}" --verbose
@@ -533,7 +533,7 @@ jobs:
             release-assets/*.provenance.json
           fail_on_unmatched_files: true
 
-      - name: Mirror Synara artifacts onto the pinned updater feed
+      - name: Mirror NuncioADE artifacts onto the pinned updater feed
         if: ${{ needs.preflight.outputs.mirror_to_stable_channel == 'true' }}
         shell: bash
         env:
@@ -585,7 +585,7 @@ jobs:
 
   finalize:
     name: Finalize release
-    if: ${{ needs.preflight.outputs.publish_release == 'true' && vars.SYNARA_FINALIZE_RELEASE == '1' }}
+    if: ${{ needs.preflight.outputs.publish_release == 'true' && vars.NUNCIO_FINALIZE_RELEASE == '1' }}
     needs: [preflight, release]
     runs-on: ubuntu-24.04
     timeout-minutes: 10

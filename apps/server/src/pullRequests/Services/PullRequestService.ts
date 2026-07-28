@@ -11,7 +11,7 @@ import type {
   PullRequestSetPinnedResult,
   PullRequestsListInput,
   PullRequestsListResult,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { ServiceMap } from "effect";
 import type { Effect } from "effect";
 
@@ -36,4 +36,4 @@ export interface PullRequestServiceShape {
 export class PullRequestService extends ServiceMap.Service<
   PullRequestService,
   PullRequestServiceShape
->()("synara/pullRequests/Services/PullRequestService/PullRequestService") {}
+>()("nuncioade/pullRequests/Services/PullRequestService/PullRequestService") {}

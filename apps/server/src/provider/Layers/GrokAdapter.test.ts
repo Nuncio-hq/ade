@@ -3,10 +3,10 @@
 // Layer: Provider adapter tests
 // Depends on: GrokAdapter helper exports and shared contract ids.
 
-import { TurnId } from "@synara/contracts";
+import { TurnId } from "@nuncio/contracts";
 import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
-import { SYNARA_HARNESS_POLICY_MARKER } from "../../agentGateway/harnessPolicy.ts";
+import { NUNCIO_HARNESS_POLICY_MARKER } from "../../agentGateway/harnessPolicy.ts";
 import {
   extractGrokUserInputQuestions,
   extractGrokExitPlanMarkdown,
@@ -30,16 +30,16 @@ import {
   resolveGrokPlanHookResponse,
   scopeGrokRuntimeItemIdForTurn,
   scopeGrokToolCallStateForTurn,
-  takeGrokSynaraHarnessPolicyTextPart,
+  takeGrokNuncioADEHarnessPolicyTextPart,
 } from "./GrokAdapter.ts";
 
-describe("Grok Synara harness policy", () => {
+describe("Grok NuncioADE harness policy", () => {
   it("delivers private scoped host context once", () => {
     const state: { harnessPolicyDelivered?: boolean } = {};
-    expect(takeGrokSynaraHarnessPolicyTextPart(state, true)?.text).toContain(
-      SYNARA_HARNESS_POLICY_MARKER,
+    expect(takeGrokNuncioADEHarnessPolicyTextPart(state, true)?.text).toContain(
+      NUNCIO_HARNESS_POLICY_MARKER,
     );
-    expect(takeGrokSynaraHarnessPolicyTextPart(state, true)).toBeNull();
+    expect(takeGrokNuncioADEHarnessPolicyTextPart(state, true)).toBeNull();
   });
 });
 
@@ -50,7 +50,7 @@ describe("Grok native plan approval", () => {
         text: "Design the change",
         interactionMode: "plan",
       }),
-    ).toMatch(/^Synara requested Grok's native plan mode\./u);
+    ).toMatch(/^NuncioADE requested Grok's native plan mode\./u);
   });
 
   it("sets Grok's native prompt mode idempotently on every turn", () => {
@@ -61,28 +61,28 @@ describe("Grok native plan approval", () => {
   it("backs native Plan mode with a fail-closed pre-tool hook", () => {
     expect(
       resolveGrokPlanHookResponse("plan", {
-        hookCallbackId: "synara-plan-guard",
+        hookCallbackId: "nuncioade-plan-guard",
         hookEventName: "pre_tool_use",
         toolName: "read_file",
       }),
     ).toEqual({});
     expect(
       resolveGrokPlanHookResponse("plan", {
-        hookCallbackId: "synara-plan-guard",
+        hookCallbackId: "nuncioade-plan-guard",
         hookEventName: "pre_tool_use",
         toolName: "run_terminal_cmd",
       }),
     ).toMatchObject({ decision: "deny" });
     expect(
       resolveGrokPlanHookResponse("plan", {
-        hookCallbackId: "synara-plan-guard",
+        hookCallbackId: "nuncioade-plan-guard",
         hookEventName: "pre_tool_use",
         toolName: "future_mutating_tool",
       }),
     ).toMatchObject({ decision: "deny" });
     expect(
       resolveGrokPlanHookResponse("default", {
-        hookCallbackId: "synara-plan-guard",
+        hookCallbackId: "nuncioade-plan-guard",
         hookEventName: "pre_tool_use",
         toolName: "run_terminal_cmd",
       }),
@@ -129,11 +129,11 @@ describe("Grok native plan approval", () => {
     expect(extractGrokExitPlanMarkdown(request)).toBeUndefined();
   });
 
-  it("keeps native plan mode gated after Synara captures the plan", () => {
+  it("keeps native plan mode gated after NuncioADE captures the plan", () => {
     expect(makeGrokExitPlanModeCapturedResponse()).toEqual({
       outcome: "cancelled",
       feedback:
-        "Synara captured this plan for user review. Do not revise or implement it now. End this turn and wait for the user's next message.",
+        "NuncioADE captured this plan for user review. Do not revise or implement it now. End this turn and wait for the user's next message.",
     });
   });
 
@@ -184,7 +184,7 @@ describe("Grok native user questions", () => {
     ]);
   });
 
-  it("maps Synara answers to Grok's question-text keyed response", () => {
+  it("maps NuncioADE answers to Grok's question-text keyed response", () => {
     expect(extractGrokUserInputQuestions(request)[0]).toMatchObject({
       id: "grok-question-0",
       header: "Verification",

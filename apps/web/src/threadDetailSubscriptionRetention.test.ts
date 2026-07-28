@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ThreadId, WS_STREAM_LIMITS } from "@synara/contracts";
+import { ThreadId, WS_STREAM_LIMITS } from "@nuncio/contracts";
 import { useStore } from "./store";
 import {
   getRetainedThreadDetailIdsSnapshot,

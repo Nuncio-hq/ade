@@ -1,5 +1,5 @@
-import type { ProviderRuntimeEvent } from "@synara/contracts";
-import { ApprovalRequestId, EventId, RuntimeItemId, ThreadId, TurnId } from "@synara/contracts";
+import type { ProviderRuntimeEvent } from "@nuncio/contracts";
+import { ApprovalRequestId, EventId, RuntimeItemId, ThreadId, TurnId } from "@nuncio/contracts";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -240,7 +240,7 @@ describe("provider runtime activity projection", () => {
     const payload = activity?.payload as { data?: Record<string, unknown> };
 
     expect(JSON.stringify(payload.data).length).toBeLessThanOrEqual(16_000);
-    expect(payload.data?.__synaraTruncated).toBe(true);
+    expect(payload.data?.__nuncioadeTruncated).toBe(true);
     expect(payload.data?.originalJsonChars).toBeGreaterThan(300_000);
   });
 

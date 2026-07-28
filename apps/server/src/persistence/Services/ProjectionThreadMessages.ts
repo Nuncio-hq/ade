@@ -19,7 +19,7 @@ import {
   TurnId,
   IsoDateTime,
   NonNegativeInt,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { Schema, ServiceMap } from "effect";
 import type { Effect, Option } from "effect";
 
@@ -110,4 +110,4 @@ export interface ProjectionThreadMessageRepositoryShape {
 export class ProjectionThreadMessageRepository extends ServiceMap.Service<
   ProjectionThreadMessageRepository,
   ProjectionThreadMessageRepositoryShape
->()("synara/persistence/Services/ProjectionThreadMessages/ProjectionThreadMessageRepository") {}
+>()("nuncioade/persistence/Services/ProjectionThreadMessages/ProjectionThreadMessageRepository") {}

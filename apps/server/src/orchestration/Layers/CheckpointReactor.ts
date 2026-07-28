@@ -11,9 +11,9 @@ import {
   type OrchestrationThread,
   type ProviderSession,
   type ProviderRuntimeEvent,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { Cause, Effect, Layer, Option, Schedule, Stream } from "effect";
-import { makeDrainableWorker, startDrainableWorkerProducers } from "@synara/shared/DrainableWorker";
+import { makeDrainableWorker, startDrainableWorkerProducers } from "@nuncio/shared/DrainableWorker";
 
 import { parseCheckpointFilesFromUnifiedDiff } from "../../checkpointing/Diffs.ts";
 import {

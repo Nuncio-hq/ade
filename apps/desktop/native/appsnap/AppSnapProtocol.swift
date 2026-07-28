@@ -200,7 +200,7 @@ final class NDJSONEmitter {
     }
 
     private func writeDiagnostic(_ message: String) {
-        guard let data = "[synara-appsnap-helper] \(message)\n".data(using: .utf8) else {
+        guard let data = "[nuncioade-appsnap-helper] \(message)\n".data(using: .utf8) else {
             return
         }
         lock.lock()

@@ -1,4 +1,4 @@
-import type { OrchestrationCommand } from "@synara/contracts";
+import type { OrchestrationCommand } from "@nuncio/contracts";
 import { Queue } from "effect";
 
 export const ORCHESTRATION_COMMAND_QUEUE_CAPACITY = 256;

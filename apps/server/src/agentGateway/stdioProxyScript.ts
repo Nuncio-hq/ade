@@ -1,5 +1,5 @@
 /**
- * Stdio-to-HTTP proxy script for the Synara agent gateway.
+ * Stdio-to-HTTP proxy script for the NuncioADE agent gateway.
  *
  * Some MCP clients (ACP agents without `mcpCapabilities.http`) can only spawn
  * stdio MCP servers. This module materializes a small self-contained script
@@ -17,12 +17,12 @@ export const AGENT_GATEWAY_STDIO_PROXY_FILE_NAME = "agent-gateway-mcp-proxy.mjs"
 
 // Kept dependency-free and ES2022-compatible: it must run on whichever
 // node/bun binary happens to back `process.execPath`.
-const STDIO_PROXY_SCRIPT = `// Synara agent gateway stdio<->HTTP MCP proxy (generated file, do not edit).
-const url = process.env.SYNARA_AGENT_GATEWAY_URL;
-const token = process.env.SYNARA_AGENT_GATEWAY_TOKEN;
+const STDIO_PROXY_SCRIPT = `// NuncioADE agent gateway stdio<->HTTP MCP proxy (generated file, do not edit).
+const url = process.env.NUNCIO_AGENT_GATEWAY_URL;
+const token = process.env.NUNCIO_AGENT_GATEWAY_TOKEN;
 
 if (!url || !token) {
-  process.stderr.write("SYNARA_AGENT_GATEWAY_URL and SYNARA_AGENT_GATEWAY_TOKEN are required.\\n");
+  process.stderr.write("NUNCIO_AGENT_GATEWAY_URL and NUNCIO_AGENT_GATEWAY_TOKEN are required.\\n");
   process.exit(1);
 }
 
@@ -66,7 +66,7 @@ async function forward(line) {
       writeMessage({
         jsonrpc: "2.0",
         id,
-        error: { code: -32603, message: "Synara gateway request failed: " + String(error) },
+        error: { code: -32603, message: "NuncioADE gateway request failed: " + String(error) },
       });
     }
   }

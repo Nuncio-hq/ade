@@ -13,16 +13,16 @@ const secondName = characters(100, 112, 99, 111, 100, 101);
 describe("brand identity guard", () => {
   it("detects retired names in paths and text", () => {
     const violations = findBrandIdentityViolations([
-      { path: `docs/${firstName}.md`, contents: "Synara" },
+      { path: `docs/${firstName}.md`, contents: "NuncioADE" },
       { path: "source.ts", contents: `const value = "${secondName}:state";` },
     ]);
     expect(violations).toHaveLength(2);
   });
 
-  it("does not match ordinary numeric type names or canonical Synara text", () => {
+  it("does not match ordinary numeric type names or canonical NuncioADE text", () => {
     expect(
       findBrandIdentityViolations([
-        { path: "source.ts", contents: "const value = new Uint32Array(); // Synara" },
+        { path: "source.ts", contents: "const value = new Uint32Array(); // NuncioADE" },
       ]),
     ).toEqual([]);
   });
@@ -42,7 +42,7 @@ describe("brand identity guard", () => {
   });
 
   it("requires user-facing raster assets to match a visually approved digest", () => {
-    const approvedContents = new TextEncoder().encode("approved Synara screenshot");
+    const approvedContents = new TextEncoder().encode("approved NuncioADE screenshot");
     const approvedDigest = "a553296ca5a2d3ad7b64a6bc1b36c2834da750eae6611642177482b99ba85bd8";
     const approvedDigests = new Map([["screenshot.jpeg", approvedDigest]]);
 

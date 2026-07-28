@@ -1,8 +1,8 @@
 # Keybindings
 
-Synara reads keybindings from:
+NuncioADE reads keybindings from:
 
-- `~/.synara/userdata/keybindings.json`
+- `~/.nuncioade/userdata/keybindings.json`
 
 The file must be a JSON array of rules:
 

@@ -85,11 +85,11 @@ import {
   ThreadId,
   type GitStatusResult,
   type ResolvedKeybindingsConfig,
-} from "@synara/contracts";
-import { isGenericChatThreadTitle } from "@synara/shared/chatThreads";
-import { getDefaultModel } from "@synara/shared/model";
-import { pluralize } from "@synara/shared/text";
-import { resolveThreadWorkspaceCwd } from "@synara/shared/threadEnvironment";
+} from "@nuncio/contracts";
+import { isGenericChatThreadTitle } from "@nuncio/shared/chatThreads";
+import { getDefaultModel } from "@nuncio/shared/model";
+import { pluralize } from "@nuncio/shared/text";
+import { resolveThreadWorkspaceCwd } from "@nuncio/shared/threadEnvironment";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import {
@@ -165,7 +165,7 @@ import {
 import { shouldRenderTerminalWorkspace } from "./ChatView.logic";
 import { CHAT_SURFACE_HEADER_HEIGHT_CLASS } from "./chat/chatHeaderControls";
 import { SidebarLeadingControls } from "./SidebarHeaderNavigationControls";
-import { SynaraLogo } from "./SynaraLogo";
+import { NuncioADELogo } from "./NuncioADELogo";
 import { ProjectSidebarIcon } from "./ProjectSidebarIcon";
 import { ThreadHoverCardContent } from "./ThreadHoverCardContent";
 import { ProjectHoverCardContent } from "./ProjectHoverCardContent";
@@ -466,8 +466,8 @@ function ProjectContextMenuIcon({ icon }: { icon: LucideIcon }) {
 }
 
 type DebugFeatureFlagsWindow = Window & {
-  synaraShowFeatureFlags?: () => void;
-  synaraHideFeatureFlags?: () => void;
+  nuncioadeShowFeatureFlags?: () => void;
+  nuncioadeHideFeatureFlags?: () => void;
 };
 
 function readDebugFeatureFlagsMenuVisibility(): boolean {
@@ -874,8 +874,8 @@ function ProjectSortMenu({
   );
 }
 
-const SYNARA_CHANGELOG_URL = "https://trysynara.com/changelog";
-const SYNARA_DOCS_URL = "https://trysynara.com/docs";
+const NUNCIO_CHANGELOG_URL = "https://trysynara.com/changelog";
+const NUNCIO_DOCS_URL = "https://trysynara.com/docs";
 
 // Footer help menu; swapped out for the desktop-update pill while an update is
 // available (see SidebarFooter).
@@ -902,7 +902,7 @@ function SidebarHelpMenu({
         <MenuGroup>
           <MenuItem
             className={SIDEBAR_CONTEXT_MENU_ITEM_CLASS_NAME}
-            onClick={() => openExternalLink(SYNARA_CHANGELOG_URL)}
+            onClick={() => openExternalLink(NUNCIO_CHANGELOG_URL)}
           >
             <SidebarContextMenuIcon icon={GiftIcon} />
             <span>What’s new</span>
@@ -918,7 +918,7 @@ function SidebarHelpMenu({
           </MenuItem>
           <MenuItem
             className={SIDEBAR_CONTEXT_MENU_ITEM_CLASS_NAME}
-            onClick={() => openExternalLink(SYNARA_DOCS_URL)}
+            onClick={() => openExternalLink(NUNCIO_DOCS_URL)}
           >
             <SidebarContextMenuIcon icon={BookIcon} />
             <span>Docs</span>
@@ -1414,18 +1414,18 @@ export default function Sidebar() {
       updateVisibility();
     };
 
-    debugWindow.synaraShowFeatureFlags = showFeatureFlags;
-    debugWindow.synaraHideFeatureFlags = hideFeatureFlags;
+    debugWindow.nuncioadeShowFeatureFlags = showFeatureFlags;
+    debugWindow.nuncioadeHideFeatureFlags = hideFeatureFlags;
     window.addEventListener("storage", updateVisibility);
     updateVisibility();
 
     return () => {
       window.removeEventListener("storage", updateVisibility);
-      if (debugWindow.synaraShowFeatureFlags === showFeatureFlags) {
-        delete debugWindow.synaraShowFeatureFlags;
+      if (debugWindow.nuncioadeShowFeatureFlags === showFeatureFlags) {
+        delete debugWindow.nuncioadeShowFeatureFlags;
       }
-      if (debugWindow.synaraHideFeatureFlags === hideFeatureFlags) {
-        delete debugWindow.synaraHideFeatureFlags;
+      if (debugWindow.nuncioadeHideFeatureFlags === hideFeatureFlags) {
+        delete debugWindow.nuncioadeHideFeatureFlags;
       }
     };
   }, []);
@@ -4509,8 +4509,8 @@ export default function Sidebar() {
       : sidebarHoverRevealHideClassName("project-header");
     const projectRun = projectRunsByProjectId[project.id] ?? null;
     const projectRunServer = projectRunServerByProjectId.get(project.id) ?? null;
-    // A project reads as "running" when Synara tracks a run for it or when a
-    // local server (possibly started outside Synara) is attributed by cwd.
+    // A project reads as "running" when NuncioADE tracks a run for it or when a
+    // local server (possibly started outside NuncioADE) is attributed by cwd.
     const isProjectRunning = projectRun !== null || projectRunServer !== null;
     const collapsedProjectStatus = project.expanded ? null : projectStatus;
     // The "open dev server" affordance now lives in the project context menu, so
@@ -5203,9 +5203,9 @@ export default function Sidebar() {
       },
       {
         id: "feedback",
-        label: "Feedback Synara",
-        description: "Send feedback or report an issue to the Synara team.",
-        keywords: ["feedback", "bug", "issue", "problem", "report", "support", "synara"],
+        label: "Feedback NuncioADE",
+        description: "Send feedback or report an issue to the NuncioADE team.",
+        keywords: ["feedback", "bug", "issue", "problem", "report", "support", "nuncioade"],
       },
       {
         id: "settings",
@@ -5292,7 +5292,7 @@ export default function Sidebar() {
             toastManager.add({
               type: "info",
               title: "Preparing update",
-              description: `Synara is preparing version ${nextState.availableVersion ?? "available"} in the background.`,
+              description: `NuncioADE is preparing version ${nextState.availableVersion ?? "available"} in the background.`,
             });
             return;
           }
@@ -5301,7 +5301,7 @@ export default function Sidebar() {
             toastManager.add({
               type: "info",
               title: "Preparing update",
-              description: "Synara is downloading the update in the background.",
+              description: "NuncioADE is downloading the update in the background.",
             });
             return;
           }
@@ -5319,7 +5319,7 @@ export default function Sidebar() {
             toastManager.add({
               type: "info",
               title: "You're up to date",
-              description: `Synara ${nextState.currentVersion} is already the newest version.`,
+              description: `NuncioADE ${nextState.currentVersion} is already the newest version.`,
             });
             return;
           }
@@ -5535,8 +5535,8 @@ export default function Sidebar() {
             )}
           >
             {titlebarControls}
-            <SynaraLogo
-              aria-label="Synara"
+            <NuncioADELogo
+              aria-label="NuncioADE"
               className="pointer-events-none ml-auto size-3.5 text-[var(--color-text-foreground-secondary)] opacity-80"
             />
           </SidebarHeader>

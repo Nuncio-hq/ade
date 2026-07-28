@@ -7,7 +7,7 @@
  *
  * @module ProviderRuntimeReconcilerLive
  */
-import { CommandId, EventId, type RuntimeMode } from "@synara/contracts";
+import { CommandId, EventId, type RuntimeMode } from "@nuncio/contracts";
 import { Cause, Duration, Effect, Layer, Option, Schedule } from "effect";
 
 import { OrchestrationEngineService } from "../../orchestration/Services/OrchestrationEngine.ts";
@@ -88,8 +88,8 @@ const make = (options?: ProviderRuntimeReconcilerLiveOptions) =>
           kind: "provider.runtime.reconciled",
           summary:
             plan.action === "align-running-turn"
-              ? "Synara realigned the active provider turn"
-              : "Synara recovered a stale running state",
+              ? "NuncioADE realigned the active provider turn"
+              : "NuncioADE recovered a stale running state",
           payload: {
             provider: plan.provider,
             action: plan.action,

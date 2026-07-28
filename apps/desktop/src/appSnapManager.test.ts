@@ -6,8 +6,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PassThrough } from "node:stream";
 
-import { PROVIDER_SEND_TURN_MAX_ATTACHMENTS } from "@synara/contracts";
-import { SYNARA_DEVELOPMENT_BUNDLE_ID } from "@synara/shared/desktopIdentity";
+import { PROVIDER_SEND_TURN_MAX_ATTACHMENTS } from "@nuncio/contracts";
+import { NUNCIO_DEVELOPMENT_BUNDLE_ID } from "@nuncio/shared/desktopIdentity";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -43,9 +43,9 @@ describe("desktop AppSnap platform state", () => {
     const onState = vi.fn();
     const manager = new DesktopAppSnapManager({
       platform: "win32",
-      helperPath: "C:\\missing\\synara-appsnap-helper.exe",
+      helperPath: "C:\\missing\\nuncioade-appsnap-helper.exe",
       captureDirectory: "C:\\tmp\\appsnap",
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       onState,
       onCaptured: vi.fn(),
       onError: vi.fn(),
@@ -66,9 +66,9 @@ describe("desktop AppSnap platform state", () => {
   it("preserves a missing-helper error instead of reporting a permission problem", async () => {
     const manager = new DesktopAppSnapManager({
       platform: "darwin",
-      helperPath: "/tmp/synara-appsnap-helper-that-does-not-exist",
-      captureDirectory: "/tmp/synara-appsnap-test",
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      helperPath: "/tmp/nuncioade-appsnap-helper-that-does-not-exist",
+      captureDirectory: "/tmp/nuncioade-appsnap-test",
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       onState: vi.fn(),
       onCaptured: vi.fn(),
       onError: vi.fn(),
@@ -89,8 +89,8 @@ describe("AppSnap shortcut availability", () => {
     const manager = new DesktopAppSnapManager({
       platform: "darwin",
       helperPath: "/tmp/missing-appsnap-helper",
-      captureDirectory: "/tmp/synara-appsnap-test",
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      captureDirectory: "/tmp/nuncioade-appsnap-test",
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       shortcutRegistry: { register, unregister },
       onState: vi.fn(),
       onCaptured: vi.fn(),
@@ -111,8 +111,8 @@ describe("AppSnap shortcut availability", () => {
     const manager = new DesktopAppSnapManager({
       platform: "darwin",
       helperPath: "/tmp/missing-appsnap-helper",
-      captureDirectory: "/tmp/synara-appsnap-test",
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      captureDirectory: "/tmp/nuncioade-appsnap-test",
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       shortcutRegistry: { register: () => false, unregister: vi.fn() },
       onState: vi.fn(),
       onCaptured: vi.fn(),
@@ -145,8 +145,8 @@ describe("AppSnap shortcut availability", () => {
     const manager = new DesktopAppSnapManager({
       platform: "darwin",
       helperPath: process.execPath,
-      captureDirectory: "/tmp/synara-appsnap-test",
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      captureDirectory: "/tmp/nuncioade-appsnap-test",
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       spawn,
       shortcutRegistry: { register, unregister },
       onState: vi.fn(),
@@ -174,9 +174,9 @@ describe("AppSnap shortcut availability", () => {
       [
         "--watch",
         "--output-dir",
-        "/tmp/synara-appsnap-test",
+        "/tmp/nuncioade-appsnap-test",
         "--excluded-bundle-id",
-        SYNARA_DEVELOPMENT_BUNDLE_ID,
+        NUNCIO_DEVELOPMENT_BUNDLE_ID,
         "--external-trigger",
       ],
       expect.any(Object),
@@ -250,8 +250,8 @@ describe("AppSnap helper protocol", () => {
     const manager = new DesktopAppSnapManager({
       platform: "darwin",
       helperPath: process.execPath,
-      captureDirectory: "/tmp/synara-appsnap-test",
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      captureDirectory: "/tmp/nuncioade-appsnap-test",
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       spawn,
       onState: vi.fn(),
       onCaptured: vi.fn(),
@@ -323,8 +323,8 @@ describe("AppSnap helper protocol", () => {
     const manager = new DesktopAppSnapManager({
       platform: "darwin",
       helperPath: process.execPath,
-      captureDirectory: "/tmp/synara-appsnap-test",
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      captureDirectory: "/tmp/nuncioade-appsnap-test",
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       spawn,
       shortcutRegistry: { register, unregister },
       onState: vi.fn(),
@@ -394,8 +394,8 @@ describe("AppSnap helper protocol", () => {
     const manager = new DesktopAppSnapManager({
       platform: "darwin",
       helperPath: process.execPath,
-      captureDirectory: "/tmp/synara-appsnap-test",
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      captureDirectory: "/tmp/nuncioade-appsnap-test",
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       spawn,
       onState: vi.fn(),
       onCaptured: vi.fn(),
@@ -438,8 +438,8 @@ describe("AppSnap helper protocol", () => {
     const manager = new DesktopAppSnapManager({
       platform: "darwin",
       helperPath: process.execPath,
-      captureDirectory: "/tmp/synara-appsnap-test",
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      captureDirectory: "/tmp/nuncioade-appsnap-test",
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       spawn,
       shortcutRegistry: { register, unregister },
       onState: vi.fn(),
@@ -482,7 +482,7 @@ describe("AppSnap helper protocol", () => {
   });
 
   it("coalesces concurrent listener reconciliation while the capture directory is prepared", async () => {
-    const captureDirectory = mkdtempSync(join(tmpdir(), "synara-appsnap-reconcile-"));
+    const captureDirectory = mkdtempSync(join(tmpdir(), "nuncioade-appsnap-reconcile-"));
     const firstCheckChild = createFakeChildProcess();
     const secondCheckChild = createFakeChildProcess();
     const watchChild = createFakeChildProcess();
@@ -503,7 +503,7 @@ describe("AppSnap helper protocol", () => {
       platform: "darwin",
       helperPath: process.execPath,
       captureDirectory,
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       spawn,
       onState: vi.fn(),
       onCaptured: vi.fn(),
@@ -548,7 +548,7 @@ describe("AppSnap helper protocol", () => {
           "--output-dir",
           captureDirectory,
           "--excluded-bundle-id",
-          SYNARA_DEVELOPMENT_BUNDLE_ID,
+          NUNCIO_DEVELOPMENT_BUNDLE_ID,
         ],
         expect.any(Object),
       );
@@ -561,7 +561,7 @@ describe("AppSnap helper protocol", () => {
   });
 
   it("retains a full composer batch and reports any overflow", async () => {
-    const captureDirectory = mkdtempSync(join(tmpdir(), "synara-appsnap-test-"));
+    const captureDirectory = mkdtempSync(join(tmpdir(), "nuncioade-appsnap-test-"));
     const checkChild = createFakeChildProcess();
     const watchChild = createFakeChildProcess();
     const spawn = vi
@@ -574,7 +574,7 @@ describe("AppSnap helper protocol", () => {
       platform: "darwin",
       helperPath: process.execPath,
       captureDirectory,
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       spawn,
       onState: vi.fn(),
       onCaptured,
@@ -639,8 +639,8 @@ describe("AppSnap helper protocol", () => {
     const manager = new DesktopAppSnapManager({
       platform: "darwin",
       helperPath: process.execPath,
-      captureDirectory: "/tmp/synara-appsnap-test",
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      captureDirectory: "/tmp/nuncioade-appsnap-test",
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       spawn,
       onState: vi.fn(),
       onCaptured: vi.fn(),
@@ -693,7 +693,7 @@ describe("AppSnap helper protocol", () => {
   });
 
   it("keeps the helper capture file when persisting the pending copy fails", async () => {
-    const captureDirectory = mkdtempSync(join(tmpdir(), "synara-appsnap-persist-fail-"));
+    const captureDirectory = mkdtempSync(join(tmpdir(), "nuncioade-appsnap-persist-fail-"));
     const checkChild = createFakeChildProcess();
     const watchChild = createFakeChildProcess();
     const spawn = vi
@@ -707,7 +707,7 @@ describe("AppSnap helper protocol", () => {
       platform: "darwin",
       helperPath: process.execPath,
       captureDirectory,
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       spawn,
       onState: vi.fn(),
       onCaptured,
@@ -762,7 +762,7 @@ describe("AppSnap helper protocol", () => {
   });
 
   it("restores pending captures after a manager restart and removes them only after ack", async () => {
-    const captureDirectory = mkdtempSync(join(tmpdir(), "synara-appsnap-pending-"));
+    const captureDirectory = mkdtempSync(join(tmpdir(), "nuncioade-appsnap-pending-"));
     const checkChild = createFakeChildProcess();
     const watchChild = createFakeChildProcess();
     const spawn = vi
@@ -774,7 +774,7 @@ describe("AppSnap helper protocol", () => {
       platform: "darwin",
       helperPath: process.execPath,
       captureDirectory,
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       spawn,
       onState: vi.fn(),
       onCaptured,
@@ -807,7 +807,7 @@ describe("AppSnap helper protocol", () => {
           name: "restart-capture.png",
           sourceAppName: "Safari",
           sourceBundleIdentifier: "com.apple.Safari",
-          sourceWindowTitle: "Synara",
+          sourceWindowTitle: "NuncioADE",
         })}\n`,
       );
       await vi.waitFor(() => expect(onCaptured).toHaveBeenCalledTimes(1));
@@ -817,7 +817,7 @@ describe("AppSnap helper protocol", () => {
         platform: "darwin",
         helperPath: process.execPath,
         captureDirectory,
-        excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+        excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
         onState: vi.fn(),
         onCaptured: vi.fn(),
         onError: vi.fn(),
@@ -829,7 +829,7 @@ describe("AppSnap helper protocol", () => {
         name: "restart-capture.png",
         sourceAppName: "Safari",
         sourceBundleIdentifier: "com.apple.Safari",
-        sourceWindowTitle: "Synara",
+        sourceWindowTitle: "NuncioADE",
       });
       expect(Buffer.from(restored[0]!.bytes)).toEqual(captureBytes);
 
@@ -841,7 +841,7 @@ describe("AppSnap helper protocol", () => {
         platform: "darwin",
         helperPath: process.execPath,
         captureDirectory,
-        excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+        excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
         onState: vi.fn(),
         onCaptured: vi.fn(),
         onError: vi.fn(),
@@ -855,7 +855,7 @@ describe("AppSnap helper protocol", () => {
   });
 
   it("recovers a helper PNG left behind before pending metadata was persisted", async () => {
-    const captureDirectory = mkdtempSync(join(tmpdir(), "synara-appsnap-helper-recovery-"));
+    const captureDirectory = mkdtempSync(join(tmpdir(), "nuncioade-appsnap-helper-recovery-"));
     const captureId = "6b981032-c848-4d0b-94f1-6de335391aa2";
     const helperPath = join(captureDirectory, `appsnap-${captureId}.png`);
     const captureBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01]);
@@ -865,7 +865,7 @@ describe("AppSnap helper protocol", () => {
       platform: "darwin",
       helperPath: process.execPath,
       captureDirectory,
-      excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+      excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
       onState: vi.fn(),
       onCaptured: vi.fn(),
       onError: vi.fn(),
@@ -889,7 +889,7 @@ describe("AppSnap helper protocol", () => {
         platform: "darwin",
         helperPath: process.execPath,
         captureDirectory,
-        excludedBundleId: SYNARA_DEVELOPMENT_BUNDLE_ID,
+        excludedBundleId: NUNCIO_DEVELOPMENT_BUNDLE_ID,
         onState: vi.fn(),
         onCaptured: vi.fn(),
         onError: vi.fn(),

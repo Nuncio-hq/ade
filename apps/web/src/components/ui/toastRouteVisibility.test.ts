@@ -1,4 +1,4 @@
-import { ProjectId, ThreadId } from "@synara/contracts";
+import { ProjectId, ThreadId } from "@nuncio/contracts";
 import { describe, expect, it } from "vitest";
 
 import {

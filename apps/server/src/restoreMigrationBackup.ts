@@ -4,9 +4,9 @@ import { Effect } from "effect";
 
 import { restoreMarkedMigrationBackup } from "./persistence/MigrationBackup.ts";
 
-const USAGE = "Usage: synara-restore-migration-backup <absolute-database-path>";
+const USAGE = "Usage: nuncioade-restore-migration-backup <absolute-database-path>";
 const STOP_PROCESSES_WARNING =
-  "WARNING: Stop every Synara process before restoring a migration backup.";
+  "WARNING: Stop every NuncioADE process before restoring a migration backup.";
 
 type RestoreMigrationBackupOutput = Pick<Console, "error" | "log" | "warn">;
 
@@ -44,7 +44,7 @@ const entryPointNames = new Set([
   "restoreMigrationBackup.ts",
   "restoreMigrationBackup.mjs",
   "restoreMigrationBackup.cjs",
-  "synara-restore-migration-backup",
+  "nuncioade-restore-migration-backup",
 ]);
 
 if (process.argv[1] && entryPointNames.has(path.basename(process.argv[1]))) {

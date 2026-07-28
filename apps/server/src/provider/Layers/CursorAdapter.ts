@@ -21,8 +21,8 @@ import {
   type RuntimeMode,
   type ThreadId,
   TurnId,
-} from "@synara/contracts";
-import { prepareWindowsSafeProcess } from "@synara/shared/windowsProcess";
+} from "@nuncio/contracts";
+import { prepareWindowsSafeProcess } from "@nuncio/shared/windowsProcess";
 import {
   DateTime,
   Deferred,
@@ -40,10 +40,10 @@ import {
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import type * as Acp from "@agentclientprotocol/sdk";
 
-import { buildAcpSynaraMcpServers } from "../../agentGateway/mcpInjection.ts";
+import { buildAcpNuncioADEMcpServers } from "../../agentGateway/mcpInjection.ts";
 import {
-  type SynaraHarnessPolicyDeliveryState,
-  takeSynaraHarnessPolicyTextPartForProviderSession,
+  type NuncioADEHarnessPolicyDeliveryState,
+  takeNuncioADEHarnessPolicyTextPartForProviderSession,
 } from "../../agentGateway/harnessPolicy.ts";
 import { AgentGatewayCredentials } from "../../agentGateway/Services/AgentGatewayCredentials.ts";
 import { PROVIDER_ADAPTER_RUNTIME_EVENT_BUFFER_CAPACITY } from "../Services/ProviderAdapter.ts";
@@ -121,11 +121,11 @@ import { discoverCursorSkills } from "../cursorSkillsDiscovery.ts";
 
 const PROVIDER = "cursor" as const;
 
-export const takeCursorSynaraHarnessPolicyTextPart = (
-  state: SynaraHarnessPolicyDeliveryState,
+export const takeCursorNuncioADEHarnessPolicyTextPart = (
+  state: NuncioADEHarnessPolicyDeliveryState,
   scopedGatewayConnectionAvailable: boolean,
 ) =>
-  takeSynaraHarnessPolicyTextPartForProviderSession(state, {
+  takeNuncioADEHarnessPolicyTextPartForProviderSession(state, {
     provider: PROVIDER,
     scopedGatewayConnectionAvailable,
   });
@@ -133,9 +133,9 @@ const CURSOR_RESUME_VERSION = 1 as const;
 const CURSOR_MODEL_DISCOVERY_TIMEOUT_MS = 15_000;
 // Backstop for an alive-but-silent cursor-agent child: if a turn produces no
 // ACP activity for this long, force-fail it instead of showing "Working"
-// forever. Generous by design; override with SYNARA_CURSOR_TURN_IDLE_TIMEOUT_MS.
+// forever. Generous by design; override with NUNCIO_CURSOR_TURN_IDLE_TIMEOUT_MS.
 const CURSOR_TURN_IDLE_TIMEOUT_MS = resolveAcpTurnIdleTimeoutMs({
-  envVar: "SYNARA_CURSOR_TURN_IDLE_TIMEOUT_MS",
+  envVar: "NUNCIO_CURSOR_TURN_IDLE_TIMEOUT_MS",
   defaultMs: 600_000,
 });
 const CURSOR_TURN_WATCHDOG_INTERVAL_MS = 15_000;
@@ -148,7 +148,7 @@ const CURSOR_ACP_SESSION_MODE_ALIASES = {
   approval: ACP_APPROVAL_MODE_ALIASES,
 } as const;
 const CURSOR_PLAN_MODE_PROMPT_PREFIX = [
-  "Synara Cursor plan mode is active.",
+  "NuncioADE Cursor plan mode is active.",
   "Do not implement or mutate files in this turn.",
   "Do not ask follow-up questions or wait for confirmation; if scope is ambiguous, choose a reasonable default and state the assumption in the plan.",
   "When ready, create the final implementation plan.",
@@ -359,7 +359,7 @@ export function makeCursorAdapter(
     const childProcessSpawner = yield* ChildProcessSpawner.ChildProcessSpawner;
     const serverConfig = yield* Effect.service(ServerConfig);
     // Optional so adapter tests can run without the gateway layer; when
-    // present, every session gets the synara_* MCP tools.
+    // present, every session gets the nuncioade_* MCP tools.
     const agentGatewayCredentials = Option.getOrUndefined(
       yield* Effect.serviceOption(AgentGatewayCredentials),
     );
@@ -629,11 +629,11 @@ export function makeCursorAdapter(
             childProcessSpawner,
             cwd,
             ...(resumeSessionId ? { resumeSessionId } : {}),
-            clientInfo: { name: "Synara", version: "0.0.0" },
+            clientInfo: { name: "NuncioADE", version: "0.0.0" },
             ...(agentGatewayCredentials
               ? {
                   buildMcpServers: (initializeResult) =>
-                    buildAcpSynaraMcpServers({
+                    buildAcpNuncioADEMcpServers({
                       connection: gatewaySessionLease!.connection,
                       initializeResult,
                       stdioProxy: agentGatewayCredentials.stdioProxy,
@@ -1102,7 +1102,7 @@ export function makeCursorAdapter(
             issue: "Turn requires non-empty text or attachments.",
           });
         }
-        const harnessPolicy = takeCursorSynaraHarnessPolicyTextPart(
+        const harnessPolicy = takeCursorNuncioADEHarnessPolicyTextPart(
           ctx,
           agentGatewayCredentials !== undefined,
         );
@@ -1467,7 +1467,7 @@ export function makeCursorAdapter(
           cursorSettings: effectiveAcpSettings,
           childProcessSpawner,
           cwd: process.cwd(),
-          clientInfo: { name: "Synara", version: "0.0.0" },
+          clientInfo: { name: "NuncioADE", version: "0.0.0" },
         });
         const started = yield* runtime.start();
         const models = yield* fetchCursorAcpModelDescriptors(runtime, started.sessionId);

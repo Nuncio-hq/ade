@@ -49,7 +49,7 @@ function makeTempDir(prefix: string): string {
 }
 
 function makeConfig(overrides: Partial<ServerConfigShape> = {}): ServerConfigShape {
-  const baseDir = makeTempDir("synara-effect-http-");
+  const baseDir = makeTempDir("nuncioade-effect-http-");
   return {
     mode: "web",
     port: 0,
@@ -187,7 +187,7 @@ describe("production Effect HTTP routes", () => {
     ).toBe(false);
     expect(
       isLegacyTokenAuthorized({
-        config: { ...loopback, publicUrl: new URL("https://synara.example.test/") },
+        config: { ...loopback, publicUrl: new URL("https://nuncioade.example.test/") },
         url: new URL("http://127.0.0.1/attachments/id?token=desktop-secret"),
       }),
     ).toBe(false);
@@ -247,7 +247,7 @@ describe("production Effect HTTP routes", () => {
           { method: "POST", headers: { Authorization: `Bearer ${"b".repeat(64)}` } },
           { method: "POST", headers: { Authorization: "Basic browser-token" } },
           { method: "POST", headers: { Authorization: "Bearer browser-token" } },
-          { method: "POST", headers: { Cookie: "synara_session=browser-session" } },
+          { method: "POST", headers: { Cookie: "nuncioade_session=browser-session" } },
         ];
 
         for (const request of requests) {
@@ -271,7 +271,7 @@ describe("production Effect HTTP routes", () => {
       { mode: "web" },
       { mode: "desktop", host: "0.0.0.0", allowInsecureRemote: true },
       { mode: "desktop", host: "192.168.1.50", allowInsecureRemote: true },
-      { mode: "desktop", publicUrl: new URL("https://synara.example.test/") },
+      { mode: "desktop", publicUrl: new URL("https://nuncioade.example.test/") },
       { mode: "desktop", desktopShutdownToken: undefined },
     ];
 
@@ -318,19 +318,19 @@ describe("production Effect HTTP routes", () => {
       },
     );
 
-    const staticDir = makeTempDir("synara-effect-static-");
+    const staticDir = makeTempDir("nuncioade-effect-static-");
     mkdirSync(path.join(staticDir, "assets"), { recursive: true });
-    writeFileSync(path.join(staticDir, "index.html"), "<main>Synara shell</main>");
-    writeFileSync(path.join(staticDir, "assets", "app.js"), "globalThis.synara = true;");
+    writeFileSync(path.join(staticDir, "index.html"), "<main>NuncioADE shell</main>");
+    writeFileSync(path.join(staticDir, "assets", "app.js"), "globalThis.nuncioade = true;");
     await withEffectServer(makeConfig({ staticDir }), { kind: "static" }, async (origin) => {
       const asset = await fetch(`${origin}/assets/app.js`);
       expect(asset.status).toBe(200);
-      await expect(asset.text()).resolves.toContain("globalThis.synara");
+      await expect(asset.text()).resolves.toContain("globalThis.nuncioade");
 
       const fallback = await fetch(`${origin}/chat/thread-id`);
       expect(fallback.status).toBe(200);
       expect(fallback.headers.get("content-type")).toContain("text/html");
-      await expect(fallback.text()).resolves.toContain("Synara shell");
+      await expect(fallback.text()).resolves.toContain("NuncioADE shell");
     });
   });
 

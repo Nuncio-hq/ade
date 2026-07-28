@@ -289,24 +289,24 @@ const PLAN_DATA = [
 },
 {
   id:4, name:"Phase 4 — Bridge, extensions & gateway", st:"todo",
-  goal:"Harness extensions + synara_* tools + các nút điều khiển.",
+  goal:"Harness extensions + nuncioade_* tools + các nút điều khiển.",
   tasks:[
     {t:"makeOmpExtensionUIContext (port makePiExtensionUIContext + askUserQuestions extra) → setToolUIContext(uiContext, true) từ CreateAgentSessionResult", st:"todo"},
     {t:"respondToUserInput round-trip (pending map — port PiPendingUserInput)", st:"todo"},
     {t:"Extension AskUserQuestion (harness/extensions/) chạy E2E dưới OMP qua legacy shim — điểm chứng minh harness sống", st:"todo"},
-    {t:"Gateway MCP: dựng MCPManager + connectServers({synara: …}) → createAgentSession({mcpManager}); bật enableMCP:true", st:"todo"},
+    {t:"Gateway MCP: dựng MCPManager + connectServers({nuncioade: …}) → createAgentSession({mcpManager}); bật enableMCP:true", st:"todo"},
     {t:"stopTask → session.asyncJobManager.cancel(jobId)", st:"todo"},
     {t:"compactThread → session.compact() (one-liner đã verify)", st:"todo"},
     {t:"listSkills / listCommands từ discoverSkills / discoverSlashCommands + getComposerCapabilities", st:"todo"},
   ],
-  accept:"<b>Kiểm tra:</b> trong thread OMP, nhờ agent dùng tool AskUserQuestion → dialog câu hỏi hiện trong ADE, trả lời được. Nhờ agent gọi một synara_* tool → chạy. Bấm compact thủ công → thấy compaction status.",
-  unlock:["Extensions harness của mình chạy trên OMP trong ADE","synara_* gateway tools","Nút compact thủ công","Skills/commands của OMP hiện trong composer"],
+  accept:"<b>Kiểm tra:</b> trong thread OMP, nhờ agent dùng tool AskUserQuestion → dialog câu hỏi hiện trong ADE, trả lời được. Nhờ agent gọi một nuncioade_* tool → chạy. Bấm compact thủ công → thấy compaction status.",
+  unlock:["Extensions harness của mình chạy trên OMP trong ADE","nuncioade_* gateway tools","Nút compact thủ công","Skills/commands của OMP hiện trong composer"],
   prompt:`Làm Phase 4 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
 - Port makePiExtensionUIContext (PiAdapter.ts:1466-1693) sang OMP: setToolUIContext(uiContext, true), giữ askUserQuestions feature-detect; respondToUserInput round-trip.
 - Verify extension harness/extensions/AskUserQuestion E2E dưới OMP (legacy @earendil-works shim) — nếu cần sửa extension, extension + bridge cùng MỘT commit (luật AGENTS.md).
-- Gateway MCP: MCPManager.connectServers với synara gateway config (tham khảo buildOpenCodeMcpServer / mcpInjection.ts), truyền mcpManager vào createAgentSession, bật enableMCP:true.
+- Gateway MCP: MCPManager.connectServers với nuncioade gateway config (tham khảo buildOpenCodeMcpServer / mcpInjection.ts), truyền mcpManager vào createAgentSession, bật enableMCP:true.
 - stopTask → asyncJobManager.cancel; compactThread → session.compact(); listSkills/listCommands qua discoverSkills/discoverSlashCommands.
-- Acceptance: AskUserQuestion dialog E2E + synara_* tool call + compact thủ công chạy.
+- Acceptance: AskUserQuestion dialog E2E + nuncioade_* tool call + compact thủ công chạy.
 - Xong: cập nhật docs/plans/omp-integration.html + STATE.md.`
 },
 {
@@ -346,10 +346,10 @@ const COV_DATA = [
 {n:"<code>listSessions</code> / <code>hasSession</code> / <code>readThread</code>",st:"v1",note:"In-memory session map + mapMessageHistory tương đương (session.messages). Same as pi."},
 {n:"<code>listModels</code>",st:"v1",note:"ModelRegistry.getAvailable() — spike đã thấy registry hoạt động (resolve claude-fable-5 từ settings user).",spike:1},
 {n:"<code>listSkills</code> / <code>listCommands</code>",st:"free",note:"OMP export sẵn discoverSkills / discoverSlashCommands / discoverCustomTSCommands (sdk.ts:727,764,771) — chỉ cần map kết quả sang contract."},
-{n:"<code>stopTask</code> (dừng background task)",st:"v1",note:"Glue sang session.asyncJobManager.cancel(jobId) — móc nối đầu tiên cho tham vọng background tools. Contract Synara ĐÃ chừa slot này sẵn (ProviderAdapter.ts:143)."},
+{n:"<code>stopTask</code> (dừng background task)",st:"v1",note:"Glue sang session.asyncJobManager.cancel(jobId) — móc nối đầu tiên cho tham vọng background tools. Contract NuncioADE ĐÃ chừa slot này sẵn (ProviderAdapter.ts:143)."},
 {n:"<code>compactThread</code>",st:"v1",note:"Nâng từ later → v1 sau khi verify: session.compact(instructions?) là method trực tiếp trên AgentSession (agent-session.ts:5084) — glue 1 dòng. Lưu ý: đây chỉ là nút compact THỦ CÔNG; auto-compaction (4 action: context-full/handoff/shake/snapcompact) chạy trong engine bất kể adapter, v1 đã map event auto_compaction_start/end."},
-{n:"<code>rollbackThread</code>",st:"later",note:"OMP sessionManager có branching/leafId như pi nhưng cần verify API 17.x. Pi làm qua leafId; port sau v1. Fallback: conversationRollback \"restart-session\" của Synara dùng được trước."},
-{n:"<code>forkThread</code>",st:"later",note:"Session file + branching của OMP hỗ trợ về nguyên tắc; cần map cursor. Fallback conversation-history-fork của Synara dùng được trước."},
+{n:"<code>rollbackThread</code>",st:"later",note:"OMP sessionManager có branching/leafId như pi nhưng cần verify API 17.x. Pi làm qua leafId; port sau v1. Fallback: conversationRollback \"restart-session\" của NuncioADE dùng được trước."},
+{n:"<code>forkThread</code>",st:"later",note:"Session file + branching của OMP hỗ trợ về nguyên tắc; cần map cursor. Fallback conversation-history-fork của NuncioADE dùng được trước."},
 {n:"<code>readExternalThread</code>",st:"later",note:"Đọc session file OMP đã persist mà không cần binding — cần hiểu format storage (agent.db/history.db) trước."},
 {n:"<code>steerSubagent</code>",st:"later",note:"OMP có hub/IRC send tới subagent — khả thi và hay, nhưng sau v1."},
 {n:"<code>backgroundTask</code> (đẩy foreground → background)",st:"later",note:"OMP quyết async lúc gọi tool (async:true), chưa thấy API chuyển giữa chừng. Cần nghiên cứu thêm."},
@@ -360,12 +360,12 @@ const COV_DATA = [
 {n:"<code>message_start/update/end</code> (assistant + reasoning)",st:"v1",note:"→ item.started/updated/completed cho assistant_message & reasoning (phân biệt qua block type trong payload). Spike: 23 update events trong 1 turn.",spike:1},
 {n:"<code>tool_execution_start/update/end</code>",st:"v1",note:"→ item tool call với title/detail/exitCode — port toolLifecycleData của PiAdapter. Spike quan sát cả 3.",spike:1},
 {n:"<code>agent_end</code> + <code>isTerminal</code>",st:"v1",risk:1,note:"⚠ THAY ĐỔI SEMANTICS LỚN NHẤT: pi có agent_settled, OMP bỏ hẳn (0 hit trong source) — thay bằng agent_end.isTerminal (false = async delivery sắp resume). Toàn bộ turn-outcome/watchdog logic viết mới quanh cờ này, không copy từ pi được.",spike:1},
-{n:"Turn tự phát từ async delivery (async-result)",st:"v1",risk:1,note:"⚠ RISK #2: job xong → OMP tự inject follow-up turn KHÔNG QUA sendTurn (yield-queue idle flush, session/async-job-delivery.ts). Phải kiểm tra providerRuntimeEventIngress + Reconciler chấp nhận turn không do Synara khởi tạo. Đây là điều kiện tiên quyết cho background tools."},
+{n:"Turn tự phát từ async delivery (async-result)",st:"v1",risk:1,note:"⚠ RISK #2: job xong → OMP tự inject follow-up turn KHÔNG QUA sendTurn (yield-queue idle flush, session/async-job-delivery.ts). Phải kiểm tra providerRuntimeEventIngress + Reconciler chấp nhận turn không do NuncioADE khởi tạo. Đây là điều kiện tiên quyết cho background tools."},
 {n:"<code>auto_compaction_start/end</code>",st:"v1",note:"→ status item context_compaction (pi đã có pattern compaction_end). 4 action: context-full/handoff/shake/snapcompact — hiển thị action trong title."},
 {n:"<code>auto_retry_start/end</code> + <code>retry_fallback_applied/succeeded</code>",st:"v1",note:"→ status item + phối hợp ompTurnFailure. Đây là turn-resilience mà branch app/pi-turn-resilience đang làm cho pi — OMP cho free ở tầng engine."},
 {n:"<code>notice</code> (info/warning/error)",st:"v1",note:"→ status item generic. Rẻ."},
-{n:"<code>thinking_level_changed</code>",st:"v1",note:"→ cập nhật session snapshot (thinking level hiện tại) — Synara đã có chỗ hiển thị."},
-{n:"<code>todo_reminder</code> / <code>todo_auto_clear</code>",st:"v1",note:"Map cơ hội: Synara có sẵn runtimeTaskList.ts — todos của OMP đậu vào concept task list hiện có, KHÔNG cần contract mới."},
+{n:"<code>thinking_level_changed</code>",st:"v1",note:"→ cập nhật session snapshot (thinking level hiện tại) — NuncioADE đã có chỗ hiển thị."},
+{n:"<code>todo_reminder</code> / <code>todo_auto_clear</code>",st:"v1",note:"Map cơ hội: NuncioADE có sẵn runtimeTaskList.ts — todos của OMP đậu vào concept task list hiện có, KHÔNG cần contract mới."},
 {n:"<code>irc_message</code>",st:"later",note:"Chat giữa các agent — v1 đi qua generic item + data. UI riêng khi làm sâu subagent."},
 {n:"<code>goal_updated</code> / <code>ttsr_triggered</code>",st:"later",note:"Goal mode & rule re-injection — generic item + data trước, UI sau nếu dùng."},
 ]},
@@ -378,12 +378,12 @@ const COV_DATA = [
 {n:"Token usage snapshot",st:"v1",note:"session.getSessionStats() (agent-session.ts:7725) — port normalizeTokenUsage, đối chiếu shape stats 17.x."},
 {n:"Phân loại lỗi turn (ompTurnFailure.ts)",st:"v1",note:"Bản sao có sửa của piTurnFailure — nhưng NHẸ hơn vì auto-retry/fallback đã nằm trong engine; adapter chủ yếu phân loại lỗi terminal."},
 {n:"Extension UI bridge (setToolUIContext + askUserQuestions)",st:"v1",note:"Port makePiExtensionUIContext → setToolUIContext(uiContext, hasUI) (CreateAgentSessionResult, sdk.ts:562). Acceptance: extension AskUserQuestion chạy E2E dưới OMP (legacy shim @earendil-works đã có sẵn trong engine)."},
-{n:"Gateway MCP injection (synara_* tools)",st:"v1",note:"Đi đường CHUẨN như Claude/Codex/OpenCode: dựng MCPManager, connectServers({synara: gatewayConfig}) rồi truyền qua createAgentSession({mcpManager}) — bỏ đường customTools đặc thù của pi. Đồng nhất codebase."},
+{n:"Gateway MCP injection (nuncioade_* tools)",st:"v1",note:"Đi đường CHUẨN như Claude/Codex/OpenCode: dựng MCPManager, connectServers({nuncioade: gatewayConfig}) rồi truyền qua createAgentSession({mcpManager}) — bỏ đường customTools đặc thù của pi. Đồng nhất codebase."},
 {n:"Native deps dưới desktop backend",st:"v1",risk:1,note:"⚠ RISK #3: @oh-my-pi/pi-natives (brush), onnxruntime-node (postinstall bị block vẫn chạy được spike — nhưng hindsight/embeddings có thể cần). Phải smoke-test trong app Electron build thật, không chỉ bun dev."},
 {n:"Cấu hình feature flags lúc nhúng",st:"v1",note:"Quyết định v1: enableIrc:false (tránh nhiễu registry trong server), enableLsp có thể bật sau, skipPythonPreflight:true, enableMCP:true (cho gateway + user servers). Mỗi cờ ghi rõ lý do trong code."},
 {n:"Lazy-load SDK + pin version chính xác",st:"v1",note:"Giữ pattern lazyModule của pi (OMP nặng hơn pi nhiều). Pin exact @oh-my-pi/* (17.1.3→17.1.6 trong vài ngày), track như engine-base thứ hai."},
 ]},
-{s:"D. Delta trên đất Synara (ngoài adapter)",rows:[
+{s:"D. Delta trên đất NuncioADE (ngoài adapter)",rows:[
 {n:"<code>ProviderKind</code> + schemas trong packages/contracts",st:"v1",note:"Thêm \"omp\" vào union (Effect Schema, orchestration.ts:56). Chạm contracts = chạm WS protocol — làm sớm, một commit riêng, note kỹ cho upstream merge."},
 {n:"ProviderAdapterRegistry + ProviderService wiring",st:"v1",note:"Đăng ký OmpAdapterLive vào registry/layer stack — theo đúng khuôn PiAdapterLive (runtimeLayer.ts:81, ProviderAdapterRegistry.ts:46)."},
 {n:"Web UI: provider label/icon + model picker",st:"v1",note:"Tối thiểu: OMP hiện trong provider list, model picker đọc listModels. Không làm UI riêng cho event mới ở v1 (đúng Option 1)."},

@@ -170,10 +170,10 @@ function prepareWindowsLaunch(assetsDirectory: string, extractionRoot: string): 
   }
   runCommand("7z", ["x", "-y", `-o${applicationRoot}`, applicationArchives[0]!]);
   const executables = findFiles(applicationRoot, (candidate) =>
-    /[/\\]Synara\.exe$/i.test(candidate),
+    /[/\\]NuncioADE\.exe$/i.test(candidate),
   );
   if (executables.length !== 1) {
-    throw new Error(`Expected one extracted Synara.exe, found ${executables.length}.`);
+    throw new Error(`Expected one extracted NuncioADE.exe, found ${executables.length}.`);
   }
   return { command: executables[0]!, args: [], cwd: dirname(executables[0]!) };
 }
@@ -205,11 +205,11 @@ export function createPackagedDesktopSmokeEnvironment(
     XDG_CONFIG_HOME: join(root, "xdg-config"),
     XDG_CACHE_HOME: join(root, "xdg-cache"),
     XDG_DATA_HOME: join(root, "xdg-data"),
-    SYNARA_HOME: join(root, "synara-home"),
-    SYNARA_DISABLE_AUTO_UPDATE: "1",
+    NUNCIO_HOME: join(root, "nuncioade-home"),
+    NUNCIO_DISABLE_AUTO_UPDATE: "1",
     ELECTRON_ENABLE_LOGGING: "1",
   };
-  delete env.SYNARA_AUTH_TOKEN;
+  delete env.NUNCIO_AUTH_TOKEN;
   delete env.ELECTRON_RUN_AS_NODE;
   for (const path of [
     env.HOME,
@@ -218,12 +218,12 @@ export function createPackagedDesktopSmokeEnvironment(
     env.XDG_CONFIG_HOME,
     env.XDG_CACHE_HOME,
     env.XDG_DATA_HOME,
-    env.SYNARA_HOME,
+    env.NUNCIO_HOME,
   ]) {
     if (path) mkdirSync(path, { recursive: true });
   }
   if (options.platform === "mac") {
-    const userDataPath = join(env.HOME!, "Library", "Application Support", "synara");
+    const userDataPath = join(env.HOME!, "Library", "Application Support", "nuncioade");
     mkdirSync(userDataPath, { recursive: true });
     // Prevent the packaged app's update-only icon repair from registering this
     // temporary bundle in the runner's normal Launch Services database.
@@ -301,7 +301,7 @@ export async function verifyPackagedDesktopStartup(
       `Packaged ${options.platform} startup smoke must run on its native host, not ${process.platform}.`,
     );
   }
-  const temporaryRoot = mkdtempSync(join(tmpdir(), `synara-packaged-smoke-${options.platform}-`));
+  const temporaryRoot = mkdtempSync(join(tmpdir(), `nuncioade-packaged-smoke-${options.platform}-`));
   const extractionRoot = join(temporaryRoot, "payload");
   mkdirSync(extractionRoot, { recursive: true });
 
@@ -309,7 +309,7 @@ export async function verifyPackagedDesktopStartup(
   try {
     const launch = prepareLaunch(options, extractionRoot);
     const env = createPackagedDesktopSmokeEnvironment(join(temporaryRoot, "state"), options);
-    const logPath = join(env.SYNARA_HOME!, "userdata", "logs", "desktop-main.log");
+    const logPath = join(env.NUNCIO_HOME!, "userdata", "logs", "desktop-main.log");
     child = spawn(launch.command, [...launch.args], {
       cwd: launch.cwd,
       env,

@@ -13,5 +13,5 @@ export interface CursorAdapterShape extends ProviderAdapterShape<ProviderAdapter
 }
 
 export class CursorAdapter extends ServiceMap.Service<CursorAdapter, CursorAdapterShape>()(
-  "synara/provider/Services/CursorAdapter",
+  "nuncioade/provider/Services/CursorAdapter",
 ) {}

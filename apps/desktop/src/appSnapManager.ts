@@ -21,14 +21,14 @@ import {
   type DesktopAppSnapShortcutAvailability,
   type DesktopAppSnapShortcutUpdateResult,
   type DesktopAppSnapState,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import {
   DEFAULT_APP_SNAP_SHORTCUT,
   appSnapShortcutAccelerator,
   appSnapShortcutSystemConflict,
   isAppSnapShortcut,
   sameAppSnapShortcut,
-} from "@synara/shared/appSnapShortcut";
+} from "@nuncio/shared/appSnapShortcut";
 
 const MAX_PENDING_CAPTURES = PROVIDER_SEND_TURN_MAX_ATTACHMENTS;
 const MAX_HELPER_STDERR_CHARS = 4_096;
@@ -1005,7 +1005,7 @@ export class DesktopAppSnapManager {
         permissionRequiredMessage(this.#inputMonitoringPermission, this.#screenRecordingPermission),
       );
     }
-    // Benign overlap errors surface as a toast without yanking Synara to the
+    // Benign overlap errors surface as a toast without yanking NuncioADE to the
     // foreground while the user is still working in the captured app.
     this.#emitCaptureError(
       message.code,
@@ -1058,7 +1058,7 @@ export class DesktopAppSnapManager {
       );
       this.#emitCaptureError(
         "pending-capture-overflow",
-        `Synara could retain only the latest ${MAX_PENDING_CAPTURES} AppSnaps while the composer was unavailable. The oldest capture was discarded.`,
+        `NuncioADE could retain only the latest ${MAX_PENDING_CAPTURES} AppSnaps while the composer was unavailable. The oldest capture was discarded.`,
         discardedRecord.capture.capturedAt,
         false,
       );

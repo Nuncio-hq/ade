@@ -5,15 +5,15 @@
 
 ## Direction
 
-NuncioADE (repo `Nuncio-hq/ade`, private) = Synara fork, **OMP-first** (since
+NuncioADE (repo `Nuncio-hq/ade`, private) = NuncioADE fork, **OMP-first** (since
 2026-07-28; was Pi-first). Current scope: (1) OMP as first-class engine — new
 `OmpAdapter` over the `@oh-my-pi/pi-coding-agent` SDK (M4, docs-only so far);
 (2) harness via OMP extension points (`harness/extensions/`, skills/plugins),
 no engine source fork; (3) UI for extensions when the bridge needs it;
 (4) mobile (native, no PWA). Everything else — UI/UX, general features — is
-inherited from Synara upstream. Pi provider frozen: works, gets no investment.
-Synara code (`apps/`, `packages/`) is touched only to close bridge gaps.
-All Synara providers are kept working.
+inherited from NuncioADE upstream. Pi provider frozen: works, gets no investment.
+NuncioADE code (`apps/`, `packages/`) is touched only to close bridge gaps.
+All NuncioADE providers are kept working.
 
 ## Milestones
 
@@ -26,7 +26,7 @@ All Synara providers are kept working.
 - [~] **M2 Bridge gaps** — first bridge extension landed: `extension/ui/askUserQuestion`
   in PiAdapter + `allowNotes`/`allowCustomAnswer` on UserInputQuestion + notes UI.
 - [~] **M3 Daily driver** — STARTED: NuncioADE.app branded, built, installed;
-  DB migrated from Synara (sqlite .backup snapshot); user works in NuncioADE.
+  DB migrated from NuncioADE (sqlite .backup snapshot); user works in NuncioADE.
   Remaining: signed builds + no-script auto-update via GitHub releases.
 - [ ] **M4 OMP engine** — `OmpAdapter` in `apps/server` (direct SDK:
       `createAgentSession`/`SessionManager`/`ModelRegistry` from
@@ -48,7 +48,7 @@ All Synara providers are kept working.
   client to the Mac-hosted server, never a Pi runtime. **Native app (Expo/RN),
   PWA skipped.** Near-term: use REMOTE.md (Tailscale + auth token) to reach the
   web UI from the phone and collect real mobile requirements.
-- Naming: inherited code stays `@synara/*` / `SYNARA_*`; new code is `@nuncio/*` /
+- Naming: inherited code stays `@nuncio/*` / `NUNCIO_*`; new code is `@nuncio/*` /
   `NUNCIO_` / `ade_` tools. See AGENTS.md §Naming Convention.
 - Versioning: ADE line = 0.0.x (currently 0.0.1), user-decided only, agents never
   bump/tag. Upstream base = `UPSTREAM-BASE` file (currently v0.6.2). See AGENTS.md
@@ -84,4 +84,4 @@ All Synara providers are kept working.
 
 - `../claude-oauth-pi/pkg-src/` — OMP tarball 17.1.3 (engine source, offline
   reading; npm canonical) + pi tarballs 0.82.1 (frozen provider reference).
-- Old Synara snapshot at `~/Documents/Codex/2026-06-24/ba/work/synara` (v0.3.0, stale).
+- Old NuncioADE snapshot at `~/Documents/Codex/2026-06-24/ba/work/nuncioade` (v0.3.0, stale).

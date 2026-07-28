@@ -159,16 +159,16 @@ describe("Antigravity CLI integration helpers", () => {
     });
   });
 
-  it("keeps the globally installed hook neutral outside Synara sessions", () => {
+  it("keeps the globally installed hook neutral outside NuncioADE sessions", () => {
     const command = buildAntigravityCaptureCommand(
-      "__synara_gui_must_not_launch__",
+      "__nuncioade_gui_must_not_launch__",
       "__capture_script_must_not_run__",
       "pre-tool",
     );
     const result = runCaptureCommand(
       command,
       JSON.stringify({ payload: "x".repeat(2 * 1024 * 1024) }),
-      { SYNARA_ANTIGRAVITY_EVENTS: "" },
+      { NUNCIO_ANTIGRAVITY_EVENTS: "" },
     );
 
     expect(result.error).toBeUndefined();
@@ -176,8 +176,8 @@ describe("Antigravity CLI integration helpers", () => {
     expect(result.stdout.trim()).toBe("{}");
   });
 
-  it("runs the capture script for Synara-managed sessions", async () => {
-    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "synara-antigravity-hook-test-"));
+  it("runs the capture script for NuncioADE-managed sessions", async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "nuncioade-antigravity-hook-test-"));
     const scriptPath = path.join(directory, "capture.cjs");
     const eventPath = path.join(directory, "events.ndjson");
     try {
@@ -185,8 +185,8 @@ describe("Antigravity CLI integration helpers", () => {
       const command = buildAntigravityCaptureCommand(process.execPath, scriptPath, "pre-tool");
       const payload = JSON.stringify({ tool: "shell" });
       const result = runCaptureCommand(command, payload, {
-        SYNARA_ANTIGRAVITY_EVENTS: eventPath,
-        SYNARA_ANTIGRAVITY_HOOK_DECISION: "allow",
+        NUNCIO_ANTIGRAVITY_EVENTS: eventPath,
+        NUNCIO_ANTIGRAVITY_HOOK_DECISION: "allow",
       });
 
       expect(result.error).toBeUndefined();
@@ -198,26 +198,26 @@ describe("Antigravity CLI integration helpers", () => {
     }
   });
 
-  it("runs packaged Electron as Node only for Synara-managed sessions", () => {
+  it("runs packaged Electron as Node only for NuncioADE-managed sessions", () => {
     expect(
       buildAntigravityCaptureCommand(
-        "/Applications/Synara.app/Contents/MacOS/Synara",
-        "/tmp/synara-capture/capture.cjs",
+        "/Applications/NuncioADE.app/Contents/MacOS/NuncioADE",
+        "/tmp/nuncioade-capture/capture.cjs",
         "pre-tool",
         "darwin",
       ),
     ).toBe(
-      `if [ -z "\${SYNARA_ANTIGRAVITY_EVENTS:-}" ]; then cat >/dev/null 2>&1 || :; printf '%s\\n' '{}'; else ELECTRON_RUN_AS_NODE=1 '/Applications/Synara.app/Contents/MacOS/Synara' '/tmp/synara-capture/capture.cjs' 'pre-tool'; fi`,
+      `if [ -z "\${NUNCIO_ANTIGRAVITY_EVENTS:-}" ]; then cat >/dev/null 2>&1 || :; printf '%s\\n' '{}'; else ELECTRON_RUN_AS_NODE=1 '/Applications/NuncioADE.app/Contents/MacOS/NuncioADE' '/tmp/nuncioade-capture/capture.cjs' 'pre-tool'; fi`,
     );
     expect(
       buildAntigravityCaptureCommand(
-        String.raw`C:\Program Files\Synara\Synara.exe`,
+        String.raw`C:\Program Files\NuncioADE\NuncioADE.exe`,
         String.raw`C:\Users\test\.gemini\capture.cjs`,
         "pre-tool",
         "win32",
       ),
     ).toBe(
-      String.raw`if not defined SYNARA_ANTIGRAVITY_EVENTS (more >nul 2>nul & echo {}) else (set "ELECTRON_RUN_AS_NODE=1" && "C:\Program Files\Synara\Synara.exe" "C:\Users\test\.gemini\capture.cjs" "pre-tool")`,
+      String.raw`if not defined NUNCIO_ANTIGRAVITY_EVENTS (more >nul 2>nul & echo {}) else (set "ELECTRON_RUN_AS_NODE=1" && "C:\Program Files\NuncioADE\NuncioADE.exe" "C:\Users\test\.gemini\capture.cjs" "pre-tool")`,
     );
   });
 
@@ -231,7 +231,7 @@ describe("Antigravity CLI integration helpers", () => {
 
   it("marks every generated hook as a command hook", () => {
     expect(buildAntigravityHookConfig((event) => `capture ${event}`)).toEqual({
-      "synara-capture": {
+      "nuncioade-capture": {
         PreToolUse: [
           {
             matcher: "*",
@@ -252,7 +252,7 @@ describe("Antigravity CLI integration helpers", () => {
   });
 
   it("advances file offsets only past complete JSONL records", async () => {
-    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "synara-antigravity-test-"));
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "nuncioade-antigravity-test-"));
     const file = path.join(directory, "events.ndjson");
     try {
       await fs.writeFile(file, '{"first":true}\n{"second"');

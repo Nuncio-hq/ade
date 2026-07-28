@@ -2,14 +2,14 @@
 // Purpose: Shared storage keys + readers for per-provider favorite model slugs.
 // Layer: Web local-storage helpers used by the model picker and model cycle shortcuts.
 
-import type { ProviderKind } from "@synara/contracts";
+import type { ProviderKind } from "@nuncio/contracts";
 import { Schema } from "effect";
 
 export const FAVORITE_MODEL_STORAGE_KEYS = {
-  cursor: "synara:cursor-favourite-models:v1",
-  kilo: "synara:kilo-favourite-models:v1",
-  opencode: "synara:opencode-favourite-models:v1",
-  pi: "synara:pi-favourite-models:v1",
+  cursor: "nuncioade:cursor-favourite-models:v1",
+  kilo: "nuncioade:kilo-favourite-models:v1",
+  opencode: "nuncioade:opencode-favourite-models:v1",
+  pi: "nuncioade:pi-favourite-models:v1",
 } as const;
 
 export type FavoriteModelProvider = keyof typeof FAVORITE_MODEL_STORAGE_KEYS;

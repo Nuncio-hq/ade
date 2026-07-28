@@ -1,7 +1,7 @@
 # DELEGATION — subscriptions, models, and when to spawn which agent
 
-> For agents working on NuncioADE inside Synara/ADE. You can spawn threads on
-> other providers (`synara_create_threads`) or shell out to the Devin CLI.
+> For agents working on NuncioADE inside NuncioADE/ADE. You can spawn threads on
+> other providers (`nuncioade_create_threads`) or shell out to the Devin CLI.
 > Use the user's subscriptions deliberately — right model for the job, not the
 > cheapest or the nearest.
 
@@ -39,7 +39,7 @@ Rules:
   native `openai-codex/*` access — the bridge is a lossy double-hop.
 - **Route by context capability + performance, not habit.** Work that shares
   the current session context → in-session subagents / completion tiers (they
-  inherit the roles above). Delegate to an external engine (Synara provider
+  inherit the roles above). Delegate to an external engine (NuncioADE provider
   threads §1–3, Devin CLI §4) only when it wins: isolated parallel
   implementations in own worktrees, Claude Code harness inheritance
   (`claudeAgent`), or Devin Cloud visual-proof runs.
@@ -71,7 +71,7 @@ The Claude Code harness on the user's Claude Max subscription.
   Point of this pool: frontier models inside Cursor's harness — the user's #1 harness.
 - Don't use the API pool for work the Auto pool or Codex can do.
 
-## 4) Devin (Ultra plan) — CLI only, not a Synara provider
+## 4) Devin (Ultra plan) — CLI only, not a NuncioADE provider
 
 Spawn via Bash: `devin -p "<self-contained prompt>" --model <model>` (or
 interactive/ACP). Weekly limit — spend on what Devin is uniquely good at.
@@ -107,8 +107,8 @@ pool with headroom instead of hammering an exhausted one.
 
 - Prompts to spawned agents must be self-contained: goal, context, files in
   scope, constraints, expected deliverable, how to verify.
-- Parallel implementation agents need isolated worktrees (Synara worktree threads).
+- Parallel implementation agents need isolated worktrees (NuncioADE worktree threads).
 - Judge output, not price: if a cheaper model's result doesn't meet the bar,
   redo with a stronger one instead of shipping mediocre work.
 - Exact provider/model slugs and option keys: always confirm via
-  `synara_capabilities` before creating threads; for Devin, `devin models list`.
+  `nuncioade_capabilities` before creating threads; for Devin, `devin models list`.

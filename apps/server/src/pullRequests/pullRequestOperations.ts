@@ -1,5 +1,5 @@
-import type { OrchestrationProject, PullRequestDetail } from "@synara/contracts";
-import { githubAvatarUrlForLogin } from "@synara/shared/githubAvatar";
+import type { OrchestrationProject, PullRequestDetail } from "@nuncio/contracts";
+import { githubAvatarUrlForLogin } from "@nuncio/shared/githubAvatar";
 import { Effect } from "effect";
 
 import type { GitHubCliShape } from "../git/Services/GitHubCli";

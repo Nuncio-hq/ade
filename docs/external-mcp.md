@@ -1,12 +1,12 @@
 # External MCP integrations
 
-Synara can expose a small, user-approved MCP tool surface to another local app such as Codex or
+NuncioADE can expose a small, user-approved MCP tool surface to another local app such as Codex or
 Claude. This integration is separate from the internal `/mcp` endpoint injected into provider
 sessions.
 
 ## Guided setup
 
-1. Start Synara and open **Settings → Integrations**.
+1. Start NuncioADE and open **Settings → Integrations**.
 2. Name the connection and choose whether it may use every current and future project (the default)
    or only selected projects. Safe execution defaults restrict it to tasks it creates, isolated
    managed worktrees, and approval-required execution. Higher-impact permissions are under
@@ -14,12 +14,12 @@ sessions.
 3. Choose **Create integration**.
 4. For Codex, Claude Code, or another agentic MCP client, copy the generated setup prompt into the
    client. The prompt guides that agent through the one-time pairing, installs the correct local
-   stdio configuration, and verifies the connection with `synara_overview`. For Claude Desktop or a
-   client that cannot run the setup prompt, complete pairing in Synara and use the copy-ready JSON
-   configuration instead. Synara uses the exact executable and data directory of the running
-   installation; no global `synara` command, project ID, model slug, request ID, or credential
+   stdio configuration, and verifies the connection with `nuncioade_overview`. For Claude Desktop or a
+   client that cannot run the setup prompt, complete pairing in NuncioADE and use the copy-ready JSON
+   configuration instead. NuncioADE uses the exact executable and data directory of the running
+   installation; no global `nuncioade` command, project ID, model slug, request ID, or credential
    handling is required from the user.
-5. Synara moves from **Waiting for pairing** to **Paired** after the local credential exchange, then
+5. NuncioADE moves from **Waiting for pairing** to **Paired** after the local credential exchange, then
    to **Connected** after the client makes its first request.
 
 If the page is reloaded or the pairing code expires, use **Resume pairing** beside the integration.
@@ -34,27 +34,27 @@ The guided flow avoids asking the user for project IDs, provider/model slugs, re
 or credentials. The generated launcher is structurally equivalent to:
 
 ```sh
-/absolute/path/to/runtime /absolute/path/to/synara-server mcp serve --integration mcp_int_REDACTED --home-dir "$HOME/.synara"
+/absolute/path/to/runtime /absolute/path/to/nuncioade-server mcp serve --integration mcp_int_REDACTED --home-dir "$HOME/.nuncioade"
 ```
 
 The Codex copy action generates:
 
 ```sh
-codex mcp add synara [--env ELECTRON_RUN_AS_NODE=1] -- /absolute/runtime /absolute/server mcp serve --integration mcp_int_REDACTED --home-dir "$HOME/.synara"
+codex mcp add nuncioade [--env ELECTRON_RUN_AS_NODE=1] -- /absolute/runtime /absolute/server mcp serve --integration mcp_int_REDACTED --home-dir "$HOME/.nuncioade"
 ```
 
 The Claude Code copy action generates a user-scoped configuration:
 
 ```sh
-claude mcp add --scope user synara [-e ELECTRON_RUN_AS_NODE=1] -- /absolute/runtime /absolute/server mcp serve --integration mcp_int_REDACTED --home-dir "$HOME/.synara"
+claude mcp add --scope user nuncioade [-e ELECTRON_RUN_AS_NODE=1] -- /absolute/runtime /absolute/server mcp serve --integration mcp_int_REDACTED --home-dir "$HOME/.nuncioade"
 ```
 
 The equivalent manual Codex `config.toml` is:
 
 ```toml
-[mcp_servers.synara]
+[mcp_servers.nuncioade]
 command = "/absolute/path/to/runtime"
-args = ["/absolute/path/to/synara-server", "mcp", "serve", "--integration", "mcp_int_REDACTED", "--home-dir", "/absolute/path/to/synara-data"]
+args = ["/absolute/path/to/nuncioade-server", "mcp", "serve", "--integration", "mcp_int_REDACTED", "--home-dir", "/absolute/path/to/nuncioade-data"]
 # Desktop builds also include: env = { ELECTRON_RUN_AS_NODE = "1" }
 ```
 
@@ -63,16 +63,16 @@ For clients that use JSON MCP configuration:
 ```json
 {
   "mcpServers": {
-    "synara": {
+    "nuncioade": {
       "command": "/absolute/path/to/runtime",
       "args": [
-        "/absolute/path/to/synara-server",
+        "/absolute/path/to/nuncioade-server",
         "mcp",
         "serve",
         "--integration",
         "mcp_int_REDACTED",
         "--home-dir",
-        "/absolute/path/to/synara-data"
+        "/absolute/path/to/nuncioade-data"
       ],
       "env": { "ELECTRON_RUN_AS_NODE": "1" }
     }
@@ -80,20 +80,20 @@ For clients that use JSON MCP configuration:
 }
 ```
 
-Synara always includes its actual data directory in generated setup, so multiple installations do not
+NuncioADE always includes its actual data directory in generated setup, so multiple installations do not
 silently connect to the wrong runtime. A manually written bridge configuration should do the same:
 
 ```json
 {
   "command": "/absolute/path/to/runtime",
   "args": [
-    "/absolute/path/to/synara-server",
+    "/absolute/path/to/nuncioade-server",
     "mcp",
     "serve",
     "--integration",
     "mcp_int_REDACTED",
     "--home-dir",
-    "/absolute/path/to/synara-data"
+    "/absolute/path/to/nuncioade-data"
   ],
   "env": { "ELECTRON_RUN_AS_NODE": "1" }
 }
@@ -103,9 +103,9 @@ The raw integration credential is not placed in MCP client configuration. The pa
 creates the credential locally and persists a private pending record, then exchanges the short-lived
 code with the running loopback server. A lost response or local write failure can therefore be retried
 without consuming a different secret. The final credential is written to
-`<Synara home>/mcp/credentials/<integration-id>.json`. Synara creates its parent directory with mode `0700`
+`<NuncioADE home>/mcp/credentials/<integration-id>.json`. NuncioADE creates its parent directory with mode `0700`
 and the file with mode `0600` on POSIX systems. On Windows the file remains under the current user
-profile, but Windows does not provide the same POSIX mode guarantee; protect the account and Synara
+profile, but Windows does not provide the same POSIX mode guarantee; protect the account and NuncioADE
 data directory accordingly.
 
 When exactly one credential is stored, the bridge can select it automatically. When more
@@ -116,13 +116,13 @@ principal to use.
 
 The advertised catalog is filtered by the integration's granted scopes. It exposes:
 
-- `synara_overview` — orient in one call with allowed projects, paths and activity, provider
+- `nuncioade_overview` — orient in one call with allowed projects, paths and activity, provider
   availability, granted scopes, safe defaults, limits, and suggested next steps.
-- `synara_capabilities` — provider/model construction and safety limits for an allowed project.
-- `synara_list_allowed_projects` — only projects selected by the user.
-- `synara_create_task` — one task per stable `requestId`.
-- `synara_wait_for_task` — wait for an authorized task without changing it.
-- `synara_read_task` — read tasks created by the integration. Reading other tasks requires the
+- `nuncioade_capabilities` — provider/model construction and safety limits for an allowed project.
+- `nuncioade_list_allowed_projects` — only projects selected by the user.
+- `nuncioade_create_task` — one task per stable `requestId`.
+- `nuncioade_wait_for_task` — wait for an authorized task without changing it.
+- `nuncioade_read_task` — read tasks created by the integration. Reading other tasks requires the
   separate `tasks:read-project` scope.
 
 Creation requires an explicit `projectId`, `provider`, `model`, `prompt`, and stable `requestId`.
@@ -131,9 +131,9 @@ checkout execution and full-access execution are independent, explicit scopes.
 
 ## Security and lifecycle
 
-- `/mcp/external` is available only while Synara itself is loopback-only. Configuring remote or
+- `/mcp/external` is available only while NuncioADE itself is loopback-only. Configuring remote or
   published access disables the external endpoint instead of exposing it remotely.
-- External credentials have the fixed `synara.external-mcp` audience. They are opaque, expiring,
+- External credentials have the fixed `nuncioade.external-mcp` audience. They are opaque, expiring,
   revocable, stored as SHA-256 hashes in the server database, and cannot authenticate browser,
   WebSocket, server-token, or internal provider-session paths.
 - Expiry and revocation are checked at request ingress and again while long-running create/wait
@@ -150,7 +150,7 @@ checkout execution and full-access execution are independent, explicit scopes.
 - Revoke an integration from **Settings → Integrations**. Revocation takes effect immediately; pair
   a newly created integration before using the bridge again.
 
-The stdio bridge re-reads Synara's private runtime-state file on each request and requires the
+The stdio bridge re-reads NuncioADE's private runtime-state file on each request and requires the
 loopback process to answer a fresh HMAC challenge before it sends a credential or pairing code. It
 retries discovery briefly across a server restart or port change, bounds and aborts hung HTTP calls,
 and processes several stdio requests concurrently so a long wait does not block ping or read calls.

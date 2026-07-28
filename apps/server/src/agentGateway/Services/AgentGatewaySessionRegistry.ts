@@ -1,4 +1,4 @@
-import type { ProviderKind, ThreadId } from "@synara/contracts";
+import type { ProviderKind, ThreadId } from "@nuncio/contracts";
 import { ServiceMap } from "effect";
 
 export type AgentGatewayCapability =
@@ -45,4 +45,4 @@ export interface AgentGatewaySessionRegistryShape {
 export class AgentGatewaySessionRegistry extends ServiceMap.Service<
   AgentGatewaySessionRegistry,
   AgentGatewaySessionRegistryShape
->()("synara/agentGateway/Services/AgentGatewaySessionRegistry") {}
+>()("nuncioade/agentGateway/Services/AgentGatewaySessionRegistry") {}
