@@ -58,6 +58,17 @@ Notes:
 - Merge conflicts inside the shadow (upstream moved a line the codemod also
   rewrites) resolve toward UPSTREAM's structure, then let the codemod run
   normalize identity. Never resolve toward old shadow content.
+- **List ALL conflicts before resolving — never truncate merge output**
+  (`| tail` cost us a broken shadow once). Resolve every file in
+  `git diff --name-only --diff-filter=U`, and before committing verify BOTH:
+  zero unmerged paths AND zero conflict markers:
+  `rg -l '^<{7} |^>{7} ' --glob '!node_modules'` must print nothing.
+  `git add -A` happily stages unresolved markers and the commit then succeeds —
+  this is the one way the shadow can silently go bad.
+- The shadow's `.gitignore` is upstream's: it does NOT ignore ADE-local paths
+  like `.ade-dev/`. Before working on the shadow, add `.ade-dev/` to
+  `$(git rev-parse --git-dir)/info/exclude` (per-worktree, survives branch
+  switches) so `git add -A` can't pollute the shadow with dev-instance state.
 - Re-running the codemod is idempotent; an unchanged release produces "nothing
   to change" and you may skip the commit.
 
