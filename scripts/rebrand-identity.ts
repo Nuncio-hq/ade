@@ -38,6 +38,13 @@ const EXEMPT_PATHS = new Set([
   "SYNARA-AGENTS.md",
   "SYNARA-CLAUDE.md",
   "docs/DECISIONS.md",
+  // Hand-curated lineage docs: the one-time rebrand is done, and their
+  // factual "Synara" references (upstream name, fork lineage) must survive
+  // future codemod runs.
+  "AGENTS.md",
+  "docs/STATE.md",
+  "docs/UPSTREAM-SYNC.md",
+  "docs/REFERENCES.md",
   "CHANGELOG.md",
   "UPSTREAM-BASE",
   "bun.lock",

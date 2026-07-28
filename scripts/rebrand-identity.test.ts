@@ -127,7 +127,14 @@ describe("isExemptPath", () => {
       "advisor-plans/README.md",
       "scripts/rebrand-identity.ts",
       "scripts/rebrand-identity.test.ts",
+      "scripts/check-brand-identity.test.ts",
       "apps/server/src/persistence/Migrations/074_ExternalMcpIntegrations.ts",
+      // Hand-curated lineage docs: the one-time rebrand is done, and their
+      // factual "Synara" references must survive future codemod runs.
+      "AGENTS.md",
+      "docs/STATE.md",
+      "docs/UPSTREAM-SYNC.md",
+      "docs/REFERENCES.md",
     ]) {
       expect(isExemptPath(path), path).toBe(true);
     }
@@ -135,9 +142,9 @@ describe("isExemptPath", () => {
 
   it("does not exempt live project files", () => {
     for (const path of [
-      "AGENTS.md",
       "README.md",
       "REMOTE.md",
+      "CLAUDE.md",
       "apps/web/src/store.ts",
       "packages/shared/src/synaraHome.ts",
       "scripts/package.json",

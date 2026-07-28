@@ -145,26 +145,15 @@ function readTrackedFiles(): BrandIdentityBinaryFile[] {
   return paths.map((path) => ({ path, contents: readFileSync(path) }));
 }
 
-// NuncioADE: docs that legitimately discuss project lineage and upstream
-// origins are exempt from the retired-identity scan; the guard still protects
-// all code.
-const lineageDocPaths = new Set([
-  "AGENTS.md",
-  "SYNARA-AGENTS.md",
-  "SYNARA-CLAUDE.md",
-  "docs/REFERENCES.md",
-  "docs/DECISIONS.md",
-  "docs/STATE.md",
-]);
-
 function main(): void {
   const trackedFiles = readTrackedFiles();
-  const searchableFiles = trackedFiles
-    .filter((file) => !lineageDocPaths.has(file.path))
-    .map((file) => ({
-      path: file.path,
-      contents: file.contents.includes(0) ? "" : Buffer.from(file.contents).toString("utf8"),
-    }));
+  // Exemptions (lineage docs, historical snapshots, fixtures) are owned by the
+  // codemod's isExemptPath and applied inside findBrandIdentityViolations, so
+  // this guard and the codemod share a single source of truth.
+  const searchableFiles = trackedFiles.map((file) => ({
+    path: file.path,
+    contents: file.contents.includes(0) ? "" : Buffer.from(file.contents).toString("utf8"),
+  }));
   const violations = [
     ...findBrandIdentityViolations(searchableFiles),
     ...findVisualBrandAssetViolations(trackedFiles),

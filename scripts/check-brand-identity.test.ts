@@ -84,6 +84,10 @@ describe("brand identity guard", () => {
         },
         { path: "SYNARA-AGENTS.md", contents: "Synara agent docs" },
         { path: "plans/006-make-synara-the-agent-harness.md", contents: "synara" },
+        // Lineage docs are hand-curated: factual upstream references stay.
+        { path: "AGENTS.md", contents: "forked from Synara, keeps Synara ground intact" },
+        { path: "docs/STATE.md", contents: "inherited from Synara upstream" },
+        { path: "docs/UPSTREAM-SYNC.md", contents: "pulling Synara releases into NuncioADE" },
       ]),
     ).toEqual([]);
   });

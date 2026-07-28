@@ -6,9 +6,9 @@
 
 ## App design / taste (system-wide)
 
-- **NuncioADE** (`upstream` remote) — our fork base; design + orchestration reference by definition.
-- **T3Code** (pingdotgg/t3code) — NuncioADE's own origin; where the core design taste comes from.
-- **Zed** (zed-industries/zed) — top-tier clean code and UI polish; authors of ACP (which NuncioADE uses for some adapters). User backs this team.
+- **Synara** (`upstream` remote) — our fork base; design + orchestration reference by definition.
+- **T3Code** (pingdotgg/t3code) — Synara's own origin; where the core design taste comes from.
+- **Zed** (zed-industries/zed) — top-tier clean code and UI polish; authors of ACP (which Synara uses for some adapters). User backs this team.
 - **Conductor** (closed, Mac) — parallel Claude Code workspaces; good workspace harness UX. Related: orca/superset (extensions in `~/.pi/agent/extensions/` come from this world).
 
 ## System architecture (NOT harness behavior)
@@ -31,7 +31,7 @@
 - **pi** (@earendil-works, tarballs in `../claude-oauth-pi/pkg-src/`) — origin of the engine lineage; frozen provider in ADE; its extension API remains the compat baseline (OMP ships legacy shims for it).
 - **OMP / oh-my-pi** (can1357/oh-my-pi; npm `@oh-my-pi/pi-coding-agent`) — **the engine** since 2026-07-28 (see DECISIONS.md), no longer just a reference: consumed from npm, customized via extensions/skills/plugins. Tarball in `pkg-src/` for offline source reading.
 - **Grok Build** (xAI) — harness reference.
-- **Kilo Code** (Kilo-Org/kilocode) — exemplary fork lineage: Cline → Roo Code → Kilo, building on top instead of rewriting; a model for how we treat NuncioADE.
+- **Kilo Code** (Kilo-Org/kilocode) — exemplary fork lineage: Cline → Roo Code → Kilo, building on top instead of rewriting; a model for how we treat Synara.
 - **Cline** (cline/cline) — origin of that lineage; plan/act mode pattern at the source.
 - **Aider** (Aider-AI/aider) — the OG harness; git-native workflow (auto-commit, undo) and benchmark methodology.
 - **OpenHands** (All-Hands-AI/OpenHands) — open-source Devin; readable source for the async-agent ideas that inspired us. User used it briefly, positive.
@@ -48,7 +48,7 @@
 
 Open source:
 
-- **Remodex** (Emanuele-web04) — same author as NuncioADE; mobile remote for coding agents. Closest open reference to our mobile plan, from the codebase family we already know.
+- **Remodex** (Emanuele-web04) — same author as Synara; mobile remote for coding agents. Closest open reference to our mobile plan, from the codebase family we already know.
 - **Orca mobile** — mobile version of orca (we already run its pi extensions); shows the extension-world take on remote control.
 
 Closed source — study UX and feature scope:

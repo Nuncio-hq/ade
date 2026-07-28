@@ -2,22 +2,22 @@
 
 ## Project Identity
 
-**NuncioADE** (repo `Nuncio-hq/ade`, private) is a personal agentic development environment, forked from [Synara](https://github.com/Emanuele-web04/synara) (itself a fork of T3Code). It inherits NuncioADE's full architecture and keeps every provider working, but its product direction is **OMP-first**: OMP (oh-my-pi, `@oh-my-pi/*` npm SDK) is the first-class engine and gets new investment first — consumed as npm releases, customized through its extension points, integrated via direct SDK (see §Engine Focus). The original Pi provider (`@earendil-works/pi-*`) stays working but is frozen. Nothing from NuncioADE is removed. UI/UX and general features are inherited from upstream; our own investment goes to the OMP harness, extension UI where needed, and mobile.
+**NuncioADE** (repo `Nuncio-hq/ade`, private) is a personal agentic development environment, forked from [Synara](https://github.com/Emanuele-web04/synara) (itself a fork of T3Code). It inherits Synara's full architecture and keeps every provider working, but its product direction is **OMP-first**: OMP (oh-my-pi, `@oh-my-pi/*` npm SDK) is the first-class engine and gets new investment first — consumed as npm releases, customized through its extension points, integrated via direct SDK (see §Engine Focus). The original Pi provider (`@earendil-works/pi-*`) stays working but is frozen. Nothing from Synara is removed. UI/UX and general features are inherited from upstream; our own investment goes to the OMP harness, extension UI where needed, and mobile.
 
-## Naming Convention (inherited vs ours)
+## Naming & Identity (post-rebrand)
 
-Inherited NuncioADE code keeps its NuncioADE identity — do NOT rename. Renaming happens only if we ever decide to fully rebuild UI/UX (may be never):
+Since 2026-07-28 the WHOLE tree carries the NuncioADE identity — the old "inherited code keeps its Synara identity" rule is reversed (see DECISIONS.md). First-party identity, everywhere including inherited files:
 
-- Keep: `@nuncio/*` package names, `NUNCIO_*` env vars, app title/branding in `apps/` and `packages/`.
-- Modifying files in NuncioADE ground (e.g. the PiAdapter bridge) is still NuncioADE world — no renames there.
-
-Anything NEW and ours gets our namespace from the first commit — never `nuncioade`:
-
-- New workspace packages (e.g. mobile, harness-as-package): scope `@nuncio/*`.
-- New env vars / config keys we introduce: prefix `NUNCIO_`.
+- Packages: `@nuncio/*`. Env vars / config keys: `NUNCIO_*`. CLI: `nuncioade` (+ `ade` alias). Product: `NuncioADE`. Bundle id: `com.nuncio.ade`.
 - Harness extension tools/commands (OMP or pi): prefix `ade_` tools, `/ade-*` commands.
 
-This avoids a future refactor: our code never needs renaming, inherited code never causes merge conflicts.
+The retired identity (`@synara/*`, `SYNARA_*`, `Synara`, bare `synara`) survives ONLY in:
+
+- **Attribution & upstream references**: the `SYNARA-*.md` snapshots, "forked from Synara" prose, `Emanuele-web04/synara` repo links, `trysynara.com` endpoints (upstream-hosted; protected in the codemod).
+- **Immutable history**: `docs/DECISIONS.md`, `CHANGELOG.md`, and `apps/server/src/persistence/Migrations/**` (applied SQL must never change).
+- **Legacy-compat shims** that keep pre-rebrand user data working (browser storage-key migration, managed codex-config markers, external-MCP credential prefixes and hash salt) — each marked `// rebrand-exempt` and covered by tests.
+
+Mechanism (single source of truth = `scripts/rebrand-identity.ts`): a deterministic, idempotent codemod owns all token mappings, protections, and exemptions. `bun run brand:check` (CI-enforced) flags any reintroduction of the retired identity outside exemptions. Upstream syncs stay clean because BOTH sides are rebranded by the same codemod — see §Upstream Workflow and `docs/UPSTREAM-SYNC.md`.
 
 This is an early WIP. Sweeping changes that improve long-term maintainability are encouraged.
 
@@ -41,7 +41,7 @@ Deprecated things must be listed in `docs/STATE.md` under "Deprecated / do not r
 
 ## Upstream Docs (read these too)
 
-The original NuncioADE agent docs are preserved verbatim in this repo and remain authoritative for everything not covered here (Codex app-server, UI conventions, transcript performance guardrails, dev instance isolation details):
+The original Synara agent docs are preserved verbatim in this repo and remain authoritative for everything not covered here (Codex app-server, UI conventions, transcript performance guardrails, dev instance isolation details):
 
 - `SYNARA-AGENTS.md` — original upstream `AGENTS.md`
 - `SYNARA-CLAUDE.md` — original upstream `CLAUDE.md`
@@ -50,14 +50,14 @@ Ignore the "Model Selection" section in those files: it reflects the upstream au
 
 ## Branching
 
-Trunk-based. `main` is the only long-lived branch and must always be green (`bun fmt`, `bun lint`, `bun typecheck` pass). There is NO long-lived `dev`, `harness`, `app`, or `mobile` branch — do not create them.
+Trunk-based. `main` must always be green (`bun fmt`, `bun lint`, `bun typecheck` pass). There is NO long-lived `dev`, `harness`, `app`, or `mobile` branch — do not create them. The ONE long-lived exception besides `main` is `sync/rebranded-upstream`: a mechanical shadow (`latest synced upstream tag + rebrand codemod`) that keeps release syncs conflict-free. It is never hand-edited and never merged from directly — only via `docs/UPSTREAM-SYNC.md`.
 
 All work happens on short-lived branches cut from `main`, merged back when green, deleted after merge. Name them by area prefix:
 
 - `harness/<feature>` — OMP harness work: extensions/skills/plugins (e.g. `harness/permission-gate`)
-- `app/<feature>` — NuncioADE-side work: server, web, desktop, bridge (e.g. `app/bridge-custom-widgets`)
+- `app/<feature>` — app-side work: server, web, desktop, bridge (e.g. `app/bridge-custom-widgets`)
 - `mobile/<feature>` — mobile client work (e.g. `mobile/spike-expo-shell`)
-- `sync/upstream-<version>` — upstream merges: merge the chosen upstream **release tag** here (never upstream HEAD; see Upstream Workflow), resolve conflicts (keep our `AGENTS.md`/`CLAUDE.md`; refresh `SYNARA-*.md` from upstream), verify, then merge to `main`
+- `sync/upstream-<version>` — upstream syncs: advance the `sync/rebranded-upstream` shadow to the chosen upstream **release tag** first (never upstream HEAD), then merge the SHADOW here, resolve conflicts (keep our `AGENTS.md`/`CLAUDE.md`; refresh `SYNARA-*.md` from the raw tag), verify, then merge to `main`. Full steps: `docs/UPSTREAM-SYNC.md`
 
 Rules:
 
@@ -68,11 +68,11 @@ Rules:
 
 ## Versioning & Releases
 
-ADE has its OWN version line (currently 0.0.x), independent of NuncioADE's. The
-NuncioADE release our main is based on lives in the `UPSTREAM-BASE` file at the repo
+ADE has its OWN version line (currently 0.0.x), independent of Synara's. The
+Synara release our main is based on lives in the `UPSTREAM-BASE` file at the repo
 root — our "engine version". Think of it as: ADE version = our product; upstream
 base = the outsourced platform underneath (we focus on the OMP harness; everything else is
-effectively outsourced to NuncioADE upstream).
+effectively outsourced to Synara upstream).
 
 Hard rules:
 
@@ -87,14 +87,14 @@ Hard rules:
 - Release procedure: set the version in the four release package.json files via
   `scripts/update-release-package-versions.ts`, commit `release: vX.Y.Z`, then
   `git tag vX.Y.Z && git push --tags` — CI does the rest.
-- After an upstream sync lands, update `UPSTREAM-BASE` to the merged NuncioADE tag
+- After an upstream sync lands, update `UPSTREAM-BASE` to the merged Synara tag
   in the same commit. Keeping the base fresh IS part of maintaining ADE: the
   non-harness surface improves only through these syncs.
 
 ## Upstream Workflow
 
-- `upstream` remote points to the original NuncioADE repo. We selectively pull improvements; we do not track it as a hard dependency.
-- **Merge released versions only, never upstream HEAD.** Sync targets are upstream release tags (check `gh api repos/Emanuele-web04/synara/releases`): `git fetch upstream --tags`, then merge the chosen `vX.Y.Z` tag via a `sync/upstream-<version>` branch. Why: HEAD commits are unstable/diluted; releases are the tested checkpoints.
+- `upstream` remote points to the original Synara repo. We selectively pull improvements; we do not track it as a hard dependency.
+- **Merge released versions only, never upstream HEAD.** Sync targets are upstream release tags (check `gh api repos/Emanuele-web04/synara/releases`): `git fetch upstream --tags`, advance the `sync/rebranded-upstream` shadow to the chosen `vX.Y.Z` tag (re-running the rebrand codemod), then merge the shadow via a `sync/upstream-<version>` branch. Why: HEAD commits are unstable/diluted; releases are the tested checkpoints; the shadow makes identity renames non-conflicting.
 - **Full sync runbook: `docs/UPSTREAM-SYNC.md`** — follow it step by step (conflict resolution rules per file class, verification, landing). Read it before any sync work.
 - To inspect what a release brings: `git log --oneline main..vX.Y.Z`.
 - Once diverged, prefer `git cherry-pick` of specific commits from a release (especially anything touching `PiAdapter`, `piTurnFailure`, or `@earendil-works/pi-*` version bumps).
@@ -104,9 +104,9 @@ Hard rules:
 
 ```
 Nuncio/
-├── ade/                      # this repo = the product (NuncioADE fork)
-│   ├── apps/{server,web,desktop} # inherited from NuncioADE — modify minimally
-│   ├── packages/                 # inherited from NuncioADE — modify minimally
+├── ade/                      # this repo = the product (Synara fork)
+│   ├── apps/{server,web,desktop} # inherited from Synara — modify minimally
+│   ├── packages/                 # inherited from Synara — modify minimally
 │   └── harness/                  # ★ ours — OMP harness, does not exist upstream
 │       ├── extensions/           #   extensions (core deliverable; pi-API compatible, run on OMP via its legacy shims)
 │       ├── skills/ prompts/      #   optional engine resources
@@ -118,14 +118,14 @@ Nuncio/
 Boundary rules:
 
 - **`harness/`** is our own ground: change freely, never conflicts with upstream merges. Extensions are wired in by symlinking into the engine's agent dir — OMP: `~/.omp/agent/extensions/` (real use) or a project's `.omp/extensions/` (dev/testing); the frozen pi provider still reads `~/.pi/agent/extensions/` / `.pi/extensions/`.
-- **`apps/` + `packages/`** are NuncioADE ground: only touch them when a harness extension needs it — primarily extending the `ExtensionUIContext` bridge in `apps/server/src/provider/Layers/PiAdapter.ts` (and `OmpAdapter` once it lands; NuncioADE ignores TUI-only widgets and editor hooks) plus matching web UI. Keep each change small and note it in the commit message to ease upstream conflict resolution.
+- **`apps/` + `packages/`** are Synara ground: only touch them when a harness extension needs it — primarily extending the `ExtensionUIContext` bridge in `apps/server/src/provider/Layers/PiAdapter.ts` (and `OmpAdapter` once it lands; Synara ignores TUI-only widgets and editor hooks) plus matching web UI. Keep each change small and note it in the commit message to ease upstream conflict resolution.
 - An extension that depends on a bridge change must land in the same commit/PR as that bridge change.
 - **`claude-oauth-pi/pkg-src`** holds engine source snapshots: the OMP tarball (`@oh-my-pi/pi-coding-agent` — read here for SDK/extension APIs; npm is canonical) and `@earendil-works/pi-coding-agent` tarballs (frozen provider reference, with `docs/` and `examples/extensions|hooks`).
 
 ## Dev Workflow (dev → product)
 
 1. **Dev loop**: run an isolated ADE instance (see Local Dev Instance Isolation), edit extensions in `harness/extensions/`, hot-reload via the engine's reload command in-app, test against `playground/`.
-2. **Bisect**: if an extension misbehaves in ADE, run the same extension in the engine CLI (`omp`; `pi` TUI for the frozen pi provider). CLI-works/ADE-fails ⇒ bridge gap in NuncioADE code; both-fail ⇒ extension bug. Watch for version skew between the `omp` CLI and `@oh-my-pi/*` pinned in `apps/server/package.json` (once OmpAdapter lands).
+2. **Bisect**: if an extension misbehaves in ADE, run the same extension in the engine CLI (`omp`; `pi` TUI for the frozen pi provider). CLI-works/ADE-fails ⇒ bridge gap in Synara-inherited code; both-fail ⇒ extension bug. Watch for version skew between the `omp` CLI and `@oh-my-pi/*` pinned in `apps/server/package.json` (once OmpAdapter lands).
 3. **Ship**: `bun run build:desktop` → install and use ADE as the daily driver; feedback loops back into `harness/`.
 
 ## Task Completion Requirements
@@ -165,6 +165,6 @@ If you add new functionality, first check whether shared logic can be extracted 
 
 ## Local Dev Instance Isolation
 
-- Never start the default `bun run dev` while another instance (including the NuncioADE desktop app) is running, unless shared ports/state are intended.
+- Never start the default `bun run dev` while another instance (including an installed NuncioADE.app) is running, unless shared ports/state are intended.
 - Use an isolated home dir and non-default ports when running side by side, e.g. `env -u NUNCIO_AUTH_TOKEN NUNCIO_PORT_OFFSET=3158 NUNCIO_NO_BROWSER=1 bun run dev -- --home-dir ./.ade-dev --port 58090` (dry-run first with `--dry-run`).
 - Check ports with `lsof -nP -iTCP:<port> -sTCP:LISTEN`.
