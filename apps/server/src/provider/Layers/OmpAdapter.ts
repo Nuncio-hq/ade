@@ -1327,10 +1327,27 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
                 `OMP model '${requestedModelSlug}' is not available. Pick a discovered model (provider/model slug).`,
               );
             }
-            const sessionFile = extractResumeSessionFile(input.resumeCursor);
-            const sessionManager = sessionFile
-              ? await sdk.SessionManager.open(sessionFile)
-              : sdk.SessionManager.create(cwd);
+            // `SessionManager.create` stamps a terminal breadcrumb that cannot
+            // be suppressed (#resetToNewSession → #rememberBreadcrumb). Inside
+            // Synara that crumb is inherited from whatever terminal launched
+            // the server, so the user's own `omp` CLI would resume a Synara
+            // thread's session. Minting the file explicitly avoids the crumb
+            // and hands back a resume cursor before the first turn, so a crash
+            // right after start is still resumable.
+            const sessionFile =
+              extractResumeSessionFile(input.resumeCursor) ??
+              sdk.SessionManager.createEmptySessionFile(cwd);
+            const sessionManager = await sdk.SessionManager.open(
+              sessionFile,
+              undefined,
+              undefined,
+              {
+                // When the recorded cwd is gone the engine falls back to the
+                // *process* project dir; pin the thread's workspace instead.
+                initialCwd: cwd,
+                suppressBreadcrumb: true,
+              },
+            );
             // The gateway rides in as native custom tools, not as a supplied
             // MCPManager: a caller-supplied manager only propagates to the
             // tool session for subagents to inherit — the engine registers MCP
@@ -1363,18 +1380,24 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
               // true (tools/ask.ts) — and setToolUIContext below supplies the
               // context those surfaces render through.
               hasUI: true,
-              // LSP warmup spawns language servers per session — resource cost
-              // with no consumer until Synara surfaces diagnostics. Off for now.
-              enableLsp: false,
-              // IRC would register every embedded session on the shared hub and
-              // pollute the user's agent registry. Off inside the server.
+              // On. The engine's own `lsp.lazy` setting (default true) keeps
+              // startup to discovery — language servers spawn on the first
+              // `lsp` call, not per session — so the cost is bounded by the
+              // user's setting rather than by a policy Synara invents. Off
+              // would silently drop OMP's code-intelligence tool entirely.
+              enableLsp: true,
+              // Off. IRC registers the session on the shared agent hub; a
+              // desktop host runs many threads at once and would flood the
+              // user's roster with sessions they never addressed.
               enableIrc: false,
-              // The engine discovers and owns the user's MCP servers; Synara's
-              // gateway comes in beside them as custom tools.
+              // On. The engine discovers and owns the user's MCP servers;
+              // Synara's gateway comes in beside them as custom tools.
               enableMCP: true,
               ...(gatewayTools.length > 0 ? { customTools: [...gatewayTools] } : {}),
-              // The python preflight probes interpreters at startup; the eval
-              // kernel is unused in the embedded skeleton, so skip the cost.
+              // On. The preflight only probes python/ruby/julia when JS eval is
+              // disabled (tools/index.ts), so skipping it costs no capability:
+              // `eval` stays available through JS and the other kernels are
+              // checked at first invocation instead of at every session start.
               skipPythonPreflight: true,
             });
             return {

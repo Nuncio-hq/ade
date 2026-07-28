@@ -76,6 +76,13 @@ const fakeSession = {
 /** Set by the adapter through `setToolUIContext`; the engine's ask surface. */
 const capturedUiContext: { context: unknown } = { context: undefined };
 
+/** How the adapter obtained its SessionManager — mint-then-open vs resume. */
+const sessionManagerCalls: Array<{
+  readonly op: "mint" | "open";
+  readonly arg: string;
+  readonly options?: unknown;
+}> = [];
+
 const fakeSdk = {
   discoverAuthStorage: async () => ({}),
   ModelRegistry: class {
@@ -94,7 +101,14 @@ const fakeSdk = {
   },
   SessionManager: {
     create: () => fakeSessionManager,
-    open: async () => fakeSessionManager,
+    createEmptySessionFile: (cwd: string) => {
+      sessionManagerCalls.push({ op: "mint", arg: cwd });
+      return "/tmp/omp-minted-session.jsonl";
+    },
+    open: async (file: string, _dir: unknown, _storage: unknown, options?: unknown) => {
+      sessionManagerCalls.push({ op: "open", arg: file, options });
+      return fakeSessionManager;
+    },
   },
   createAgentSession: async () => ({
     session: fakeSession,
@@ -113,6 +127,7 @@ function resetFake() {
   agentState.error = undefined;
   engineWork.runningJobs = 0;
   engineWork.pendingDeliveries = false;
+  sessionManagerCalls.length = 0;
 }
 
 /**
@@ -512,6 +527,62 @@ it.layer(testLayers())("OMP extension UI bridge", (it) => {
       // rather than leave the turn hanging on a dialog nobody can answer.
       yield* adapter.stopSession(threadId);
       assert.equal(yield* Effect.promise(() => answered), false);
+    }),
+  );
+});
+
+it.layer(testLayers())("OMP session resume", (it) => {
+  it.effect("mints its own session file so a thread is resumable before its first turn", () =>
+    Effect.gen(function* () {
+      resetFake();
+      const threadId = ThreadId.makeUnsafe("thread-omp-fresh-session");
+      const adapter = yield* OmpAdapter;
+
+      const session = yield* adapter.startSession({
+        threadId,
+        runtimeMode: "local",
+        cwd: process.cwd(),
+      } as never);
+
+      // `SessionManager.create` would stamp a terminal breadcrumb pointing the
+      // user's own `omp` CLI at this session, so the adapter mints the file and
+      // opens it with the crumb suppressed instead.
+      assert.deepEqual(
+        sessionManagerCalls.map((call) => call.op),
+        ["mint", "open"],
+      );
+      assert.deepEqual(sessionManagerCalls[1]?.options, {
+        initialCwd: process.cwd(),
+        suppressBreadcrumb: true,
+      });
+      assert.equal(session.resumeCursor, "/tmp/omp-session-1.jsonl");
+
+      yield* adapter.stopSession(threadId);
+    }),
+  );
+
+  it.effect("reopens the persisted session file instead of starting a new one", () =>
+    Effect.gen(function* () {
+      resetFake();
+      const threadId = ThreadId.makeUnsafe("thread-omp-resume");
+      const adapter = yield* OmpAdapter;
+
+      yield* adapter.startSession({
+        threadId,
+        runtimeMode: "local",
+        cwd: process.cwd(),
+        resumeCursor: "/tmp/omp-restored.jsonl",
+      } as never);
+
+      // A restart must reuse the recorded cursor: minting here would silently
+      // drop the thread's history on the engine side.
+      assert.deepEqual(
+        sessionManagerCalls.map((call) => call.op),
+        ["open"],
+      );
+      assert.equal(sessionManagerCalls[0]?.arg, "/tmp/omp-restored.jsonl");
+
+      yield* adapter.stopSession(threadId);
     }),
   );
 });
