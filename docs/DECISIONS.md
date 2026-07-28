@@ -196,3 +196,21 @@
   admitted. Fix: a `provider-discovery` class limited to 12, leaving
   `expensive-read` at 2 for git diffs, snapshots and thread compaction. This is
   upstream code we diverge in; re-check it on every sync.
+
+- **2026-07-28 — A dead per-thread stream must self-heal (Synara ground).** The
+  client subscribes one WebSocket stream per open thread. When that stream dies
+  with the transport's bounded retries spent, `__root.tsx` only cleared the
+  cursor and called `markThreadDetailSyncFailed` — and that marker is a no-op
+  for a thread already flagged `synced`, because rendering stale data beats
+  blanking a conversation. Nothing resubscribed. The thread froze on whatever
+  the client last applied: an in-flight turn spins "Thinking" forever while the
+  server completes it, writes the reply, and generates the title (observed in
+  `~/.nuncioade` — turn `beb9b24e` completed 11:31:39Z with the UI still
+  spinning). Provider-agnostic by construction. Fix: a self-chaining resubscribe
+  backoff (1s widening to 30s, 12 attempts) that runs for as long as the client
+  holds the lease and stops on the first stream frame. `THREAD_SNAPSHOT_NOT_FOUND`
+  is excluded — an unpromoted draft is expected to 404 and the shell stream
+  already restarts it via `requestThreadSnapshot`; adding a second owner would
+  just churn subscribes for every idle draft. Measured: a new thread burns 8–11
+  of the transport's 12 bootstrap retries before its `thread.create` projection
+  lands, so this margin is thinner than it looks.

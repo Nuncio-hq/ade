@@ -30,6 +30,7 @@ import {
   readEffectRpcClientMessage,
   sendEffectRpcChunk,
   sendEffectRpcExit,
+  sendEffectRpcFailure,
   type EffectRpcWebSocketClient,
 } from "../test/effectRpcWebSocketMock";
 import { createBrowserTestServerConfig, createFullscreenTestHost } from "../test/browserHarness";
@@ -54,6 +55,7 @@ let shellStreamClient: EffectRpcWebSocketClient | null = null;
 const threadStreamRequestIdByThreadId = new Map<ThreadId, string>();
 const threadStreamClientByThreadId = new Map<ThreadId, EffectRpcWebSocketClient>();
 let delayNextThreadSnapshot = false;
+let rejectThreadSubscriptionsAsDuplicate = 0;
 let subscribeShellRequestCount = 0;
 const subscribeThreadRequestCountById = new Map<ThreadId, number>();
 let subscribeThreadRequests: ThreadId[] = [];
@@ -282,6 +284,14 @@ const worker = setupWorker(
         subscribeThreadRequests.push(threadId);
         threadStreamRequestIdByThreadId.set(threadId, request.id);
         threadStreamClientByThreadId.set(threadId, client);
+        if (rejectThreadSubscriptionsAsDuplicate > 0) {
+          rejectThreadSubscriptionsAsDuplicate -= 1;
+          sendEffectRpcFailure(client, request.id, {
+            code: "STREAM_DUPLICATE_SUBSCRIPTION",
+            message: "Thread stream already subscribed.",
+          });
+          return;
+        }
         if (delayNextThreadSnapshot) {
           delayNextThreadSnapshot = false;
           return;
@@ -437,7 +447,7 @@ describe("EventRouter scoped orchestration sync", () => {
     threadStreamRequestIdByThreadId.clear();
     threadStreamClientByThreadId.clear();
     delayNextThreadSnapshot = false;
-    localStorage.clear();
+    rejectThreadSubscriptionsAsDuplicate = 0;
     useComposerDraftStore.setState({
       draftsByThreadId: {},
       draftThreadsByThreadId: {},
@@ -1269,6 +1279,57 @@ describe("EventRouter scoped orchestration sync", () => {
           expect(message?.text).toBe("I’ll start by scanning the repository.");
         },
         { timeout: 4_000, interval: 16 },
+      );
+    } finally {
+      await mounted.cleanup();
+    }
+  });
+  it("resubscribes a thread whose stream died after every transport retry", async () => {
+    // A synced thread keeps its "synced" flag through a stream failure so the
+    // conversation is not blanked, which also means no failure banner and no
+    // retry button. Without an automatic resubscribe the view freezes: an
+    // in-flight turn spins forever while the server settles it.
+    const mounted = await mountApp();
+
+    try {
+      await vi.waitFor(
+        () => {
+          expect(subscribeThreadRequestCountById.get(THREAD_ID)).toBeGreaterThanOrEqual(1);
+          expect(getThreadFromState(useStore.getState(), THREAD_ID)).toBeDefined();
+        },
+        { timeout: 4_000, interval: 16 },
+      );
+      const subscribesBeforeFailure = subscribeThreadRequestCountById.get(THREAD_ID) ?? 0;
+
+      // Five rejections exhaust the transport's bounded duplicate retries; the
+      // sixth kills the first recovery attempt, so only the app-level backoff
+      // can drain the budget and get the stream back.
+      rejectThreadSubscriptionsAsDuplicate = 6;
+      const client = threadStreamClientByThreadId.get(THREAD_ID);
+      const requestId = threadStreamRequestIdByThreadId.get(THREAD_ID);
+      expect(client).toBeDefined();
+      expect(requestId).toBeDefined();
+      sendEffectRpcFailure(client!, requestId!, {
+        code: "STREAM_DUPLICATE_SUBSCRIPTION",
+        message: "Thread stream already subscribed.",
+      });
+
+      await vi.waitFor(
+        () => {
+          expect(rejectThreadSubscriptionsAsDuplicate).toBe(0);
+        },
+        { timeout: 10_000, interval: 16 },
+      );
+
+      // The recovery backoff must keep resubscribing once the rejections stop.
+      await vi.waitFor(
+        () => {
+          expect(subscribeThreadRequestCountById.get(THREAD_ID) ?? 0).toBeGreaterThan(
+            subscribesBeforeFailure + 6,
+          );
+          expect(useStore.getState().threadDetailSyncById?.[THREAD_ID]).not.toBe("failed");
+        },
+        { timeout: 10_000, interval: 32 },
       );
     } finally {
       await mounted.cleanup();
