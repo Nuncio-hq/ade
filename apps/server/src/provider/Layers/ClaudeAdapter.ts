@@ -4008,7 +4008,7 @@ function makeClaudeAdapter(options?: ClaudeAdapterLiveOptions) {
               // native conversation only after the prompt is queued. Drop the
               // dead native ids before completing the turn so ProviderService
               // persists a cursor without `resume`; the next dispatch then
-              // starts a fresh Claude session and bootstraps Synara's retained
+              // starts a fresh Claude session and bootstraps NuncioADE's retained
               // transcript instead of replaying the same broken id forever.
               context.resumeSessionId = undefined;
               context.lastAssistantUuid = undefined;

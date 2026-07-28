@@ -96,9 +96,9 @@ const PROVIDER = "codex" as const;
 // activity at all for this long, abort it instead of showing "Working" forever.
 // Every turn-scoped event (reasoning, tool output, deltas) resets the clock and
 // a pending question/approval pauses it, so only a wedged child trips this.
-// Generous by design; override with SYNARA_CODEX_TURN_IDLE_TIMEOUT_MS.
+// Generous by design; override with NUNCIO_CODEX_TURN_IDLE_TIMEOUT_MS.
 const CODEX_TURN_IDLE_TIMEOUT_MS = resolveAcpTurnIdleTimeoutMs({
-  envVar: "SYNARA_CODEX_TURN_IDLE_TIMEOUT_MS",
+  envVar: "NUNCIO_CODEX_TURN_IDLE_TIMEOUT_MS",
   defaultMs: 900_000,
 });
 const CODEX_TURN_WATCHDOG_INTERVAL_MS = 15_000;

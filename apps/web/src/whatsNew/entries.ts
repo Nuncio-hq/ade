@@ -29,7 +29,7 @@ export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
         id: "responsive-stop-controls",
         title: "Stop stays responsive under load",
         description:
-          "Interrupt and stop actions now take priority over new work, even when a busy Synara server has filled its ordinary command queue.",
+          "Interrupt and stop actions now take priority over new work, even when a busy NuncioADE server has filled its ordinary command queue.",
         details:
           "Control, user, and background commands now use separate admission priorities while preserving reserved capacity for recovery. Provider calls and lifecycle locks are bounded too, so one wedged session cannot hold every other task hostage, and failed stop requests now surface an actionable error instead of silently leaving the UI spinning.",
       },
@@ -47,7 +47,7 @@ export const WHATS_NEW_ENTRIES: readonly WhatsNewEntry[] = [
         description:
           "Turns are less likely to remain stuck as running after terminal provider events, restarts, stale resumes, or delayed lifecycle updates.",
         details:
-          "Synara retains enough turn identity to settle late Claude results, fences stale lifecycle generations, reconciles durable provider commands and runtime events, and aligns Codex, Claude, Cursor, and ACP session ownership through start, stop, reconnect, and restart boundaries.",
+          "NuncioADE retains enough turn identity to settle late Claude results, fences stale lifecycle generations, reconciles durable provider commands and runtime events, and aligns Codex, Claude, Cursor, and ACP session ownership through start, stop, reconnect, and restart boundaries.",
       },
       {
         id: "safe-follow-up-queues",
