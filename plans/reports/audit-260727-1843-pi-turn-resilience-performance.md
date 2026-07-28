@@ -94,14 +94,14 @@ the title. Item id handling stays as-is.
 `handleSessionEvent`'s `switch` (line 1807) has `default: return`. Unhandled Pi events that
 matter:
 
-| Event | Cost of dropping |
-|---|---|
+| Event                                                            | Cost of dropping                                                |
+| ---------------------------------------------------------------- | --------------------------------------------------------------- |
 | `auto_retry_start {attempt, maxAttempts, delayMs, errorMessage}` | No "retrying 2/3 in 4s" feedback. 2–8s of silence = looks dead. |
-| `auto_retry_end {success, attempt, finalError}` | Recovery invisible. |
-| `agent_settled` | Real terminal event unused (root cause of A1). |
-| `queue_update {steering, followUp}` | Queued messages invisible; user re-sends, compounding load. |
-| `summarization_retry_scheduled/attempt_start/finished` | Compaction retries invisible. |
-| `extension_error` | **Your own harness extension errors are swallowed.** |
+| `auto_retry_end {success, attempt, finalError}`                  | Recovery invisible.                                             |
+| `agent_settled`                                                  | Real terminal event unused (root cause of A1).                  |
+| `queue_update {steering, followUp}`                              | Queued messages invisible; user re-sends, compounding load.     |
+| `summarization_retry_scheduled/attempt_start/finished`           | Compaction retries invisible.                                   |
+| `extension_error`                                                | **Your own harness extension errors are swallowed.**            |
 
 `extension_error` deserves emphasis: `harness/extensions/` is the core deliverable of this repo,
 and an extension that throws mid-turn produces no user-visible signal today.
@@ -176,7 +176,7 @@ Cost per delta is O(response-so-far), so total cost per turn is **O(n²)** in re
 A 50 KB response streamed over ~5k deltas serializes on the order of hundreds of MB of JSON —
 on the server's event hot path, per turn.
 
-This is a Pi-specific outlier. `ClaudeAdapter.ts:2645-2649` attaches the *stream event*
+This is a Pi-specific outlier. `ClaudeAdapter.ts:2645-2649` attaches the _stream event_
 (`content_block_delta`), which is O(delta) and bounded. Pi is the only adapter whose per-delta
 raw payload grows with the message.
 
@@ -187,7 +187,7 @@ far faster than necessary, and `boundedCallbackIngress.offer` **silently drops**
 events on overflow (`dropped += 1`, line 144-146). Dropped deltas = missing assistant text in
 the UI = another "agent broke" symptom, arising purely from payload bloat.
 
-Note `compactProviderRuntimeEventForIngress` truncates only *after* stringifying, at a 512 KB
+Note `compactProviderRuntimeEventForIngress` truncates only _after_ stringifying, at a 512 KB
 threshold — so the expensive serialization happens on every delta regardless.
 
 **Fix:** for delta events emit `payload: { assistantMessageEvent }` (or just the delta) instead
@@ -202,9 +202,9 @@ just Pi.
 ```ts
 const recordItem = (context, item) => {
   const turn = context.activeTurnId
-    ? context.turns.find((c) => c.id === context.activeTurnId)   // linear scan per delta
+    ? context.turns.find((c) => c.id === context.activeTurnId) // linear scan per delta
     : context.turns.at(-1);
-  turn?.items.push(item);                                        // one object per token
+  turn?.items.push(item); // one object per token
 };
 ```
 
@@ -244,16 +244,16 @@ in `offer` removes one full serialization from every runtime event in the system
 
 Sequenced by impact-per-unit-risk. 1–2 are the ones that make agents stop dying.
 
-| # | Change | Fixes | Risk |
-|---|---|---|---|
-| 1 | Honor `agent_end.willRetry`; finalize on `agent_settled` | A1 | Medium — core lifecycle |
-| 2 | Slim delta `raw.payload` to the delta | B1, and the drop path | Low |
-| 3 | Handle `auto_retry_*`, `extension_error`, `queue_update`, `summarization_retry_*` | A3 | Low — additive |
-| 4 | Coalesce `recordItem` deltas + cache active turn | B2 | Low |
-| 5 | Single `sizeOf` stringify in the ingress pair | B3, all providers | Low |
-| 6 | Turn inactivity watchdog | A4 | Medium — needs a threshold decision |
-| 7 | Honor `compaction_end.willRetry`/`errorMessage`, surface `reason` | A2 | Low — cosmetic |
-| 8 | Decide + document explicit `retry` / timeout settings | A6 | Low, needs user call |
+| #   | Change                                                                            | Fixes                 | Risk                                |
+| --- | --------------------------------------------------------------------------------- | --------------------- | ----------------------------------- |
+| 1   | Honor `agent_end.willRetry`; finalize on `agent_settled`                          | A1                    | Medium — core lifecycle             |
+| 2   | Slim delta `raw.payload` to the delta                                             | B1, and the drop path | Low                                 |
+| 3   | Handle `auto_retry_*`, `extension_error`, `queue_update`, `summarization_retry_*` | A3                    | Low — additive                      |
+| 4   | Coalesce `recordItem` deltas + cache active turn                                  | B2                    | Low                                 |
+| 5   | Single `sizeOf` stringify in the ingress pair                                     | B3, all providers     | Low                                 |
+| 6   | Turn inactivity watchdog                                                          | A4                    | Medium — needs a threshold decision |
+| 7   | Honor `compaction_end.willRetry`/`errorMessage`, surface `reason`                 | A2                    | Low — cosmetic                      |
+| 8   | Decide + document explicit `retry` / timeout settings                             | A6                    | Low, needs user call                |
 
 Items 1, 3, 7 are all inside `handleSessionEvent` and share one test fixture — worth landing as
 one branch (`app/pi-turn-resilience`) rather than three.
@@ -267,7 +267,7 @@ All items land in `apps/server/`. Verified no downstream change is required:
   `turn.completed`. No schema change, so no contract/version coordination.
 - **`apps/web`** — untouched. `runtime.warning` already flows through `apps/web/src/workLog.ts`;
   compaction already renders via `providerRuntimeActivityProjection.ts:797-824`. The fixes change
-  *when* and *how correctly* events are emitted, not their shape, so the UI improves without
+  _when_ and _how correctly_ events are emitted, not their shape, so the UI improves without
   edits.
 - **`harness/extensions`** — untouched, but A3 is what finally makes extension errors visible
   there.
