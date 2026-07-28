@@ -7,6 +7,7 @@ import readline from "node:readline";
 
 import {
   EXTERNAL_MCP_CREATE_TIMEOUT_MS,
+  EXTERNAL_MCP_CREDENTIAL_PREFIX,
   EXTERNAL_MCP_DEFAULT_WAIT_MS,
   EXTERNAL_MCP_MAX_WAIT_MS,
   type ExternalMcpPairResult,
@@ -468,7 +469,7 @@ function loadOrCreatePendingPairing(
   }
   const value: PendingPairingStore = {
     version: 1,
-    credential: `syn_mcp_v1_${randomBytes(32).toString("base64url")}`,
+    credential: `${EXTERNAL_MCP_CREDENTIAL_PREFIX}${randomBytes(32).toString("base64url")}`,
     createdAt: new Date().toISOString(),
   };
   writePrivateJson(filePath, value);
