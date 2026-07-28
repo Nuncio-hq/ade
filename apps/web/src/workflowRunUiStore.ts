@@ -10,6 +10,7 @@
 import type { ThreadId } from "@synara/contracts";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { createLocalStorageStateStorage } from "./persistedLocalStorage";
 import { isPlainObject, sanitizeStringKeyedRecord } from "./persistedRecord";
 
 export interface WorkflowRunUiThreadState {
@@ -158,7 +159,7 @@ export const useWorkflowRunUiStore = create<WorkflowRunUiStoreState>()(
     }),
     {
       name: WORKFLOW_RUN_UI_STORAGE_KEY,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(createLocalStorageStateStorage),
       merge: (persisted, current) => ({
         ...current,
         stateByThreadId: sanitizeWorkflowRunUiStateByThreadId(

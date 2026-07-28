@@ -6,6 +6,7 @@
 import type { GitReadWorkingTreeDiffInput } from "@synara/contracts";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { createLocalStorageStateStorage } from "./persistedLocalStorage";
 
 export type RepoDiffScope = NonNullable<GitReadWorkingTreeDiffInput["scope"]>;
 
@@ -39,7 +40,7 @@ export const useRepoDiffScopeStore = create<RepoDiffScopeStore>()(
     }),
     {
       name: REPO_DIFF_SCOPE_STORAGE_KEY,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(createLocalStorageStateStorage),
       partialize: (state) => ({ scope: state.scope }),
       // Validate the persisted scope on rehydrate: an unknown/legacy value would
       // otherwise flow into the diff request and the label lookup unchecked.
