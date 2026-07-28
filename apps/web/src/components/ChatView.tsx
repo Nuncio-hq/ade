@@ -886,6 +886,8 @@ function getProviderStartOptionsCustomBinaryPath(
       return normalizeCustomBinaryPath(providerOptions?.cursor?.binaryPath);
     case "pi":
       return normalizeCustomBinaryPath(providerOptions?.pi?.binaryPath);
+    case "omp":
+      return normalizeCustomBinaryPath(providerOptions?.omp?.binaryPath);
   }
 }
 
@@ -2131,6 +2133,7 @@ export default function ChatView({
       kilo: resolveHint("kilo"),
       opencode: resolveHint("opencode"),
       pi: resolveHint("pi"),
+      omp: resolveHint("omp"),
     };
   }, [
     activeProject?.defaultModelSelection,

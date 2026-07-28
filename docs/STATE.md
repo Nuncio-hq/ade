@@ -37,7 +37,9 @@ All Synara providers are kept working.
       `abort()` reaps bash children natively — no process supervisor needed;
       `agent_settled` gone → `agent_end.isTerminal`; async jobs inject
       self-initiated follow-up turns). Plan + tracker + coverage gộp một doc:
-      `docs/plans/omp-integration.html`. Adapter code not started.
+      `docs/plans/omp-integration.html`. Phase 1 (contracts & plumbing) DONE
+      2026-07-28 on `app/omp-adapter`: "omp" ProviderKind + OmpModelSelection +
+      settings/switch mirrors, typecheck/lint green. Adapter (phase 2) not started.
 
 ## In force
 

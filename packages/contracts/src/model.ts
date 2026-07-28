@@ -126,6 +126,12 @@ export const PiModelOptions = Schema.Struct({
 });
 export type PiModelOptions = typeof PiModelOptions.Type;
 
+// OMP mirrors pi's thinking levels; its discovery owns the live model catalog.
+export const OmpModelOptions = Schema.Struct({
+  thinkingLevel: Schema.optional(Schema.Literals(PI_THINKING_LEVEL_OPTIONS)),
+});
+export type OmpModelOptions = typeof OmpModelOptions.Type;
+
 export const CursorModelOptions = Schema.Struct({
   reasoningEffort: Schema.optional(TrimmedNonEmptyString),
   fastMode: Schema.optional(Schema.Boolean),
@@ -154,6 +160,7 @@ export const ProviderModelOptions = Schema.Struct({
   kilo: Schema.optional(OpenCodeModelOptions),
   opencode: Schema.optional(OpenCodeModelOptions),
   pi: Schema.optional(PiModelOptions),
+  omp: Schema.optional(OmpModelOptions),
 });
 export type ProviderModelOptions = typeof ProviderModelOptions.Type;
 
@@ -771,6 +778,8 @@ export const MODEL_OPTIONS_BY_PROVIDER = {
   ],
   // Pi discovery owns the live catalog, including auth-gated Anthropic models.
   pi: [],
+  // OMP discovery owns the live catalog (ModelRegistry), like pi.
+  omp: [],
   cursor: [
     {
       slug: "auto",
@@ -833,7 +842,7 @@ export type ModelOptionsByProvider = typeof MODEL_OPTIONS_BY_PROVIDER;
 type BuiltInModelSlug = (typeof MODEL_OPTIONS_BY_PROVIDER)[ProviderKind][number]["slug"];
 export type ModelSlug = BuiltInModelSlug | (string & {});
 
-export type ProviderWithDefaultModel = Exclude<ProviderKind, "pi">;
+export type ProviderWithDefaultModel = Exclude<ProviderKind, "pi" | "omp">;
 
 export const DEFAULT_MODEL_BY_PROVIDER: Record<ProviderWithDefaultModel, ModelSlug> = {
   codex: "gpt-5.5",
@@ -957,6 +966,7 @@ export const MODEL_SLUG_ALIASES_BY_PROVIDER: Record<ProviderKind, Record<string,
   kilo: {},
   opencode: {},
   pi: {},
+  omp: {},
 };
 
 // ── Agent mention aliases ─────────────────────────────────────────────
@@ -993,4 +1003,5 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderKind, string> = {
   kilo: "Kilo",
   opencode: "OpenCode",
   pi: "Pi",
+  omp: "OMP",
 };

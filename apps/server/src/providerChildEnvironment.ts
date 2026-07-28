@@ -11,6 +11,7 @@ export type ProviderChildKind =
   | "droid"
   | "grok"
   | "kilo"
+  | "omp"
   | "opencode"
   | "pi";
 
@@ -50,6 +51,7 @@ const PROVIDER_CREDENTIAL_GRANTS: Record<ProviderChildKind, "all" | ReadonlySet<
   kilo: "all",
   opencode: "all",
   pi: "all",
+  omp: "all",
 };
 
 const INHERITED_NATIVE_CAPABILITY_KEYS = new Set([

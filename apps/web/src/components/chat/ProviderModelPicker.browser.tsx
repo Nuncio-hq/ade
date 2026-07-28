@@ -62,6 +62,14 @@ const MODEL_OPTIONS_BY_PROVIDER = {
       upstreamProviderName: "Anthropic",
     },
   ],
+  omp: [
+    {
+      slug: "anthropic/claude-fable-5",
+      name: "Claude Fable 5",
+      upstreamProviderId: "anthropic",
+      upstreamProviderName: "Anthropic",
+    },
+  ],
   antigravity: [
     {
       slug: "Gemini 3.5 Flash",

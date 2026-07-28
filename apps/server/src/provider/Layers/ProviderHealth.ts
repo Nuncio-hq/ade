@@ -2077,7 +2077,7 @@ export function makeProviderHealthLive(options?: { readonly providerUpdateTimeou
       const refreshScope = yield* Scope.make("sequential");
       yield* Effect.addFinalizer(() => Scope.close(refreshScope, Exit.void));
 
-      const cachePathByProvider = new Map(
+      const cachePathByProvider = new Map<ProviderKind, string>(
         PROVIDERS.map(
           (provider) =>
             [
@@ -2154,6 +2154,8 @@ export function makeProviderHealthLive(options?: { readonly providerUpdateTimeou
             return settings.providers.opencode.binaryPath;
           case "pi":
             return settings.providers.pi.binaryPath;
+          case "omp":
+            return settings.providers.omp.binaryPath;
         }
       };
 

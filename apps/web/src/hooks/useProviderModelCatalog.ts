@@ -294,6 +294,7 @@ export function useProviderModelCatalog(input: {
         modelHintByProvider?.opencode,
       ),
       pi: getAppModelOptions("pi", customModelsByProvider.pi, modelHintByProvider?.pi),
+      omp: getAppModelOptions("omp", customModelsByProvider.omp, modelHintByProvider?.omp),
     };
     const result: Record<
       ProviderKind,
@@ -312,6 +313,8 @@ export function useProviderModelCatalog(input: {
       kilo: kiloDynamicModelsQuery.data,
       opencode: openCodeDynamicModelsQuery.data,
       pi: piDynamicModelsQuery.data,
+      // OMP runtime model discovery arrives with the OmpAdapter (M4 phase 2).
+      omp: undefined,
     };
     for (const provider of [
       "claudeAgent",
@@ -381,6 +384,7 @@ export function useProviderModelCatalog(input: {
       kilo: kiloDynamicModelsQuery.data?.models ?? [],
       opencode: openCodeDynamicModelsQuery.data?.models ?? [],
       pi: piDynamicModelsQuery.data?.models ?? [],
+      omp: [],
     }),
     [
       antigravityModelsQuery.data?.models,
