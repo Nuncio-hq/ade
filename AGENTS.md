@@ -29,6 +29,7 @@ This file is the LAW layer: how we work, boundaries, conventions. It changes rar
 - `docs/DECISIONS.md` — **append-only log**: one entry per decision (date + decision + why). Never edit or delete old entries. If a decision is reversed, append a new entry that supersedes it.
 - `docs/REFERENCES.md` — **curated reference projects** (design taste, harnesses, mobile). Consult when designing a similar feature; note the per-entry caveats (e.g. OpenCode: architecture yes, harness UX no). Propose additions to the user — don't add silently.
 - `docs/DELEGATION.md` — **which subscription/model/agent to spawn for which work** (Claude Max, Codex, Cursor pools, Devin CLI). Read before delegating work to other agents or creating provider threads. Supersedes the "Model Selection" section in `SYNARA-AGENTS.md`.
+- `docs/CI-LOCAL.md` — **pre-push CI mirror** (`bun run ci:local*`): when to run which tier, mapping to GitHub steps, hang signals. Read before pushing or debugging a red PR check.
 
 Update triggers — when any of these happen, updating the docs is PART OF THE TASK, not optional:
 
@@ -127,16 +128,26 @@ Boundary rules:
 1. **Dev loop**: run an isolated ADE instance (see Local Dev Instance Isolation), edit extensions in `harness/extensions/`, hot-reload via the engine's reload command in-app, test against `playground/`.
 2. **Bisect**: if an extension misbehaves in ADE, run the same extension in the engine CLI (`omp`; `pi` TUI for the frozen pi provider). CLI-works/ADE-fails ⇒ bridge gap in Synara-inherited code; both-fail ⇒ extension bug. Watch for version skew between the `omp` CLI and `@oh-my-pi/*` pinned in `apps/server/package.json` (once OmpAdapter lands).
 3. **Ship**: `bun run build:desktop` → install and use ADE as the daily driver; feedback loops back into `harness/`.
-4. **Pre-push CI mirror** (fail-fast, cheapest first — do not wait on GitHub to debug):
-   `bun run ci:local:fast` (brand/fmt/lint/typecheck/migrations/smoke) while iterating;
-   `bun run ci:local` before an ordinary push; `bun run ci:local:web` when touching
-   `apps/web` vite/vitest/browser; `bun run ci:local:full` to also build desktop.
-   Script: `scripts/ci-local.ts`.
+4. **Pre-push CI mirror** — GitHub always runs the full Synara-inherited gate on every
+   PR and every push to `main` (no path filters; browser step alone budgets 20 minutes).
+   **Do not use the runner as a debug loop.** Run the local mirror first (fail-fast,
+   cheapest steps first); push only when it is green. Full agent runbook:
+   `docs/CI-LOCAL.md`. Commands:
+   - `bun run ci:local:fast` — brand/fmt/lint/typecheck/migrations/release-smoke (iterate)
+   - `bun run ci:local` — + full unit tests (default before push)
+   - `bun run ci:local:web` — + Playwright stable (**required** if the diff touches
+     `apps/web` vite/vitest/browser setup, persist/`localStorage`, or web test harness)
+   - `bun run ci:local:full` — + desktop build/preload verify (closest to Ubuntu job)
+     Script: `scripts/ci-local.ts`. If browser hangs >3 minutes on
+     `[optimizer] bundling dependencies...`, kill it — same failure mode as the CI
+     20-minute timeout (do not wait it out on GitHub either).
 
 ## Task Completion Requirements
 
 - All of `bun fmt`, `bun lint`, and `bun typecheck` must pass before considering tasks completed.
-- Treat them as heavyweight workspace checks: bundle into one final verification pass per task; avoid rerunning the full set during iteration.
+- Prefer `bun run ci:local:fast` (or `ci:local` / `ci:local:web` per `docs/CI-LOCAL.md`)
+  as the final verification pass for a task instead of ad-hoc re-running each tool;
+  avoid re-running the full heavy set during tight iteration.
 - NEVER run `bun test`. Always use `bun run test` (runs Vitest).
 - Before finishing any task, ask: _did this change make `docs/STATE.md` or `AGENTS.md` stale?_ If yes, updating them is part of the task (see Living Docs). A task that changes direction, components, or workflow without updating the docs is NOT done.
 

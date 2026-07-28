@@ -77,6 +77,8 @@ All Synara-inherited providers are kept working.
   `ade_` tools. Retired `synara` tokens survive only in attribution, exempt
   history, and `// rebrand-exempt` compat shims — enforced by `bun run
 brand:check` in CI. See AGENTS.md §Naming & Identity.
+- Pre-push: agents run `bun run ci:local*` locally before relying on GitHub
+  (runbook `docs/CI-LOCAL.md`); do not use the runner as a debug loop.
 - Versioning: ADE line = 0.0.x (currently 0.0.1), user-decided only, agents never
   bump/tag. Upstream base = `UPSTREAM-BASE` file (currently v0.6.2). See AGENTS.md
   §Versioning & Releases.
