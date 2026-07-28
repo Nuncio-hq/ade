@@ -43,7 +43,7 @@ describe("brand identity guard", () => {
 
   it("requires user-facing raster assets to match a visually approved digest", () => {
     const approvedContents = new TextEncoder().encode("approved NuncioADE screenshot");
-    const approvedDigest = "a553296ca5a2d3ad7b64a6bc1b36c2834da750eae6611642177482b99ba85bd8";
+    const approvedDigest = "98699c499c2dd7be2b6655295f34e5652ccf483d89e231d465e55d2854f9e5cb";
     const approvedDigests = new Map([["screenshot.jpeg", approvedDigest]]);
 
     expect(
