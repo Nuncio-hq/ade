@@ -8,8 +8,13 @@ const MAX_SNAPSHOT_KEY_LENGTH = 512;
 const MAX_SNAPSHOT_VALUE_LENGTH = 16 * 1024 * 1024;
 const MAX_SNAPSHOT_BYTES = 16 * 1024 * 1024;
 
+// Key prefixes written by the pre-rebrand identity. Kept forever so installs
+// upgrading across the rename self-migrate; rebrand-exempt pins the literals.
+export const LEGACY_STORAGE_KEY_PREFIXES = ["synara:", "synara."] as const; // rebrand-exempt
+const CURRENT_STORAGE_KEY_PREFIXES = ["nuncioade:", "nuncioade."] as const;
+
 function isCanonicalStorageKey(key: string): boolean {
-  return key.startsWith("nuncioade:") || key.startsWith("nuncioade.");
+  return CURRENT_STORAGE_KEY_PREFIXES.some((prefix) => key.startsWith(prefix));
 }
 
 function getLocalStorage(): Storage | null {
@@ -54,7 +59,38 @@ export function importNuncioADEStorageSnapshot(
   }
 }
 
+export function migrateLegacyStorageKeyPrefixes(storage = getLocalStorage()): number {
+  if (!storage) return 0;
+  try {
+    const renames: Array<{ from: string; to: string }> = [];
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      if (!key) continue;
+      const legacyIndex = LEGACY_STORAGE_KEY_PREFIXES.findIndex((prefix) =>
+        key.startsWith(prefix),
+      );
+      if (legacyIndex === -1) continue;
+      renames.push({
+        from: key,
+        to: `${CURRENT_STORAGE_KEY_PREFIXES[legacyIndex]}${key.slice(LEGACY_STORAGE_KEY_PREFIXES[legacyIndex]!.length)}`,
+      });
+    }
+    let migrated = 0;
+    for (const { from, to } of renames) {
+      const value = storage.getItem(from);
+      if (value === null) continue;
+      if (storage.getItem(to) === null) storage.setItem(to, value);
+      storage.removeItem(from);
+      migrated += 1;
+    }
+    return migrated;
+  } catch {
+    return 0;
+  }
+}
+
 export function bootstrapNuncioADEStorageOriginMigration(): void {
+  migrateLegacyStorageKeyPrefixes();
   const bridge = globalThis.window?.desktopBridge?.storageMigration;
   if (!bridge) return;
 

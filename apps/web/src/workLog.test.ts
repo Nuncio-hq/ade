@@ -6,6 +6,7 @@ import {
   deriveWorkLogEntries,
   isFileChangeWorkLogEntry,
   isProviderFileEditWorkLogEntry,
+  LEGACY_THREAD_CREATION_ACTIVITY_KIND,
   omitRoutedSubagentWorkEntries,
 } from "./workLog";
 import { makeActivity } from "./storeTestFixtures";
@@ -217,6 +218,37 @@ describe("deriveWorkLogEntries", () => {
       cadenceLabel: "Every 5m",
       proposalState: "pending",
     });
+  });
+
+  it("still recognizes thread creation activities recorded with the legacy kind", () => {
+    const activities: OrchestrationThreadActivity[] = [
+      makeActivity({
+        id: "legacy-created-threads",
+        createdAt: "2026-02-23T00:00:05.000Z",
+        turnId: "turn-1",
+        kind: LEGACY_THREAD_CREATION_ACTIVITY_KIND,
+        summary: "Created 1 thread",
+        tone: "info",
+        payload: {
+          operationId: "gateway:create:one-worker",
+          requestedCount: 1,
+          createdCount: 1,
+          threads: [
+            {
+              threadId: "thread-legacy",
+              title: "Legacy thread",
+              provider: "codex",
+              model: "gpt-5.6",
+              environment: "local",
+              status: "task_dispatched",
+            },
+          ],
+        },
+      }),
+    ];
+
+    const [entry] = deriveWorkLogEntries(activities, TurnId.makeUnsafe("turn-1"));
+    expect(entry?.nuncioadeThreadCreation?.threads).toHaveLength(1);
   });
 
   it("exposes a provider-independent NuncioADE thread creation recap", () => {

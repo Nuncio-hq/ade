@@ -38,6 +38,10 @@ import { stripProposedPlanBlocksFromText } from "./proposedPlan";
 
 import type { ChatMessage, ProposedPlan } from "./types";
 
+// Activity kind written by the pre-rebrand identity; old journal entries keep
+// rendering their thread-creation recap. rebrand-exempt pins the literal.
+export const LEGACY_THREAD_CREATION_ACTIVITY_KIND = "synara.threads.created"; // rebrand-exempt
+
 export type WorkLogRequestKind = ApprovalRequestKind;
 
 export interface WorkLogEntry {
@@ -520,7 +524,10 @@ function toDerivedWorkLogEntry(activity: OrchestrationThreadActivity): DerivedWo
       entry.automation = automation;
     }
   }
-  if (activity.kind === "nuncioade.threads.created") {
+  if (
+    activity.kind === "nuncioade.threads.created" ||
+    activity.kind === LEGACY_THREAD_CREATION_ACTIVITY_KIND
+  ) {
     const nuncioadeThreadCreation = extractWorkLogNuncioADEThreadCreation(payload);
     if (nuncioadeThreadCreation) {
       entry.nuncioadeThreadCreation = nuncioadeThreadCreation;

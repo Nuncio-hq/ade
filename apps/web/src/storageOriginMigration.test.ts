@@ -96,6 +96,48 @@ describe("storageOriginMigration", () => {
     expect(storage.getItem("nuncioade:composer-drafts:v1")).toBe("draft");
   });
 
+  it("migrates legacy-prefixed keys without clobbering current state", async () => {
+    const { LEGACY_STORAGE_KEY_PREFIXES, migrateLegacyStorageKeyPrefixes } = await import(
+      "./storageOriginMigration"
+    );
+    const [legacyColon, legacyDot] = LEGACY_STORAGE_KEY_PREFIXES;
+    globalThis.localStorage.setItem(`${legacyDot}editor.chatPaneWidth`, "320");
+    globalThis.localStorage.setItem(`${legacyColon}theme`, "light");
+    globalThis.localStorage.setItem("nuncioade:theme", "dark");
+    globalThis.localStorage.setItem("foreign:key", "keep");
+
+    expect(migrateLegacyStorageKeyPrefixes()).toBe(2);
+    expect(globalThis.localStorage.getItem("nuncioade.editor.chatPaneWidth")).toBe("320");
+    expect(globalThis.localStorage.getItem("nuncioade:theme")).toBe("dark");
+    expect(globalThis.localStorage.getItem(`${legacyDot}editor.chatPaneWidth`)).toBeNull();
+    expect(globalThis.localStorage.getItem(`${legacyColon}theme`)).toBeNull();
+    expect(globalThis.localStorage.getItem("foreign:key")).toBe("keep");
+  });
+
+  it("legacy key migration is idempotent", async () => {
+    const { LEGACY_STORAGE_KEY_PREFIXES, migrateLegacyStorageKeyPrefixes } = await import(
+      "./storageOriginMigration"
+    );
+    const [legacyDot] = LEGACY_STORAGE_KEY_PREFIXES.slice(1);
+    globalThis.localStorage.setItem(`${legacyDot}openUsage.enabled`, "true");
+
+    expect(migrateLegacyStorageKeyPrefixes()).toBe(1);
+    expect(migrateLegacyStorageKeyPrefixes()).toBe(0);
+    expect(globalThis.localStorage.getItem("nuncioade.openUsage.enabled")).toBe("true");
+  });
+
+  it("migrates legacy keys during bootstrap even without a desktop bridge", async () => {
+    const mod = await import("./storageOriginMigration");
+    const [legacyDot] = mod.LEGACY_STORAGE_KEY_PREFIXES.slice(1);
+    globalThis.localStorage.setItem(`${legacyDot}openUsage.enabled`, "true");
+
+    vi.resetModules();
+    await import("./storageOriginMigration");
+
+    expect(globalThis.localStorage.getItem("nuncioade.openUsage.enabled")).toBe("true");
+    expect(globalThis.localStorage.getItem(`${legacyDot}openUsage.enabled`)).toBeNull();
+  });
+
   it("acknowledges the desktop snapshot only after a complete bootstrap import", async () => {
     const acknowledgeSnapshot = vi.fn(async () => undefined);
     vi.stubGlobal("window", {
