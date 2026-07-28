@@ -2,12 +2,12 @@
 // Purpose: Pins the OMP extension/ask UI bridge — question projection, answer
 //          mapping back to engine values, cancel semantics, and the TUI-only
 //          surface that Synara deliberately does not implement.
-// Layer: Server provider (OMP) tests
+// Layer: @nuncio/omp-sidecar tests
 
 import type { ProviderUserInputAnswers, UserInputQuestion } from "@synara/contracts";
 import { describe, expect, it } from "vitest";
 
-import { makeOmpExtensionUiContext, type OmpUserInputRequest } from "./ompExtensionUiContext.ts";
+import { makeOmpExtensionUiContext, type OmpUserInputRequest } from "./extension-ui-context";
 
 interface Recorded {
   readonly requests: OmpUserInputRequest[];

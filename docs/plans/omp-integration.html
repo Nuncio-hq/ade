@@ -790,10 +790,10 @@
               t: "Feature flags có ghi chú lý do: enableLsp BẬT (lsp.lazy mặc định true nên startup chỉ discovery), enableIrc tắt, enableMCP bật, skipPythonPreflight bật (probe chỉ chạy khi JS eval tắt)",
               st: "done",
             },
-            { t: "bun fmt + bun lint + bun typecheck + bun run test — một lượt cuối", st: "todo" },
+            { t: "bun fmt + bun lint + bun typecheck + bun run test — một lượt cuối", st: "done" },
             {
               t: "Docs: STATE.md (M4 → done, bisect tool đổi sang omp CLI chính thức), DECISIONS.md entry chốt thiết kế adapter, AGENTS.md nếu có gì sai lệch",
-              st: "todo",
+              st: "done",
             },
             {
               t: "Dogfood: dùng OMP thread trong NuncioADE.app ít nhất vài ngày trước khi nghĩ tới release (user quyết định release, agent không tag)",
@@ -816,28 +816,28 @@
         {
           id: 6,
           name: "Phase 6 — Bun sidecar (mở khoá app đóng gói)",
-          st: "todo",
+          st: "done",
           goal: "SDK OMP sống trong binary Bun tự chứa; Synara ở lại Node trong asar.",
           tasks: [
             {
               t: "packages/omp-sidecar (@nuncio/omp-sidecar): skeleton + protocol types + handshake hello{protocolVersion,engineVersion} + script compile",
-              st: "todo",
+              st: "done",
             },
             {
               t: "Chuyển session host / event mapping / extension UI context / gateway tools vào sidecar; OmpAdapter co lại thành supervisor + client NDJSON (đổi seam loadSdk → spawnSidecar)",
-              st: "todo",
+              st: "done",
             },
             {
               t: "Đóng gói: extraResources cho binary + đặt pi_natives.<platform>.node cạnh binary + resolver dev/prod (NUNCIO_OMP_SIDECAR_PATH); bỏ @oh-my-pi khỏi apps/server",
-              st: "todo",
+              st: "done",
             },
             {
               t: "Supervisor: restart backoff, resume sau restart, lỗi nổi lên bằng runtime.warning (không im lặng), reap orphan",
-              st: "todo",
+              st: "done",
             },
           ],
           accept:
-            "<b>Kiểm tra:</b> trong NuncioADE.app build thật — model list OMP có dữ liệu, chat stream, ask dialog trả lời được, synara_* chạy; giết sidecar giữa turn → turn báo failed, turn kế tiếp resume đủ lịch sử.",
+            "<b>Đã chạy 2026-07-28:</b> dev instance — thread OMP, bash tool, reply đúng; <code>NuncioADE.app</code> build thật — binary + <code>pi_natives</code> trong <code>Contents/Resources/omp-sidecar/</code>, model list 334, turn chạy <code>command_execution</code> rồi <code>turn.completed</code>. Supervisor + resume có test trong <code>OmpAdapter.turnLifecycle.test.ts</code> và <code>session-host.test.ts</code>. Còn nợ: giết sidecar giữa turn trong app đóng gói (đã cover bằng test, chưa thử tay).",
           unlock: [
             "OMP chạy trong app đóng gói — mở lại daily-driver gate",
             "Bộ nhớ ~8–55 MiB mỗi thread thay vì ~420 MiB (đo thật)",

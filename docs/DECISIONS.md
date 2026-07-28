@@ -183,3 +183,16 @@
   accepted: +~91MiB app size, a stdio protocol we own, and one engine crash
   taking down all OMP threads at once (they resume from session files). Spec:
   `docs/plans/omp-sidecar-spec.md`; tracker phase 6.
+
+- **2026-07-28 — Provider discovery reads get their own WebSocket admission
+  class (Synara ground).** `apps/server/src/wsRequestAdmission.ts` classified
+  `provider.listModels`/`listAgents`/`listSkills`/`listCommands`/`listPlugins`
+  as `expensive-read`, capped at 2 concurrent per client. The model picker opens
+  one query per installed provider — 10 at once — so two slow CLI probes held
+  both slots and every later provider was rejected with
+  `RPC_EXPENSIVE_READ_CAPACITY_EXCEEDED` before reaching its adapter. Both
+  pi-lineage providers rendered an empty picker (OMP and Pi were last in the
+  fan-out); the OMP sidecar was innocent — it answered 334 models in 420ms once
+  admitted. Fix: a `provider-discovery` class limited to 12, leaving
+  `expensive-read` at 2 for git diffs, snapshots and thread compaction. This is
+  upstream code we diverge in; re-check it on every sync.

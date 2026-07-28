@@ -35,7 +35,7 @@
     "start:marketing": "turbo run preview --filter=@synara/marketing",
     "build": "turbo run build",
     "build:marketing": "turbo run build --filter=@synara/marketing",
-    "build:desktop": "turbo run build --filter=@synara/desktop --filter=@synara/cli",
+    "build:desktop": "turbo run build --filter=@synara/desktop --filter=@synara/cli --filter=@nuncio/omp-sidecar",
     "typecheck": "turbo run typecheck",
     "lint": "oxlint --report-unused-disable-directives",
     "test": "turbo run test",

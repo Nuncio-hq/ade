@@ -1,8 +1,9 @@
 # OMP Bun sidecar — design spec
 
-> Status: proposed (2026-07-28). Supersedes the in-process half of the
+> Status: shipped (2026-07-28). Supersedes the in-process half of the
 > 2026-07-28 "direct SDK" decision. Tracker: `docs/plans/omp-integration.html`
-> (M4 phase 6). Branch: `app/omp-adapter`.
+> (M4 phase 6). Branch: `app/omp-adapter`. Verified in the dev instance and in
+> a packaged `NuncioADE.app`.
 
 ## 1. Why
 

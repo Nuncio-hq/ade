@@ -276,7 +276,7 @@ export const PACKAGE_MANAGED_PROVIDER_UPDATES: Partial<
   omp: {
     provider: OMP_PROVIDER,
     binaryName: "omp",
-    npmPackageName: "@oh-my-pi/pi-coding-agent",
+    npmPackageName: null,
     homebrew: null,
     nativeUpdate: {
       executable: "omp",

@@ -3,12 +3,17 @@ import * as Crypto from "node:crypto";
 import { ORCHESTRATION_WS_METHODS, WS_METHODS, WsRpcError } from "@synara/contracts";
 import { Effect, Ref } from "effect";
 
-export type WsRequestClass = "control" | "standard" | "expensive-read";
+export type WsRequestClass = "control" | "standard" | "expensive-read" | "provider-discovery";
 
 export const WS_REQUEST_CLASS_LIMITS: Readonly<Record<WsRequestClass, number>> = {
   control: 16,
   standard: 12,
   "expensive-read": 2,
+  // The model/skill/command pickers legitimately probe every installed provider
+  // at once, one CLI call each. They are independent and IO-bound, so they get
+  // their own lane instead of starving behind two slow provider binaries in the
+  // expensive-read budget.
+  "provider-discovery": 12,
 };
 
 const CONTROL_METHODS = new Set<string>([
@@ -51,6 +56,9 @@ const EXPENSIVE_READ_METHODS = new Set<string>([
   WS_METHODS.statsGetProfileStats,
   WS_METHODS.statsGetProfileTokenStats,
   WS_METHODS.providerCompactThread,
+]);
+
+const PROVIDER_DISCOVERY_METHODS = new Set<string>([
   WS_METHODS.providerListCommands,
   WS_METHODS.providerListSkills,
   WS_METHODS.providerListSkillsCatalog,
@@ -62,6 +70,7 @@ const EXPENSIVE_READ_METHODS = new Set<string>([
 
 export function classifyWsRequest(method: string): WsRequestClass {
   if (CONTROL_METHODS.has(method)) return "control";
+  if (PROVIDER_DISCOVERY_METHODS.has(method)) return "provider-discovery";
   if (EXPENSIVE_READ_METHODS.has(method)) return "expensive-read";
   return "standard";
 }

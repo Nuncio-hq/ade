@@ -66,7 +66,14 @@ All Synara providers are kept working.
       terminal breadcrumb that hijacks the user's own `omp` CLI), engine feature
       flags reviewed with a reason each (`enableLsp` now ON — `lsp.lazy`
       defaults true so startup is discovery only), and OMP appears in Settings →
-      Installed CLIs. Next: phase 6.1 sidecar skeleton.
+      Installed CLIs. Phase 6 DONE 2026-07-28: the engine moved into
+      `packages/omp-sidecar` (`@nuncio/omp-sidecar`, our first `@nuncio/*`
+      package) — a compiled Bun binary speaking NDJSON over stdio, with
+      `OmpAdapter` as its supervisor client. Verified end to end in the dev
+      instance (OMP thread, bash tool, reply) and in a real `NuncioADE.app`
+      (binary + `pi_natives` in `Contents/Resources/omp-sidecar/`, 334 models,
+      `turn.completed` with a `command_execution` item). M4 remaining: run OMP
+      as the daily driver.
 
 ## In force
 

@@ -1,12 +1,12 @@
 // FILE: ompGatewayTools.test.ts
 // Purpose: Pins the OMP projection of the Synara gateway catalog — top-level
 //          tool names, non-strict schemas, and dispatch back through MCP.
-// Layer: Server provider (OMP) tests
+// Layer: @nuncio/omp-sidecar tests
 
 import { describe, expect, it } from "vitest";
 
-import type { AgentGatewayMcpConnection } from "../agentGateway/Services/AgentGatewayCredentials.ts";
-import { buildOmpAgentGatewayCustomTools } from "./ompGatewayTools.ts";
+import type { AgentGatewayMcpConnection } from "./gateway-tools";
+import { buildOmpAgentGatewayCustomTools } from "./gateway-tools";
 
 const connection: AgentGatewayMcpConnection = {
   url: "http://127.0.0.1:3773/mcp",

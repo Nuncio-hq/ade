@@ -15,6 +15,32 @@ describe("WsRequestAdmission", () => {
     expect(classifyWsRequest(WS_METHODS.terminalAckOutput)).toBe("control");
   });
 
+  it("keeps every provider's discovery probe out of the expensive-read budget", async () => {
+    // The model picker opens one listModels query per installed provider at
+    // once. Sharing the two expensive-read slots starved the providers late in
+    // the fan-out behind slow CLI probes, so their pickers rendered empty.
+    expect(classifyWsRequest(WS_METHODS.providerListModels)).toBe("provider-discovery");
+    expect(classifyWsRequest(WS_METHODS.providerCompactThread)).toBe("expensive-read");
+
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const admission = yield* makeWsRequestAdmission;
+        const heavy = yield* admission.acquire(1, ORCHESTRATION_WS_METHODS.getSnapshot);
+        const heavier = yield* admission.acquire(1, WS_METHODS.gitStatus);
+
+        const leases = yield* Effect.all(
+          Array.from({ length: 10 }, () => admission.acquire(1, WS_METHODS.providerListModels)),
+        );
+        expect(leases).toHaveLength(10);
+
+        yield* admission.release(heavy);
+        yield* admission.release(heavier);
+        for (const lease of leases) yield* admission.release(lease);
+        expect(yield* admission.snapshot).toMatchObject({ active: 0, rejectedTotal: 0 });
+      }),
+    );
+  });
+
   it("reserves independent capacity for control traffic during an expensive-read flood", async () => {
     await Effect.runPromise(
       Effect.gen(function* () {

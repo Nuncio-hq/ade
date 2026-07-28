@@ -15,11 +15,21 @@ export const MAC_APPSNAP_HELPER_BUNDLE_PATH = "Contents/Helpers/synara-appsnap-h
 export const WINDOWS_INSTALLER_GUID = "368107a8-afe6-5db5-ab3b-d4f331684868";
 const MAC_DMG_ICON_PATH = "icon.icns";
 export const NODE_PTY_ASAR_UNPACK_GLOBS = ["node_modules/node-pty/**"] as const;
+/**
+ * The OMP engine SDK is Bun-only, so it lives in a compiled Bun binary rather
+ * than in the Node backend. It ships beside the app instead of inside the asar:
+ * Bun cannot read asar archives, and the engine resolves
+ * `pi_natives.<platform>.node` from the executable's own directory. The compile
+ * script places both files in this directory.
+ */
+export const OMP_SIDECAR_DIST_DIR = "packages/omp-sidecar/dist";
+export const OMP_SIDECAR_RESOURCE_DIR = "omp-sidecar";
 
 export interface DesktopPlatformBuildConfig {
   readonly asarUnpack?: ReadonlyArray<string>;
   readonly dmg?: Record<string, unknown>;
   readonly extraFiles?: ReadonlyArray<Record<string, string>>;
+  readonly extraResources?: ReadonlyArray<Record<string, string>>;
   readonly files?: ReadonlyArray<string>;
   readonly linux?: Record<string, unknown>;
   readonly mac?: Record<string, unknown>;
@@ -65,7 +75,10 @@ export function validateDesktopNativeBuildHost(input: DesktopNativeBuildHostInpu
 export function createDesktopPlatformBuildConfig(
   input: CreateDesktopPlatformBuildConfigInput,
 ): DesktopPlatformBuildConfig {
-  const nativePackaging = { asarUnpack: [...NODE_PTY_ASAR_UNPACK_GLOBS] };
+  const nativePackaging = {
+    asarUnpack: [...NODE_PTY_ASAR_UNPACK_GLOBS],
+    extraResources: [{ from: OMP_SIDECAR_DIST_DIR, to: OMP_SIDECAR_RESOURCE_DIR }],
+  };
 
   if (input.platform === "mac") {
     const mac = {

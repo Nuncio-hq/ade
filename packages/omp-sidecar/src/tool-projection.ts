@@ -1,15 +1,11 @@
-// FILE: agentToolProjection.ts
+// FILE: tool-projection.ts
 // Purpose: Project pi-lineage tool calls (bash/read/edit/write/grep/find/ls)
 //          into canonical Synara runtime item types, titles, detail text, and
 //          lifecycle data payloads.
-// Layer: Server provider projection helper
+// Layer: Sidecar engine projection (OMP)
 // Exports: AgentToolItemType, toolItemType, toolTitle, toolDetailText, toolLifecycleData
 //
-// Ported from the equivalent private helpers in Layers/PiAdapter.ts rather than
-// extracted from it: PiAdapter is frozen Synara ground and upstream's most
-// actively edited file, so moving 200 lines out of it would cost a conflict on
-// every `sync/upstream-*`. The pi copy retires with the pi provider; new engines
-// (OMP today) consume this module.
+// Ported from the equivalent private helpers in apps/server/src/provider/agentToolProjection.ts.
 
 export type AgentToolItemType =
   | "command_execution"

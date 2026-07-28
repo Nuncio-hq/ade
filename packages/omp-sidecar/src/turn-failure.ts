@@ -1,6 +1,6 @@
-// FILE: ompTurnFailure.ts
+// FILE: turn-failure.ts
 // Purpose: Classify an OMP turn-ending error message as interrupted vs failed.
-// Layer: Server provider (OMP)
+// Layer: Sidecar engine (OMP)
 // Exports: classifyOmpTurnFailure
 //
 // Deliberately thinner than piTurnFailure's role in PiAdapter: OMP runs

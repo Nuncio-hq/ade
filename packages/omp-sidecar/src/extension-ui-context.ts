@@ -1,16 +1,16 @@
-// FILE: ompExtensionUiContext.ts
+// FILE: extension-ui-context.ts
 // Purpose: Bridge OMP's ExtensionUIContext — select/confirm/input/notify/status,
 //          the engine's native rich ask dialog, and the harness-only
 //          askUserQuestions extra — onto Synara's user-input request flow.
-// Layer: Server provider projection (OMP)
+// Layer: Sidecar engine (OMP)
 // Exports: makeOmpExtensionUiContext, OmpExtensionUiBridge, OmpExtensionUiContext
 //
 // The native `ask` tool is the primary way OMP asks the user something: it is
 // only constructed when the session reports `hasUI`, and it calls
 // `uiContext.askDialog`. Implementing askDialog here is therefore what turns
 // "agent wants to ask a question" into a Synara dialog. `askUserQuestions` is a
-// separate, non-standard entry point that pi-era harness extensions
-// feature-detect; it is kept for compatibility, not as the main path.
+// separate, non-standard entry point that pi-era extensions feature-detect; it
+// is kept for compatibility, not as the main path.
 
 import type {
   ExtensionAskDialogOption,
