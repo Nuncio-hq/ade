@@ -3414,7 +3414,10 @@ describe("ChatView timeline estimator parity (full app)", () => {
   });
 
   it("steers a running turn when Follow-up behavior is set to Steer", async () => {
-    localStorage.setItem("nuncioade:app-settings:v1", JSON.stringify({ followUpBehavior: "steer" }));
+    localStorage.setItem(
+      "nuncioade:app-settings:v1",
+      JSON.stringify({ followUpBehavior: "steer" }),
+    );
     useComposerDraftStore.getState().setPrompt(THREAD_ID, "steer this running turn");
 
     const mounted = await mountChatView({

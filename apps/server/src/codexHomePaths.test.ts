@@ -21,7 +21,10 @@ describe("Codex home paths", () => {
 
   it("anchors the overlay under NUNCIO_HOME", () => {
     assert.equal(
-      resolveNuncioADECodexHomeOverlayPath({ NUNCIO_HOME: "/nuncioade/runtime" }, "/users/me/.codex"),
+      resolveNuncioADECodexHomeOverlayPath(
+        { NUNCIO_HOME: "/nuncioade/runtime" },
+        "/users/me/.codex",
+      ),
       path.join("/nuncioade/runtime", "codex-home-overlay"),
     );
   });

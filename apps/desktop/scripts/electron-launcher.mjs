@@ -13,7 +13,10 @@ import {
   writeFileSync,
 } from "node:fs";
 import { createRequire } from "node:module";
-import { resolveNuncioADEDesktopFlavor, nuncioadeDesktopIdentity } from "@nuncio/shared/desktopIdentity";
+import {
+  resolveNuncioADEDesktopFlavor,
+  nuncioadeDesktopIdentity,
+} from "@nuncio/shared/desktopIdentity";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 

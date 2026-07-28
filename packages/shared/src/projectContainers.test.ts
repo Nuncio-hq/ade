@@ -22,7 +22,9 @@ describe("resolveChatContainerWorkspaceRoot", () => {
 
 describe("matchesLegacyHomeChatWorkspaceRoot", () => {
   it("matches the chat root and the home directory, tolerating trailing slashes", () => {
-    expect(matchesLegacyHomeChatWorkspaceRoot("/Users/demo/Documents/NuncioADE/", PATHS)).toBe(true);
+    expect(matchesLegacyHomeChatWorkspaceRoot("/Users/demo/Documents/NuncioADE/", PATHS)).toBe(
+      true,
+    );
     expect(matchesLegacyHomeChatWorkspaceRoot("/Users/demo", PATHS)).toBe(true);
     expect(matchesLegacyHomeChatWorkspaceRoot("/Users/demo/Developer/app", PATHS)).toBe(false);
   });

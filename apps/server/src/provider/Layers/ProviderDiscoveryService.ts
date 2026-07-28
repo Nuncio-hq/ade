@@ -129,7 +129,9 @@ const make = Effect.gen(function* () {
       );
       return {
         skills: filterDisabledSkills(merged, settings.skills.disabled),
-        source: nativeResult?.source ? `${nativeResult.source}+nuncioade.catalog` : "nuncioade.catalog",
+        source: nativeResult?.source
+          ? `${nativeResult.source}+nuncioade.catalog`
+          : "nuncioade.catalog",
         cached: nativeResult?.cached ?? false,
       } satisfies ProviderListSkillsResult;
     });

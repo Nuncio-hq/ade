@@ -75,7 +75,11 @@ describe("discoverSkillsCatalog", () => {
   });
 
   it("aggregates skills from nuncioade and provider home folders with origin scopes", async () => {
-    await writeSkill(path.join(nuncioadeBaseDir, "skills", "portable"), "portable", "NuncioADE skill");
+    await writeSkill(
+      path.join(nuncioadeBaseDir, "skills", "portable"),
+      "portable",
+      "NuncioADE skill",
+    );
     await writeSkill(path.join(homeDir, ".codex", "skills", "codex-only"), "codex-only", "Codex");
     await writeSkill(
       path.join(homeDir, ".claude", "skills", "claude-only"),
@@ -146,7 +150,11 @@ describe("discoverSkillsCatalog", () => {
   it("prefers the provider-native copy and falls back to NuncioADE for that provider", async () => {
     await writeSkill(path.join(nuncioadeBaseDir, "skills", "shared"), "shared", "NuncioADE copy");
     await writeSkill(path.join(homeDir, ".codex", "skills", "shared"), "shared", "Codex copy");
-    await writeSkill(path.join(nuncioadeBaseDir, "skills", "only-nuncioade"), "only-nuncioade", "Fallback");
+    await writeSkill(
+      path.join(nuncioadeBaseDir, "skills", "only-nuncioade"),
+      "only-nuncioade",
+      "Fallback",
+    );
 
     const codexView = await discoverSkillsCatalog({ homeDir, nuncioadeBaseDir, provider: "codex" });
     const codexShared = codexView.find((skill) => skill.name === "shared");

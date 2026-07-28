@@ -336,9 +336,9 @@ export function AppSnapSettingsPanel({
             Take an AppSnap to show your agent another app's window
           </p>
           <p className={SETTINGS_CARD_ROW_DESCRIPTION_CLASS_NAME}>
-            Press your two-key shortcut while any app is frontmost. NuncioADE captures that window as
-            an image, brings itself forward, and attaches the snap to a task composer — the capture
-            stays on this device until you send the message.
+            Press your two-key shortcut while any app is frontmost. NuncioADE captures that window
+            as an image, brings itself forward, and attaches the snap to a task composer — the
+            capture stays on this device until you send the message.
           </p>
           {!supported ? (
             <p className={cn(SETTINGS_CARD_ROW_DESCRIPTION_CLASS_NAME, "pt-0.5")}>

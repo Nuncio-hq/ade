@@ -66,9 +66,7 @@ export function migrateLegacyStorageKeyPrefixes(storage = getLocalStorage()): nu
     for (let index = 0; index < storage.length; index += 1) {
       const key = storage.key(index);
       if (!key) continue;
-      const legacyIndex = LEGACY_STORAGE_KEY_PREFIXES.findIndex((prefix) =>
-        key.startsWith(prefix),
-      );
+      const legacyIndex = LEGACY_STORAGE_KEY_PREFIXES.findIndex((prefix) => key.startsWith(prefix));
       if (legacyIndex === -1) continue;
       renames.push({
         from: key,

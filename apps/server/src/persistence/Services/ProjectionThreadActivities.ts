@@ -80,4 +80,6 @@ export interface ProjectionThreadActivityRepositoryShape {
 export class ProjectionThreadActivityRepository extends ServiceMap.Service<
   ProjectionThreadActivityRepository,
   ProjectionThreadActivityRepositoryShape
->()("nuncioade/persistence/Services/ProjectionThreadActivities/ProjectionThreadActivityRepository") {}
+>()(
+  "nuncioade/persistence/Services/ProjectionThreadActivities/ProjectionThreadActivityRepository",
+) {}

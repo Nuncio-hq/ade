@@ -95,7 +95,9 @@ describe("resolveElectronUpdaterCacheDir", () => {
       homeDir: "/Users/test",
     };
 
-    expect(resolveElectronUpdaterCacheDir(args)).toBe("/Users/test/Library/Caches/NuncioADE-updater");
+    expect(resolveElectronUpdaterCacheDir(args)).toBe(
+      "/Users/test/Library/Caches/NuncioADE-updater",
+    );
     expect(resolveElectronUpdaterLegacyZipPath(args)).toBe(
       "/Users/test/Library/Caches/NuncioADE-updater/update.zip",
     );

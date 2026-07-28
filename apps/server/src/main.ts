@@ -147,7 +147,10 @@ const CliEnvConfig = Config.all({
   ),
   port: Config.port("NUNCIO_PORT").pipe(Config.option, Config.map(Option.getOrUndefined)),
   host: Config.string("NUNCIO_HOST").pipe(Config.option, Config.map(Option.getOrUndefined)),
-  nuncioadeHome: Config.string("NUNCIO_HOME").pipe(Config.option, Config.map(Option.getOrUndefined)),
+  nuncioadeHome: Config.string("NUNCIO_HOME").pipe(
+    Config.option,
+    Config.map(Option.getOrUndefined),
+  ),
   devUrl: Config.url("VITE_DEV_SERVER_URL").pipe(Config.option, Config.map(Option.getOrUndefined)),
   publicUrl: Config.url("NUNCIO_PUBLIC_URL").pipe(Config.option, Config.map(Option.getOrUndefined)),
   allowInsecureRemote: optionalBooleanEnvironmentConfig("NUNCIO_ALLOW_INSECURE_REMOTE"),
@@ -221,7 +224,10 @@ const ServerConfigLive = (input: CliInput) =>
       yield* Effect.try({
         try: () => preparePrivateServerPaths(derivedPaths),
         catch: (cause) =>
-          new StartupError({ message: "Failed to secure NuncioADE's local state directory", cause }),
+          new StartupError({
+            message: "Failed to secure NuncioADE's local state directory",
+            cause,
+          }),
       });
       const noBrowser = resolveBooleanConfig(input.noBrowser, env.noBrowser, mode === "desktop");
       const authToken = Option.getOrUndefined(input.authToken) ?? env.authToken;

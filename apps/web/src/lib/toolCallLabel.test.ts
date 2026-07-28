@@ -76,13 +76,21 @@ describe("deriveNuncioADEMcpToolTitle", () => {
         "NuncioADE is reading thread activity",
         "NuncioADE read thread activity",
       ],
-      ["nuncioade_read_thread_events", "NuncioADE is reading thread events", "NuncioADE read thread events"],
+      [
+        "nuncioade_read_thread_events",
+        "NuncioADE is reading thread events",
+        "NuncioADE read thread events",
+      ],
       [
         "nuncioade_read_thread_runtime_events",
         "NuncioADE is reading thread runtime events",
         "NuncioADE read thread runtime events",
       ],
-      ["nuncioade_diagnose_thread", "NuncioADE is diagnosing a thread", "NuncioADE diagnosed a thread"],
+      [
+        "nuncioade_diagnose_thread",
+        "NuncioADE is diagnosing a thread",
+        "NuncioADE diagnosed a thread",
+      ],
       ["nuncioade_create_thread", "NuncioADE is creating a thread", "NuncioADE created a thread"],
       ["nuncioade_create_threads", "NuncioADE is creating threads", "NuncioADE created threads"],
       [
@@ -91,21 +99,41 @@ describe("deriveNuncioADEMcpToolTitle", () => {
         "NuncioADE finished waiting for threads",
       ],
       ["nuncioade_send_message", "NuncioADE is sending a message", "NuncioADE sent a message"],
-      ["nuncioade_interrupt_thread", "NuncioADE is interrupting a thread", "NuncioADE interrupted a thread"],
-      ["nuncioade_set_thread_title", "NuncioADE is renaming a thread", "NuncioADE renamed a thread"],
-      ["nuncioade_set_thread_archived", "NuncioADE is updating a thread", "NuncioADE updated a thread"],
+      [
+        "nuncioade_interrupt_thread",
+        "NuncioADE is interrupting a thread",
+        "NuncioADE interrupted a thread",
+      ],
+      [
+        "nuncioade_set_thread_title",
+        "NuncioADE is renaming a thread",
+        "NuncioADE renamed a thread",
+      ],
+      [
+        "nuncioade_set_thread_archived",
+        "NuncioADE is updating a thread",
+        "NuncioADE updated a thread",
+      ],
       [
         "nuncioade_create_automation",
         "NuncioADE is creating an automation",
         "NuncioADE created an automation",
       ],
-      ["nuncioade_list_automations", "NuncioADE is listing automations", "NuncioADE listed automations"],
+      [
+        "nuncioade_list_automations",
+        "NuncioADE is listing automations",
+        "NuncioADE listed automations",
+      ],
       [
         "nuncioade_cancel_automation",
         "NuncioADE is stopping an automation",
         "NuncioADE stopped an automation",
       ],
-      ["nuncioade_overview", "NuncioADE is gathering an overview", "NuncioADE gathered an overview"],
+      [
+        "nuncioade_overview",
+        "NuncioADE is gathering an overview",
+        "NuncioADE gathered an overview",
+      ],
       [
         "nuncioade_list_allowed_projects",
         "NuncioADE is listing allowed projects",
@@ -155,11 +183,14 @@ describe("deriveNuncioADEMcpToolTitle", () => {
   });
 
   it("recognizes bare and already-humanized NuncioADE tool names", () => {
-    expect(deriveNuncioADEMcpToolTitle({ toolName: "nuncioade_send_message", status: "running" })).toBe(
-      "NuncioADE is sending a message",
-    );
     expect(
-      deriveNuncioADEMcpToolTitle({ title: "NuncioADE: NuncioADE List Threads", status: "completed" }),
+      deriveNuncioADEMcpToolTitle({ toolName: "nuncioade_send_message", status: "running" }),
+    ).toBe("NuncioADE is sending a message");
+    expect(
+      deriveNuncioADEMcpToolTitle({
+        title: "NuncioADE: NuncioADE List Threads",
+        status: "completed",
+      }),
     ).toBe("NuncioADE listed threads");
   });
 

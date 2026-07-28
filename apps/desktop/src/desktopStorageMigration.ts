@@ -64,7 +64,9 @@ export function resolveNuncioADEStorageSnapshotPath(userDataPath: string): strin
   return Path.join(userDataPath, NUNCIO_STORAGE_SNAPSHOT_FILE_NAME);
 }
 
-export function readNuncioADEStorageSnapshot(snapshotPath: string): NuncioADEStorageSnapshot | null {
+export function readNuncioADEStorageSnapshot(
+  snapshotPath: string,
+): NuncioADEStorageSnapshot | null {
   try {
     const stats = FS.statSync(snapshotPath);
     if (!stats.isFile() || stats.size > NUNCIO_STORAGE_SNAPSHOT_MAX_BYTES) {

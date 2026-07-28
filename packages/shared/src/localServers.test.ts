@@ -49,9 +49,9 @@ describe("localServerAddressLabel", () => {
 
 describe("localServerPrimaryLabel", () => {
   it("prefers the live page title when one was resolved", () => {
-    expect(localServerPrimaryLabel(makeServer({ pageTitle: "NuncioADE", displayName: "Vite" }))).toBe(
-      "NuncioADE",
-    );
+    expect(
+      localServerPrimaryLabel(makeServer({ pageTitle: "NuncioADE", displayName: "Vite" })),
+    ).toBe("NuncioADE");
   });
 
   it("falls back to the detected display name when no page title is known", () => {
@@ -61,9 +61,9 @@ describe("localServerPrimaryLabel", () => {
 
 describe("localServerFolderLabel", () => {
   it("returns the final segment of a POSIX cwd", () => {
-    expect(localServerFolderLabel(makeServer({ cwd: "/Users/me/Developer/nuncioade-website" }))).toBe(
-      "nuncioade-website",
-    );
+    expect(
+      localServerFolderLabel(makeServer({ cwd: "/Users/me/Developer/nuncioade-website" })),
+    ).toBe("nuncioade-website");
   });
 
   it("ignores a trailing separator", () => {

@@ -768,7 +768,9 @@ it.layer(CodexTextGenerationTestLayer)("CodexTextGenerationLive", (it) => {
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const wrongCodexHome = yield* fs.makeTempDirectoryScoped({ prefix: "nuncioade-wrong-codex-" });
+        const wrongCodexHome = yield* fs.makeTempDirectoryScoped({
+          prefix: "nuncioade-wrong-codex-",
+        });
         const customCodexHome = yield* fs.makeTempDirectoryScoped({
           prefix: "nuncioade-custom-codex-",
         });

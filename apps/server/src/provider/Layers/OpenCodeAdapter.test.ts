@@ -903,7 +903,9 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
     expect(runtime.connectCalls[0]?.poolIsolationKey).toBeUndefined();
     expect(runtime.mcpAddCalls).toEqual([]);
     expect(gateway.ownerByToken.size).toBe(0);
-    expect(JSON.stringify(runtime.promptCalls[0])).toContain("NuncioADE MCP control is unavailable");
+    expect(JSON.stringify(runtime.promptCalls[0])).toContain(
+      "NuncioADE MCP control is unavailable",
+    );
   });
 
   it("keeps managed sessions identity-only and revokes credentials when MCP setup is not connected", async () => {
@@ -942,7 +944,9 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
 
     expect(gateway.revoked).toEqual(["gateway-token-1"]);
     expect(gateway.ownerByToken.size).toBe(0);
-    expect(JSON.stringify(runtime.promptCalls[0])).toContain("NuncioADE MCP control is unavailable");
+    expect(JSON.stringify(runtime.promptCalls[0])).toContain(
+      "NuncioADE MCP control is unavailable",
+    );
   });
 
   it("applies the same isolated gateway lifecycle to managed Kilo sessions", async () => {

@@ -46,6 +46,7 @@
       "version": "0.0.1",
       "bin": {
         "nuncioade": "dist/index.mjs",
+        "ade": "dist/index.mjs",
         "nuncioade-restore-migration-backup": "dist/restoreMigrationBackup.mjs",
       },
       "dependencies": {

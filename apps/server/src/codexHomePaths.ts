@@ -29,7 +29,8 @@ export function resolveNuncioADECodexHomeOverlayPath(
   sourceHomePath: string,
 ): string {
   const runtimeHome = env.NUNCIO_HOME?.trim();
-  const overlayRoot = runtimeHome || path.join(path.dirname(sourceHomePath), ".nuncioade", "runtime");
+  const overlayRoot =
+    runtimeHome || path.join(path.dirname(sourceHomePath), ".nuncioade", "runtime");
   return path.join(overlayRoot, NUNCIO_CODEX_HOME_OVERLAY_DIR);
 }
 

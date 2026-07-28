@@ -13,9 +13,9 @@ const credentials = {
 
 describe("macOS DMG finalization", () => {
   it("requires exactly one DMG artifact", () => {
-    expect(resolveSingleMacDmgFileName(["NuncioADE-0.6.0-arm64.zip", "NuncioADE-0.6.0-arm64.dmg"])).toBe(
-      "NuncioADE-0.6.0-arm64.dmg",
-    );
+    expect(
+      resolveSingleMacDmgFileName(["NuncioADE-0.6.0-arm64.zip", "NuncioADE-0.6.0-arm64.dmg"]),
+    ).toBe("NuncioADE-0.6.0-arm64.dmg");
     expect(() => resolveSingleMacDmgFileName([])).toThrow("found 0");
     expect(() => resolveSingleMacDmgFileName(["a.dmg", "b.dmg"])).toThrow("found 2");
   });

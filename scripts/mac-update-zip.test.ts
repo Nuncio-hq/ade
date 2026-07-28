@@ -77,7 +77,8 @@ describe("mac-update-zip", () => {
     );
 
     assert.throws(
-      () => resolveSingleMacUpdateZipFileName(["NuncioADE-0.1.5-arm64.zip", "NuncioADE-0.1.5-x64.zip"]),
+      () =>
+        resolveSingleMacUpdateZipFileName(["NuncioADE-0.1.5-arm64.zip", "NuncioADE-0.1.5-x64.zip"]),
       /Expected one macOS update zip artifact/,
     );
   });

@@ -921,7 +921,9 @@ describe("buildCodexProcessEnv", () => {
       platform: "darwin",
     });
 
-    expect(env.NODE_REPL_SANDBOX_ALLOWED_UNIX_SOCKETS).toBe("/tmp/codex-browser-use/nuncioade.sock");
+    expect(env.NODE_REPL_SANDBOX_ALLOWED_UNIX_SOCKETS).toBe(
+      "/tmp/codex-browser-use/nuncioade.sock",
+    );
   });
 
   it("forwards the browser-use socket capability to the Browser MCP helper", async () => {
@@ -1382,7 +1384,11 @@ describe("startSession", () => {
   });
 
   it("reports a missing project working directory instead of a missing Codex CLI", () => {
-    const missingCwd = path.join(os.tmpdir(), `nuncioade-missing-cwd-${randomUUID()}`, "old-project");
+    const missingCwd = path.join(
+      os.tmpdir(),
+      `nuncioade-missing-cwd-${randomUUID()}`,
+      "old-project",
+    );
     expect(() => assertCodexWorkingDirectoryExists(missingCwd)).toThrow(
       formatMissingCodexWorkingDirectoryError(missingCwd),
     );

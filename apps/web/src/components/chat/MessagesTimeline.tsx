@@ -1417,7 +1417,12 @@ export const MessagesTimeline = memo(function MessagesTimeline({
             ...new Map(
               allTurnWorkEntries.flatMap((entry) =>
                 entry.nuncioadeThreadCreation
-                  ? [[entry.nuncioadeThreadCreation.operationId, entry.nuncioadeThreadCreation] as const]
+                  ? [
+                      [
+                        entry.nuncioadeThreadCreation.operationId,
+                        entry.nuncioadeThreadCreation,
+                      ] as const,
+                    ]
                   : [],
               ),
             ).values(),

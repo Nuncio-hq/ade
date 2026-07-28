@@ -97,9 +97,8 @@ describe("storageOriginMigration", () => {
   });
 
   it("migrates legacy-prefixed keys without clobbering current state", async () => {
-    const { LEGACY_STORAGE_KEY_PREFIXES, migrateLegacyStorageKeyPrefixes } = await import(
-      "./storageOriginMigration"
-    );
+    const { LEGACY_STORAGE_KEY_PREFIXES, migrateLegacyStorageKeyPrefixes } =
+      await import("./storageOriginMigration");
     const [legacyColon, legacyDot] = LEGACY_STORAGE_KEY_PREFIXES;
     globalThis.localStorage.setItem(`${legacyDot}editor.chatPaneWidth`, "320");
     globalThis.localStorage.setItem(`${legacyColon}theme`, "light");
@@ -115,9 +114,8 @@ describe("storageOriginMigration", () => {
   });
 
   it("legacy key migration is idempotent", async () => {
-    const { LEGACY_STORAGE_KEY_PREFIXES, migrateLegacyStorageKeyPrefixes } = await import(
-      "./storageOriginMigration"
-    );
+    const { LEGACY_STORAGE_KEY_PREFIXES, migrateLegacyStorageKeyPrefixes } =
+      await import("./storageOriginMigration");
     const [legacyDot] = LEGACY_STORAGE_KEY_PREFIXES.slice(1);
     globalThis.localStorage.setItem(`${legacyDot}openUsage.enabled`, "true");
 

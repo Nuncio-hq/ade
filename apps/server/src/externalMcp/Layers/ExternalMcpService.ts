@@ -321,7 +321,10 @@ export const makeExternalMcpService = Effect.gen(function* () {
 
   const pair: ExternalMcpServiceShape["pair"] = (pairingCode, credential) =>
     Effect.gen(function* () {
-      if (!hasExternalMcpPairingPrefix(pairingCode) || !hasExternalMcpCredentialPrefix(credential)) {
+      if (
+        !hasExternalMcpPairingPrefix(pairingCode) ||
+        !hasExternalMcpCredentialPrefix(credential)
+      ) {
         return yield* toExternalMcpError(
           "pairing_invalid",
           "The external MCP pairing code is invalid or expired.",

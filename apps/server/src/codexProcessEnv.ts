@@ -14,7 +14,10 @@ import {
   type ShellEnvironmentReader,
 } from "@nuncio/shared/shell";
 
-import { resolveBaseCodexHomePath, resolveNuncioADECodexHomeOverlayPath } from "./codexHomePaths.ts";
+import {
+  resolveBaseCodexHomePath,
+  resolveNuncioADECodexHomeOverlayPath,
+} from "./codexHomePaths.ts";
 import { buildProviderChildEnvironment } from "./providerChildEnvironment.ts";
 
 const CODEX_PROCESS_SHELL_ENV_NAMES = ["PATH", "SSH_AUTH_SOCK"] as const;
@@ -59,7 +62,9 @@ function isSafePluginSectionHeader(value: unknown): value is string {
   );
 }
 
-export async function readNuncioADEConfigSuppressions(markerPath: string): Promise<readonly string[]> {
+export async function readNuncioADEConfigSuppressions(
+  markerPath: string,
+): Promise<readonly string[]> {
   try {
     const parsed = JSON.parse(await fs.readFile(markerPath, "utf8")) as unknown;
     if (typeof parsed !== "object" || parsed === null) return [];

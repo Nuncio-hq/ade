@@ -2238,7 +2238,12 @@ it.layer(TestLayer)("git integration", (it) => {
             yield* git(tmp, ["ls-remote", "--heads", "jasonLaster", "statemachine"]),
           ).toContain("statemachine");
           expect(
-            yield* git(tmp, ["ls-remote", "--heads", "jasonLaster", "nuncioade/pr-488/statemachine"]),
+            yield* git(tmp, [
+              "ls-remote",
+              "--heads",
+              "jasonLaster",
+              "nuncioade/pr-488/statemachine",
+            ]),
           ).toBe("");
         }),
     );

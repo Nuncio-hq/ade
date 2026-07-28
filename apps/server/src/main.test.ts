@@ -644,7 +644,10 @@ it.layer(testLayer)("server CLI command", (it) => {
 
   it.effect("rejects non-root or non-HTTPS public URLs", () =>
     Effect.gen(function* () {
-      for (const publicUrl of ["http://nuncioade.example.test", "https://nuncioade.example.test/app"]) {
+      for (const publicUrl of [
+        "http://nuncioade.example.test",
+        "https://nuncioade.example.test/app",
+      ]) {
         const error = yield* Effect.flip(
           runCli(["--host", "0.0.0.0", "--auth-token", "remote-secret", "--public-url", publicUrl]),
         );

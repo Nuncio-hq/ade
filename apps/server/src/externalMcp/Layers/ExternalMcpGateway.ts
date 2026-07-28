@@ -124,8 +124,10 @@ function readAuditMetadata(tool: string, args: Record<string, unknown>) {
     requestId: stringOrNull("requestId"),
     projectId: stringOrNull("projectId"),
     runtimeMode:
-      stringOrNull("runtimeMode") ?? (tool === "nuncioade_create_task" ? "approval-required" : null),
-    environment: stringOrNull("environment") ?? (tool === "nuncioade_create_task" ? "worktree" : null),
+      stringOrNull("runtimeMode") ??
+      (tool === "nuncioade_create_task" ? "approval-required" : null),
+    environment:
+      stringOrNull("environment") ?? (tool === "nuncioade_create_task" ? "worktree" : null),
   };
 }
 

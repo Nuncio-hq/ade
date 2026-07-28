@@ -301,7 +301,9 @@ export async function verifyPackagedDesktopStartup(
       `Packaged ${options.platform} startup smoke must run on its native host, not ${process.platform}.`,
     );
   }
-  const temporaryRoot = mkdtempSync(join(tmpdir(), `nuncioade-packaged-smoke-${options.platform}-`));
+  const temporaryRoot = mkdtempSync(
+    join(tmpdir(), `nuncioade-packaged-smoke-${options.platform}-`),
+  );
   const extractionRoot = join(temporaryRoot, "payload");
   mkdirSync(extractionRoot, { recursive: true });
 

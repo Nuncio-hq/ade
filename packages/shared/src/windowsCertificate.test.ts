@@ -26,8 +26,8 @@ describe("windowsCertificate", () => {
 
   it("rejects incomplete pins and mismatched signer fields", () => {
     expect(matchesDistinguishedName("CN=NuncioADE", "CN=NuncioADE, O=Acme Tools")).toBe(false);
-    expect(matchesDistinguishedName("CN=NuncioADE, O=Acme Tools", "CN=NuncioADE, O=Other Tools")).toBe(
-      false,
-    );
+    expect(
+      matchesDistinguishedName("CN=NuncioADE, O=Acme Tools", "CN=NuncioADE, O=Other Tools"),
+    ).toBe(false);
   });
 });

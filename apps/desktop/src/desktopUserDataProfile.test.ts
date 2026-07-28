@@ -27,9 +27,9 @@ afterEach(() => {
 describe("desktopUserDataProfile", () => {
   it("resolves the canonical NuncioADE profile names", () => {
     const appDataBase = "/Users/tester/Library/Application Support";
-    expect(resolveDesktopUserDataPath({ appDataBase, userDataDirectoryName: "nuncioade-dev" })).toBe(
-      "/Users/tester/Library/Application Support/nuncioade-dev",
-    );
+    expect(
+      resolveDesktopUserDataPath({ appDataBase, userDataDirectoryName: "nuncioade-dev" }),
+    ).toBe("/Users/tester/Library/Application Support/nuncioade-dev");
     expect(resolveDesktopUserDataPath({ appDataBase, userDataDirectoryName: "nuncioade" })).toBe(
       "/Users/tester/Library/Application Support/nuncioade",
     );

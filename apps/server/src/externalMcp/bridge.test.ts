@@ -158,7 +158,9 @@ describe("external MCP stdio bridge", () => {
     expect(() => discoverExternalMcpRuntime(baseDir)).toThrow(/No running NuncioADE instance/);
     writeRuntime(baseDir, "userdata", 3773);
     writeRuntime(baseDir, "dev", 4773);
-    expect(() => discoverExternalMcpRuntime(baseDir)).toThrow(/Multiple running NuncioADE instances/);
+    expect(() => discoverExternalMcpRuntime(baseDir)).toThrow(
+      /Multiple running NuncioADE instances/,
+    );
   });
 
   it.skipIf(process.platform === "win32")(

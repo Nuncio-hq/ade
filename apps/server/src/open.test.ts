@@ -662,7 +662,9 @@ it.layer(NodeServices.layer)("resolveAvailableEditors", (it) => {
       const path = yield* Path.Path;
       const editor = EDITORS.find((candidate) => candidate.id === "vscode");
       assert.ok(editor);
-      const programFiles = yield* fs.makeTempDirectoryScoped({ prefix: "nuncioade-vscode-staged-" });
+      const programFiles = yield* fs.makeTempDirectoryScoped({
+        prefix: "nuncioade-vscode-staged-",
+      });
       yield* fs.makeDirectory(
         path.join(
           programFiles,

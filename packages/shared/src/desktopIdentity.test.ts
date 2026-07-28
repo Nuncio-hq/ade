@@ -51,9 +51,9 @@ describe("desktopIdentity", () => {
   it("selects Canary explicitly without changing normal dev and production defaults", () => {
     expect(resolveNuncioADEDesktopFlavor({ isDevelopment: false })).toBe("production");
     expect(resolveNuncioADEDesktopFlavor({ isDevelopment: true })).toBe("development");
-    expect(resolveNuncioADEDesktopFlavor({ isDevelopment: false, requestedFlavor: " canary " })).toBe(
-      "canary",
-    );
+    expect(
+      resolveNuncioADEDesktopFlavor({ isDevelopment: false, requestedFlavor: " canary " }),
+    ).toBe("canary");
     expect(resolveNuncioADEDesktopFlavor({ isDevelopment: true, requestedFlavor: "canary" })).toBe(
       "canary",
     );

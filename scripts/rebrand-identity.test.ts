@@ -3,11 +3,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import {
-  isExemptPath,
-  transformContent,
-  transformPath,
-} from "./rebrand-identity";
+import { isExemptPath, transformContent, transformPath } from "./rebrand-identity";
 
 describe("transformContent token map", () => {
   it("renames package scope without mangling it", () => {
@@ -35,7 +31,7 @@ describe("transformContent token map", () => {
   });
 
   it("renames lowercase occurrences including dirs, storage keys and asset names", () => {
-    expect(transformContent('--home-dir ./.synara/electron-dev')).toBe(
+    expect(transformContent("--home-dir ./.synara/electron-dev")).toBe(
       "--home-dir ./.nuncioade/electron-dev",
     );
     expect(transformContent('"synara.editor.viewStateByThreadId"')).toBe(
@@ -89,9 +85,10 @@ describe("transformContent protections", () => {
       "const home = process.env.SYNARA_HOME;",
     ].join("\n");
     expect(transformContent(input)).toBe(
-      ['const legacyKeyPrefix = "synara."; // rebrand-exempt', "const home = process.env.NUNCIO_HOME;"].join(
-        "\n",
-      ),
+      [
+        'const legacyKeyPrefix = "synara."; // rebrand-exempt',
+        "const home = process.env.NUNCIO_HOME;",
+      ].join("\n"),
     );
   });
 });

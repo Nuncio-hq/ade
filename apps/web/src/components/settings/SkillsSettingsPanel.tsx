@@ -105,7 +105,9 @@ export function SkillsSettingsPanel() {
           description="Skills placed here are available on every provider. When a provider already ships its own copy of a skill, that copy is used; otherwise NuncioADE's copy is the fallback."
           status={
             nuncioadeSkillsDir ? (
-              <code className="break-all text-[11px] text-muted-foreground">{nuncioadeSkillsDir}</code>
+              <code className="break-all text-[11px] text-muted-foreground">
+                {nuncioadeSkillsDir}
+              </code>
             ) : null
           }
           control={

@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OMP Integration (M4) — Plan · Tracker · Coverage</title>
-<!--
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OMP Integration (M4) — Plan · Tracker · Coverage</title>
+    <!--
   AGENT NOTE (đọc khi làm việc trên M4 / tích hợp OMP):
   - File này là nguồn sự thật duy nhất cho tích hợp OMP: tab PLAN (tracker theo
     phase) + tab COVERAGE (49 hạng mục chi tiết).
@@ -13,249 +13,648 @@
     Đồng bộ docs/STATE.md (M4) — một phần của update triggers trong AGENTS.md.
   - Spike gốc: playground/omp-spike/ (ngoài git). Deep-link: #plan / #coverage.
 -->
-<style>
-  :root {
-    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
-    --dim:#8b949e; --green:#3fb950; --amber:#d29922; --blue:#58a6ff;
-    --red:#f85149; --purple:#bc8cff;
-  }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text);
-    font:14px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-  .wrap { max-width:1020px; margin:0 auto; padding:26px 20px 90px; }
-  h1 { font-size:21px; margin:0 0 4px; }
-  .sub { color:var(--dim); font-size:13px; margin-bottom:14px; }
-  code { color:var(--blue); font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:12.5px; }
+    <style>
+      :root {
+        --bg: #0d1117;
+        --panel: #161b22;
+        --border: #30363d;
+        --text: #e6edf3;
+        --dim: #8b949e;
+        --green: #3fb950;
+        --amber: #d29922;
+        --blue: #58a6ff;
+        --red: #f85149;
+        --purple: #bc8cff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          14px/1.55 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      .wrap {
+        max-width: 1020px;
+        margin: 0 auto;
+        padding: 26px 20px 90px;
+      }
+      h1 {
+        font-size: 21px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: var(--dim);
+        font-size: 13px;
+        margin-bottom: 14px;
+      }
+      code {
+        color: var(--blue);
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 12.5px;
+      }
 
-  .tabs { display:flex; gap:6px; border-bottom:1px solid var(--border); margin-bottom:18px; }
-  .tabs button { background:none; border:none; color:var(--dim); font-size:14px;
-    padding:9px 16px; cursor:pointer; border-bottom:2px solid transparent; font-weight:600; }
-  .tabs button.on { color:var(--text); border-bottom-color:var(--blue); }
-  section { display:none; }
-  section.on { display:block; }
+      .tabs {
+        display: flex;
+        gap: 6px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 18px;
+      }
+      .tabs button {
+        background: none;
+        border: none;
+        color: var(--dim);
+        font-size: 14px;
+        padding: 9px 16px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        font-weight: 600;
+      }
+      .tabs button.on {
+        color: var(--text);
+        border-bottom-color: var(--blue);
+      }
+      section {
+        display: none;
+      }
+      section.on {
+        display: block;
+      }
 
-  /* ===== shared ===== */
-  .card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
-  .bar { height:12px; border-radius:6px; background:#21262d; overflow:hidden; display:flex; margin:8px 0 4px; }
-  .chip { font-size:11px; padding:2px 9px; border-radius:10px; font-weight:600; white-space:nowrap; }
-  .chip.v1 { background:#12351c; color:var(--green); }
-  .chip.free { background:#0d2440; color:var(--blue); }
-  .chip.later { background:#3a2c10; color:var(--amber); }
-  .chip.risk { background:#3d1418; color:var(--red); }
-  .chip.spike { background:#2a1a3d; color:var(--purple); }
-  .foot { margin-top:26px; color:var(--dim); font-size:12px; line-height:1.7; }
+      /* ===== shared ===== */
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px 16px;
+      }
+      .bar {
+        height: 12px;
+        border-radius: 6px;
+        background: #21262d;
+        overflow: hidden;
+        display: flex;
+        margin: 8px 0 4px;
+      }
+      .chip {
+        font-size: 11px;
+        padding: 2px 9px;
+        border-radius: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .chip.v1 {
+        background: #12351c;
+        color: var(--green);
+      }
+      .chip.free {
+        background: #0d2440;
+        color: var(--blue);
+      }
+      .chip.later {
+        background: #3a2c10;
+        color: var(--amber);
+      }
+      .chip.risk {
+        background: #3d1418;
+        color: var(--red);
+      }
+      .chip.spike {
+        background: #2a1a3d;
+        color: var(--purple);
+      }
+      .foot {
+        margin-top: 26px;
+        color: var(--dim);
+        font-size: 12px;
+        line-height: 1.7;
+      }
 
-  /* ===== plan ===== */
-  .hud { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:22px; }
-  @media (max-width:800px){ .hud { grid-template-columns:1fr; } }
-  .card h3 { margin:0 0 8px; font-size:13px; color:var(--dim); text-transform:uppercase; letter-spacing:.4px; }
-  .card ul { margin:0; padding-left:18px; }
-  .card li { margin:3px 0; font-size:13.5px; }
-  .card .none { color:var(--dim); font-style:italic; }
-  #planBarFill { background:var(--green); }
-  #planPct { color:var(--text); font-weight:600; }
-  .next { border-color:#1f6feb88; }
-  .next .phase-tag { color:var(--blue); font-weight:700; }
-  .promptbox { background:#0d2440; border:1px solid #1f6feb55; border-radius:8px;
-    padding:10px 12px; margin-top:10px; font-family:ui-monospace,Menlo,monospace;
-    font-size:12px; color:#cdd9e5; white-space:pre-wrap; }
-  .copybtn { margin-top:8px; background:#1f6feb; border:none; color:white;
-    padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600; }
-  .copybtn:active { transform:scale(.97); }
-  .phase { background:var(--panel); border:1px solid var(--border); border-radius:10px;
-    margin-bottom:14px; overflow:hidden; }
-  .phase.done { border-left:4px solid var(--green); }
-  .phase.doing { border-left:4px solid var(--amber); }
-  .phase.todo { border-left:4px solid var(--border); }
-  .phase-head { display:flex; align-items:center; gap:12px; padding:13px 16px; cursor:pointer; }
-  .phase-head:hover { background:#1c2129; }
-  .phase-num { width:30px; height:30px; border-radius:50%; display:flex; align-items:center;
-    justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;
-    background:#21262d; color:var(--dim); border:1px solid var(--border); }
-  .done .phase-num { background:#12351c; color:var(--green); border-color:var(--green); }
-  .doing .phase-num { background:#3a2c10; color:var(--amber); border-color:var(--amber); }
-  .phase-title { flex:1; font-weight:600; font-size:15px; }
-  .phase-title small { display:block; font-weight:400; color:var(--dim); font-size:12.5px; }
-  .stchip { font-size:11px; padding:2px 10px; border-radius:10px; font-weight:700; }
-  .stchip.done { background:#12351c; color:var(--green); }
-  .stchip.doing { background:#3a2c10; color:var(--amber); }
-  .stchip.todo { background:#21262d; color:var(--dim); }
-  .phase-body { display:none; padding:2px 18px 16px 58px; }
-  .phase.open .phase-body { display:block; }
-  .sec { margin-top:12px; }
-  .sec h4 { margin:0 0 6px; font-size:12px; color:var(--purple);
-    text-transform:uppercase; letter-spacing:.4px; }
-  .task { display:flex; gap:9px; padding:5px 0; font-size:13.5px; align-items:baseline; }
-  .task .tdot { width:8px; height:8px; border-radius:50%; flex-shrink:0; position:relative; top:1px;
-    background:#30363d; }
-  .task.done .tdot { background:var(--green); }
-  .task.doing .tdot { background:var(--amber); }
-  .task.done { color:var(--dim); text-decoration:line-through; text-decoration-color:#3fb95066; }
-  .accept { background:#0f1a12; border:1px solid #23863633; border-radius:8px;
-    padding:9px 12px; font-size:13px; }
-  .accept b { color:var(--green); }
-  .unlock { background:#101a2b; border:1px solid #1f6feb33; border-radius:8px;
-    padding:9px 12px; font-size:13px; }
-  .unlock b { color:var(--blue); }
+      /* ===== plan ===== */
+      .hud {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 22px;
+      }
+      @media (max-width: 800px) {
+        .hud {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        color: var(--dim);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+      .card ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+      .card li {
+        margin: 3px 0;
+        font-size: 13.5px;
+      }
+      .card .none {
+        color: var(--dim);
+        font-style: italic;
+      }
+      #planBarFill {
+        background: var(--green);
+      }
+      #planPct {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .next {
+        border-color: #1f6feb88;
+      }
+      .next .phase-tag {
+        color: var(--blue);
+        font-weight: 700;
+      }
+      .promptbox {
+        background: #0d2440;
+        border: 1px solid #1f6feb55;
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-top: 10px;
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12px;
+        color: #cdd9e5;
+        white-space: pre-wrap;
+      }
+      .copybtn {
+        margin-top: 8px;
+        background: #1f6feb;
+        border: none;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .copybtn:active {
+        transform: scale(0.97);
+      }
+      .phase {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        margin-bottom: 14px;
+        overflow: hidden;
+      }
+      .phase.done {
+        border-left: 4px solid var(--green);
+      }
+      .phase.doing {
+        border-left: 4px solid var(--amber);
+      }
+      .phase.todo {
+        border-left: 4px solid var(--border);
+      }
+      .phase-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 16px;
+        cursor: pointer;
+      }
+      .phase-head:hover {
+        background: #1c2129;
+      }
+      .phase-num {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+        flex-shrink: 0;
+        background: #21262d;
+        color: var(--dim);
+        border: 1px solid var(--border);
+      }
+      .done .phase-num {
+        background: #12351c;
+        color: var(--green);
+        border-color: var(--green);
+      }
+      .doing .phase-num {
+        background: #3a2c10;
+        color: var(--amber);
+        border-color: var(--amber);
+      }
+      .phase-title {
+        flex: 1;
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .phase-title small {
+        display: block;
+        font-weight: 400;
+        color: var(--dim);
+        font-size: 12.5px;
+      }
+      .stchip {
+        font-size: 11px;
+        padding: 2px 10px;
+        border-radius: 10px;
+        font-weight: 700;
+      }
+      .stchip.done {
+        background: #12351c;
+        color: var(--green);
+      }
+      .stchip.doing {
+        background: #3a2c10;
+        color: var(--amber);
+      }
+      .stchip.todo {
+        background: #21262d;
+        color: var(--dim);
+      }
+      .phase-body {
+        display: none;
+        padding: 2px 18px 16px 58px;
+      }
+      .phase.open .phase-body {
+        display: block;
+      }
+      .sec {
+        margin-top: 12px;
+      }
+      .sec h4 {
+        margin: 0 0 6px;
+        font-size: 12px;
+        color: var(--purple);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+      .task {
+        display: flex;
+        gap: 9px;
+        padding: 5px 0;
+        font-size: 13.5px;
+        align-items: baseline;
+      }
+      .task .tdot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        position: relative;
+        top: 1px;
+        background: #30363d;
+      }
+      .task.done .tdot {
+        background: var(--green);
+      }
+      .task.doing .tdot {
+        background: var(--amber);
+      }
+      .task.done {
+        color: var(--dim);
+        text-decoration: line-through;
+        text-decoration-color: #3fb95066;
+      }
+      .accept {
+        background: #0f1a12;
+        border: 1px solid #23863633;
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+      .accept b {
+        color: var(--green);
+      }
+      .unlock {
+        background: #101a2b;
+        border: 1px solid #1f6feb33;
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+      .unlock b {
+        color: var(--blue);
+      }
 
-  /* ===== coverage ===== */
-  .bar-title { display:flex; justify-content:space-between; font-size:13px;
-    color:var(--dim); margin-bottom:8px; }
-  .bar-title b { color:var(--text); }
-  .seg-v1 { background:var(--green); }
-  .seg-free { background:var(--blue); }
-  .legend { display:flex; gap:16px; margin-top:10px; flex-wrap:wrap; font-size:12px; color:var(--dim); }
-  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
-  .controls { display:flex; gap:8px; margin:18px 0 14px; flex-wrap:wrap; }
-  .controls button { background:var(--panel); color:var(--dim);
-    border:1px solid var(--border); border-radius:20px; padding:5px 14px;
-    cursor:pointer; font-size:13px; }
-  .controls button.on { color:var(--text); border-color:var(--blue); background:#0d2440; }
-  .controls input { flex:1; min-width:180px; background:var(--panel);
-    border:1px solid var(--border); border-radius:8px; color:var(--text);
-    padding:5px 12px; font-size:13px; outline:none; }
-  h2 { font-size:15px; margin:26px 0 10px; color:var(--purple); }
-  h2 .cnt { color:var(--dim); font-weight:normal; font-size:12px; }
-  .row { background:var(--panel); border:1px solid var(--border);
-    border-radius:8px; padding:10px 14px; margin-bottom:6px; cursor:pointer; }
-  .row:hover { border-color:#58a6ff55; }
-  .row-head { display:flex; align-items:center; gap:10px; }
-  .row-name { font-weight:600; font-size:13.5px; flex:1; }
-  .row-note { display:none; color:var(--dim); font-size:13px; margin-top:8px;
-    padding-top:8px; border-top:1px dashed var(--border); }
-  .row.open .row-note { display:block; }
-  .hidden { display:none !important; }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <h1>OMP Integration (M4) — Plan · Tracker · Coverage</h1>
-  <div class="sub">
-    Engine <code>@oh-my-pi/pi-coding-agent</code> (pin exact ở Phase 2) ·
-    Branch: <code>app/omp-adapter</code> · Spike: 2026-07-28 PASSED
-    (<code>playground/omp-spike</code>) · File này do agent cập nhật khi làm xong việc.
-  </div>
-
-  <div class="tabs">
-    <button data-tab="plan" class="on">Plan &amp; Tracker</button>
-    <button data-tab="coverage">Coverage — 49 hạng mục</button>
-  </div>
-
-  <!-- ================= PLAN ================= -->
-  <section id="view-plan" class="on">
-    <div class="hud">
-      <div class="card">
-        <h3>Tiến độ tổng</h3>
-        <div class="bar"><div id="planBarFill" style="width:0%"></div></div>
-        <div style="font-size:13px;color:var(--dim)"><span id="planPct"></span> · <span id="planDetail"></span></div>
-        <h3 style="margin-top:14px">Bạn đã dùng được gì (cộng dồn)</h3>
-        <ul id="unlockedList"></ul>
+      /* ===== coverage ===== */
+      .bar-title {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: var(--dim);
+        margin-bottom: 8px;
+      }
+      .bar-title b {
+        color: var(--text);
+      }
+      .seg-v1 {
+        background: var(--green);
+      }
+      .seg-free {
+        background: var(--blue);
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        margin-right: 5px;
+      }
+      .controls {
+        display: flex;
+        gap: 8px;
+        margin: 18px 0 14px;
+        flex-wrap: wrap;
+      }
+      .controls button {
+        background: var(--panel);
+        color: var(--dim);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 5px 14px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .controls button.on {
+        color: var(--text);
+        border-color: var(--blue);
+        background: #0d2440;
+      }
+      .controls input {
+        flex: 1;
+        min-width: 180px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        padding: 5px 12px;
+        font-size: 13px;
+        outline: none;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 26px 0 10px;
+        color: var(--purple);
+      }
+      h2 .cnt {
+        color: var(--dim);
+        font-weight: normal;
+        font-size: 12px;
+      }
+      .row {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 6px;
+        cursor: pointer;
+      }
+      .row:hover {
+        border-color: #58a6ff55;
+      }
+      .row-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .row-name {
+        font-weight: 600;
+        font-size: 13.5px;
+        flex: 1;
+      }
+      .row-note {
+        display: none;
+        color: var(--dim);
+        font-size: 13px;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed var(--border);
+      }
+      .row.open .row-note {
+        display: block;
+      }
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>OMP Integration (M4) — Plan · Tracker · Coverage</h1>
+      <div class="sub">
+        Engine <code>@oh-my-pi/pi-coding-agent</code> (pin exact ở Phase 2) · Branch:
+        <code>app/omp-adapter</code> · Spike: 2026-07-28 PASSED (<code>playground/omp-spike</code>)
+        · File này do agent cập nhật khi làm xong việc.
       </div>
-      <div class="card next">
-        <h3>Việc tiếp theo → prompt cho agent</h3>
-        <div class="phase-tag" id="nextName"></div>
-        <div class="promptbox" id="nextPrompt"></div>
-        <button class="copybtn" id="copyBtn">Copy prompt</button>
-        <span id="copied" style="color:var(--green);font-size:12px;margin-left:8px;display:none">đã copy ✓</span>
-      </div>
-    </div>
-    <div id="phases"></div>
-    <div class="foot">
-      <b>Quy ước status:</b> agent sửa <code>st</code> trong PLAN_DATA khi task chuyển
-      todo → doing → done, đồng bộ <code>docs/STATE.md</code> (M4).<br>
-      <b>Luật liên quan (AGENTS.md):</b> extension + bridge chung một commit ·
-      không chạy dev instance đè cổng · verify cuối một lượt duy nhất
-      (<code>bun fmt</code> + <code>bun lint</code> + <code>bun typecheck</code>) ·
-      agent KHÔNG tự release/tag.
-    </div>
-  </section>
 
-  <!-- ================= COVERAGE ================= -->
-  <section id="view-coverage">
-    <div class="card" style="margin-bottom:18px">
-      <div class="bar-title">
-        <span><b>Option 1 (lõi trước)</b> phủ được bao nhiêu?</span>
-        <span id="covLabel"></span>
+      <div class="tabs">
+        <button data-tab="plan" class="on">Plan &amp; Tracker</button>
+        <button data-tab="coverage">Coverage — 49 hạng mục</button>
       </div>
-      <div class="bar" id="covBar"></div>
-      <div class="legend">
-        <span><span class="dot" style="background:var(--green)"></span>v1 — code trong scope Option 1</span>
-        <span><span class="dot" style="background:var(--blue)"></span>free — engine cho sẵn, chỉ cần glue mỏng</span>
-        <span><span class="dot" style="background:#21262d;border:1px solid var(--border)"></span>later — sau v1 / nâng cấp dần</span>
-      </div>
-    </div>
-    <div class="controls">
-      <button data-f="all" class="on">Tất cả</button>
-      <button data-f="v1">v1 (Option 1)</button>
-      <button data-f="free">free</button>
-      <button data-f="later">later</button>
-      <button data-f="risk">⚠ risk</button>
-      <button data-f="spike">spike ✓</button>
-      <input id="q" placeholder="tìm… (vd: bash, todo, MCP)">
-    </div>
-    <div id="covList"></div>
-    <div class="foot">
-      Nguồn: <code>apps/server/src/provider/Services/ProviderAdapter.ts</code> (contract),
-      <code>Layers/PiAdapter.ts</code> (pattern tham chiếu),
-      OMP <code>src/sdk.ts</code> / <code>session/agent-session-events.ts</code> /
-      <code>async/job-manager.ts</code> / <code>exec/bash-executor.ts</code>,
-      spike tại <code>playground/omp-spike/</code>.
-    </div>
-  </section>
-</div>
 
-<script>
-/* ========================= PLAN DATA ========================= */
-const PLAN_DATA = [
-{
-  id:0, name:"Phase 0 — Spike & thiết kế", st:"done",
-  goal:"Xác minh SDK 17.x nhúng được, chốt kiến trúc, lập coverage map.",
-  tasks:[
-    {t:"Spike playground/omp-spike: session 132ms dưới Bun, event catalog thật", st:"done"},
-    {t:"Verify teardown: abort() reaps /bin/sleep 300 (brush kill-on-drop) — bỏ nhu cầu process supervisor", st:"done"},
-    {t:"Verify MCPManager.connectServers (programmatic) + AsyncJobManager (background tools)", st:"done"},
-    {t:"Chốt: engine-native tools · event lõi trước (Option 1) · consume npm không fork", st:"done"},
-    {t:"Coverage map 49 hạng mục (tab Coverage của file này)", st:"done"},
-  ],
-  accept:"Đã đạt: spike PASSED, ghi trong STATE.md (M4).",
-  unlock:[],
-  prompt:null
-},
-{
-  id:1, name:"Phase 1 — Contracts & plumbing", st:"todo",
-  goal:"Cho hệ thống biết \"omp\" là một provider hợp lệ. Nhỏ, commit riêng, dễ trace khi merge upstream.",
-  tasks:[
-    {t:"Thêm \"omp\" vào ProviderKind — packages/contracts/src/orchestration.ts:56", st:"todo"},
-    {t:"Thêm OmpModelSelection (mirror PiModelSelection tại orchestration.ts:139) + nối vào union model selection", st:"todo"},
-    {t:"getDefaultModel(\"omp\") → null (giống pi — model đến từ registry động)", st:"todo"},
-    {t:"Sửa mọi exhaustive switch compiler báo đỏ (server + web) — đi theo lỗi typecheck", st:"todo"},
-    {t:"Settings key providers.omp.agentDir (mirror providers.pi.agentDir — escape hatch)", st:"todo"},
-  ],
-  accept:"<b>Kiểm tra:</b> <code>bun typecheck</code> xanh toàn workspace. Chưa có gì thay đổi trong UI — đúng dự kiến.",
-  unlock:[],
-  prompt:`Làm Phase 1 của M4 theo docs/plans/omp-integration.html (tab Plan):
+      <!-- ================= PLAN ================= -->
+      <section id="view-plan" class="on">
+        <div class="hud">
+          <div class="card">
+            <h3>Tiến độ tổng</h3>
+            <div class="bar"><div id="planBarFill" style="width: 0%"></div></div>
+            <div style="font-size: 13px; color: var(--dim)">
+              <span id="planPct"></span> · <span id="planDetail"></span>
+            </div>
+            <h3 style="margin-top: 14px">Bạn đã dùng được gì (cộng dồn)</h3>
+            <ul id="unlockedList"></ul>
+          </div>
+          <div class="card next">
+            <h3>Việc tiếp theo → prompt cho agent</h3>
+            <div class="phase-tag" id="nextName"></div>
+            <div class="promptbox" id="nextPrompt"></div>
+            <button class="copybtn" id="copyBtn">Copy prompt</button>
+            <span
+              id="copied"
+              style="color: var(--green); font-size: 12px; margin-left: 8px; display: none"
+              >đã copy ✓</span
+            >
+          </div>
+        </div>
+        <div id="phases"></div>
+        <div class="foot">
+          <b>Quy ước status:</b> agent sửa <code>st</code> trong PLAN_DATA khi task chuyển todo →
+          doing → done, đồng bộ <code>docs/STATE.md</code> (M4).<br />
+          <b>Luật liên quan (AGENTS.md):</b> extension + bridge chung một commit · không chạy dev
+          instance đè cổng · verify cuối một lượt duy nhất (<code>bun fmt</code> +
+          <code>bun lint</code> + <code>bun typecheck</code>) · agent KHÔNG tự release/tag.
+        </div>
+      </section>
+
+      <!-- ================= COVERAGE ================= -->
+      <section id="view-coverage">
+        <div class="card" style="margin-bottom: 18px">
+          <div class="bar-title">
+            <span><b>Option 1 (lõi trước)</b> phủ được bao nhiêu?</span>
+            <span id="covLabel"></span>
+          </div>
+          <div class="bar" id="covBar"></div>
+          <div class="legend">
+            <span
+              ><span class="dot" style="background: var(--green)"></span>v1 — code trong scope
+              Option 1</span
+            >
+            <span
+              ><span class="dot" style="background: var(--blue)"></span>free — engine cho sẵn, chỉ
+              cần glue mỏng</span
+            >
+            <span
+              ><span class="dot" style="background: #21262d; border: 1px solid var(--border)"></span
+              >later — sau v1 / nâng cấp dần</span
+            >
+          </div>
+        </div>
+        <div class="controls">
+          <button data-f="all" class="on">Tất cả</button>
+          <button data-f="v1">v1 (Option 1)</button>
+          <button data-f="free">free</button>
+          <button data-f="later">later</button>
+          <button data-f="risk">⚠ risk</button>
+          <button data-f="spike">spike ✓</button>
+          <input id="q" placeholder="tìm… (vd: bash, todo, MCP)" />
+        </div>
+        <div id="covList"></div>
+        <div class="foot">
+          Nguồn: <code>apps/server/src/provider/Services/ProviderAdapter.ts</code> (contract),
+          <code>Layers/PiAdapter.ts</code> (pattern tham chiếu), OMP <code>src/sdk.ts</code> /
+          <code>session/agent-session-events.ts</code> / <code>async/job-manager.ts</code> /
+          <code>exec/bash-executor.ts</code>, spike tại <code>playground/omp-spike/</code>.
+        </div>
+      </section>
+    </div>
+
+    <script>
+      /* ========================= PLAN DATA ========================= */
+      const PLAN_DATA = [
+        {
+          id: 0,
+          name: "Phase 0 — Spike & thiết kế",
+          st: "done",
+          goal: "Xác minh SDK 17.x nhúng được, chốt kiến trúc, lập coverage map.",
+          tasks: [
+            {
+              t: "Spike playground/omp-spike: session 132ms dưới Bun, event catalog thật",
+              st: "done",
+            },
+            {
+              t: "Verify teardown: abort() reaps /bin/sleep 300 (brush kill-on-drop) — bỏ nhu cầu process supervisor",
+              st: "done",
+            },
+            {
+              t: "Verify MCPManager.connectServers (programmatic) + AsyncJobManager (background tools)",
+              st: "done",
+            },
+            {
+              t: "Chốt: engine-native tools · event lõi trước (Option 1) · consume npm không fork",
+              st: "done",
+            },
+            { t: "Coverage map 49 hạng mục (tab Coverage của file này)", st: "done" },
+          ],
+          accept: "Đã đạt: spike PASSED, ghi trong STATE.md (M4).",
+          unlock: [],
+          prompt: null,
+        },
+        {
+          id: 1,
+          name: "Phase 1 — Contracts & plumbing",
+          st: "todo",
+          goal: 'Cho hệ thống biết "omp" là một provider hợp lệ. Nhỏ, commit riêng, dễ trace khi merge upstream.',
+          tasks: [
+            {
+              t: 'Thêm "omp" vào ProviderKind — packages/contracts/src/orchestration.ts:56',
+              st: "todo",
+            },
+            {
+              t: "Thêm OmpModelSelection (mirror PiModelSelection tại orchestration.ts:139) + nối vào union model selection",
+              st: "todo",
+            },
+            {
+              t: 'getDefaultModel("omp") → null (giống pi — model đến từ registry động)',
+              st: "todo",
+            },
+            {
+              t: "Sửa mọi exhaustive switch compiler báo đỏ (server + web) — đi theo lỗi typecheck",
+              st: "todo",
+            },
+            {
+              t: "Settings key providers.omp.agentDir (mirror providers.pi.agentDir — escape hatch)",
+              st: "todo",
+            },
+          ],
+          accept:
+            "<b>Kiểm tra:</b> <code>bun typecheck</code> xanh toàn workspace. Chưa có gì thay đổi trong UI — đúng dự kiến.",
+          unlock: [],
+          prompt: `Làm Phase 1 của M4 theo docs/plans/omp-integration.html (tab Plan):
 - Tạo branch app/omp-adapter từ main.
 - Thêm "omp" vào ProviderKind (packages/contracts/src/orchestration.ts:56), thêm OmpModelSelection mirror PiModelSelection (dòng 139), getDefaultModel("omp") → null.
 - Sửa mọi exhaustive switch mà bun typecheck báo, mirror nhánh pi.
 - Thêm settings providers.omp.agentDir mirror providers.pi.agentDir.
 - Verify: bun typecheck xanh. KHÔNG làm adapter ở phase này.
-- Xong: cập nhật status trong docs/plans/omp-integration.html (Phase 1 → done) + docs/STATE.md, commit riêng "app: add omp provider kind (M4 phase 1)".`
-},
-{
-  id:2, name:"Phase 2 — Walking skeleton (chat được!)", st:"todo",
-  goal:"Lát cắt dọc mỏng nhất: tạo thread OMP trong ADE, chat streaming, kill sạch. Lộ sớm 2 risk lifecycle.",
-  tasks:[
-    {t:"Pin exact @oh-my-pi/* mới nhất vào apps/server/package.json (KHÔNG dùng ^)", st:"todo"},
-    {t:"Services/OmpAdapter.ts — service tag, mirror Services/PiAdapter.ts (21 dòng)", st:"todo"},
-    {t:"Layers/OmpAdapter.ts — lazy import SDK; createAgentSession({cwd, agentDir, hasUI:false→true khi bridge, enableIrc:false, skipPythonPreflight:true, enableMCP:false tạm, enableLsp:false tạm})", st:"todo"},
-    {t:"startSession / sendTurn (session.prompt) / steerTurn (session.steer) / interruptTurn (session.abort) / stopSession+stopAll (abort+dispose) / listSessions / hasSession / readThread", st:"todo"},
-    {t:"Event switch tối thiểu: turn_start/end, message_start/update/end (text), agent_end — xử lý isTerminal ĐÚNG ngay từ đầu (chỉ complete turn khi isTerminal !== false)", st:"todo"},
-    {t:"listModels từ ModelRegistry.getAvailable()", st:"todo"},
-    {t:"Wire vào runtimeLayer.ts (cạnh makePiAdapterLive dòng 81) + ProviderAdapterRegistry.ts:46 + web provider entry (label/icon tối thiểu)", st:"todo"},
-  ],
-  accept:"<b>Kiểm tra (bạn tự làm):</b> chạy dev instance cô lập (lệnh trong AGENTS.md §Local Dev Instance Isolation), tạo thread provider OMP, gõ một câu — thấy text streaming về. Bấm stop thread → <code>ps aux | grep omp</code> không còn gì của thread.",
-  unlock:["Chat với OMP ngay trong ADE (text streaming, chọn model từ registry OMP)"],
-  prompt:`Làm Phase 2 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
+- Xong: cập nhật status trong docs/plans/omp-integration.html (Phase 1 → done) + docs/STATE.md, commit riêng "app: add omp provider kind (M4 phase 1)".`,
+        },
+        {
+          id: 2,
+          name: "Phase 2 — Walking skeleton (chat được!)",
+          st: "todo",
+          goal: "Lát cắt dọc mỏng nhất: tạo thread OMP trong ADE, chat streaming, kill sạch. Lộ sớm 2 risk lifecycle.",
+          tasks: [
+            {
+              t: "Pin exact @oh-my-pi/* mới nhất vào apps/server/package.json (KHÔNG dùng ^)",
+              st: "todo",
+            },
+            {
+              t: "Services/OmpAdapter.ts — service tag, mirror Services/PiAdapter.ts (21 dòng)",
+              st: "todo",
+            },
+            {
+              t: "Layers/OmpAdapter.ts — lazy import SDK; createAgentSession({cwd, agentDir, hasUI:false→true khi bridge, enableIrc:false, skipPythonPreflight:true, enableMCP:false tạm, enableLsp:false tạm})",
+              st: "todo",
+            },
+            {
+              t: "startSession / sendTurn (session.prompt) / steerTurn (session.steer) / interruptTurn (session.abort) / stopSession+stopAll (abort+dispose) / listSessions / hasSession / readThread",
+              st: "todo",
+            },
+            {
+              t: "Event switch tối thiểu: turn_start/end, message_start/update/end (text), agent_end — xử lý isTerminal ĐÚNG ngay từ đầu (chỉ complete turn khi isTerminal !== false)",
+              st: "todo",
+            },
+            { t: "listModels từ ModelRegistry.getAvailable()", st: "todo" },
+            {
+              t: "Wire vào runtimeLayer.ts (cạnh makePiAdapterLive dòng 81) + ProviderAdapterRegistry.ts:46 + web provider entry (label/icon tối thiểu)",
+              st: "todo",
+            },
+          ],
+          accept:
+            "<b>Kiểm tra (bạn tự làm):</b> chạy dev instance cô lập (lệnh trong AGENTS.md §Local Dev Instance Isolation), tạo thread provider OMP, gõ một câu — thấy text streaming về. Bấm stop thread → <code>ps aux | grep omp</code> không còn gì của thread.",
+          unlock: ["Chat với OMP ngay trong ADE (text streaming, chọn model từ registry OMP)"],
+          prompt: `Làm Phase 2 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
 - Pin exact @oh-my-pi/pi-coding-agent (+ pi-agent-core, pi-ai nếu cần type) vào apps/server.
 - Tạo Services/OmpAdapter.ts (mirror Services/PiAdapter.ts) và Layers/OmpAdapter.ts:
   lazy-load SDK như PiAdapter.ts:317-322; createAgentSession với enableIrc:false, skipPythonPreflight:true, enableMCP:false, enableLsp:false (tạm, có comment lý do);
@@ -263,161 +662,465 @@ const PLAN_DATA = [
   event switch tối thiểu turn+message text; agent_end chỉ complete turn khi isTerminal !== false (tham chiếu spike: agent_settled KHÔNG tồn tại trong OMP).
 - Wire runtimeLayer.ts + ProviderAdapterRegistry.ts + web provider entry tối thiểu.
 - Smoke test: dev instance .ade-dev, tạo thread omp, chat, stop thread, kiểm tra không leak process.
-- Xong: cập nhật docs/plans/omp-integration.html (Phase 2 done) + STATE.md. Không chạy full test suite giữa chừng.`
-},
-{
-  id:3, name:"Phase 3 — Event mapping v1 + 2 risks", st:"todo",
-  goal:"Trải nghiệm ngang PiAdapter hiện tại + nền móng background tools (2 risk rows).",
-  tasks:[
-    {t:"Tool items: tool_execution_start/update/end → item lifecycle (port toolLifecycleData, toolDetailText từ PiAdapter)", st:"todo"},
-    {t:"Reasoning items (phân biệt thinking blocks trong message payload)", st:"todo"},
-    {t:"Token usage: getSessionStats() → normalizeTokenUsage (đối chiếu shape 17.x)", st:"todo"},
-    {t:"ompTurnFailure.ts — phân loại lỗi terminal (nhẹ hơn pi: auto-retry đã nằm trong engine)", st:"todo"},
-    {t:"Status items: auto_compaction_start/end (4 action), auto_retry_*, retry_fallback_*, notice, thinking_level_changed", st:"todo"},
-    {t:"todo_reminder / todo_auto_clear → runtimeTaskList.ts (concept có sẵn, không cần contract mới)", st:"todo"},
-    {t:"RISK #1: turn tự phát từ async delivery — verify providerRuntimeEventIngress + Reconciler không drop turn không do sendTurn khởi tạo", st:"todo"},
-    {t:"RISK #2: watchdog turn mới quanh isTerminal (thay thế logic agent_settled của pi, PI_TURN_INACTIVITY_TIMEOUT_MS pattern)", st:"todo"},
-  ],
-  accept:"<b>Kiểm tra:</b> trong thread OMP nhờ agent chạy <code>bash async:true</code> một lệnh ~20s rồi cứ để đó — khi job xong, một follow-up turn tự hiện trong UI với kết quả. Tool calls hiện title/detail/exit code như thread pi.",
-  unlock:["Tool calls hiển thị đầy đủ như pi","Background jobs: kết quả tự về thread (móng cho background tools của bạn)","Compaction/retry/notice hiện status","Todo của OMP hiện trong task list"],
-  prompt:`Làm Phase 3 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
+- Xong: cập nhật docs/plans/omp-integration.html (Phase 2 done) + STATE.md. Không chạy full test suite giữa chừng.`,
+        },
+        {
+          id: 3,
+          name: "Phase 3 — Event mapping v1 + 2 risks",
+          st: "todo",
+          goal: "Trải nghiệm ngang PiAdapter hiện tại + nền móng background tools (2 risk rows).",
+          tasks: [
+            {
+              t: "Tool items: tool_execution_start/update/end → item lifecycle (port toolLifecycleData, toolDetailText từ PiAdapter)",
+              st: "todo",
+            },
+            { t: "Reasoning items (phân biệt thinking blocks trong message payload)", st: "todo" },
+            {
+              t: "Token usage: getSessionStats() → normalizeTokenUsage (đối chiếu shape 17.x)",
+              st: "todo",
+            },
+            {
+              t: "ompTurnFailure.ts — phân loại lỗi terminal (nhẹ hơn pi: auto-retry đã nằm trong engine)",
+              st: "todo",
+            },
+            {
+              t: "Status items: auto_compaction_start/end (4 action), auto_retry_*, retry_fallback_*, notice, thinking_level_changed",
+              st: "todo",
+            },
+            {
+              t: "todo_reminder / todo_auto_clear → runtimeTaskList.ts (concept có sẵn, không cần contract mới)",
+              st: "todo",
+            },
+            {
+              t: "RISK #1: turn tự phát từ async delivery — verify providerRuntimeEventIngress + Reconciler không drop turn không do sendTurn khởi tạo",
+              st: "todo",
+            },
+            {
+              t: "RISK #2: watchdog turn mới quanh isTerminal (thay thế logic agent_settled của pi, PI_TURN_INACTIVITY_TIMEOUT_MS pattern)",
+              st: "todo",
+            },
+          ],
+          accept:
+            "<b>Kiểm tra:</b> trong thread OMP nhờ agent chạy <code>bash async:true</code> một lệnh ~20s rồi cứ để đó — khi job xong, một follow-up turn tự hiện trong UI với kết quả. Tool calls hiện title/detail/exit code như thread pi.",
+          unlock: [
+            "Tool calls hiển thị đầy đủ như pi",
+            "Background jobs: kết quả tự về thread (móng cho background tools của bạn)",
+            "Compaction/retry/notice hiện status",
+            "Todo của OMP hiện trong task list",
+          ],
+          prompt: `Làm Phase 3 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
 - Hoàn thiện event mapping v1 trong Layers/OmpAdapter.ts: tool items (port toolLifecycleData/toolDetailText từ PiAdapter), reasoning, token usage (getSessionStats), status items cho auto_compaction_*/auto_retry_*/retry_fallback_*/notice/thinking_level_changed, todo_reminder → runtimeTaskList.
 - Tạo apps/server/src/provider/ompTurnFailure.ts (tham khảo piTurnFailure.ts, gọn hơn).
 - 2 RISK bắt buộc xanh: (1) turn tự phát từ async-result đi qua Ingress/Reconciler không bị drop — test bằng bash async:true; (2) watchdog turn dựa trên agent_end.isTerminal (OMP không có agent_settled).
 - Acceptance: bash async:true → follow-up turn hiện trong UI khi job xong.
-- Xong: cập nhật docs/plans/omp-integration.html + STATE.md.`
-},
-{
-  id:4, name:"Phase 4 — Bridge, extensions & gateway", st:"todo",
-  goal:"Harness extensions + nuncioade_* tools + các nút điều khiển.",
-  tasks:[
-    {t:"makeOmpExtensionUIContext (port makePiExtensionUIContext + askUserQuestions extra) → setToolUIContext(uiContext, true) từ CreateAgentSessionResult", st:"todo"},
-    {t:"respondToUserInput round-trip (pending map — port PiPendingUserInput)", st:"todo"},
-    {t:"Extension AskUserQuestion (harness/extensions/) chạy E2E dưới OMP qua legacy shim — điểm chứng minh harness sống", st:"todo"},
-    {t:"Gateway MCP: dựng MCPManager + connectServers({nuncioade: …}) → createAgentSession({mcpManager}); bật enableMCP:true", st:"todo"},
-    {t:"stopTask → session.asyncJobManager.cancel(jobId)", st:"todo"},
-    {t:"compactThread → session.compact() (one-liner đã verify)", st:"todo"},
-    {t:"listSkills / listCommands từ discoverSkills / discoverSlashCommands + getComposerCapabilities", st:"todo"},
-  ],
-  accept:"<b>Kiểm tra:</b> trong thread OMP, nhờ agent dùng tool AskUserQuestion → dialog câu hỏi hiện trong ADE, trả lời được. Nhờ agent gọi một nuncioade_* tool → chạy. Bấm compact thủ công → thấy compaction status.",
-  unlock:["Extensions harness của mình chạy trên OMP trong ADE","nuncioade_* gateway tools","Nút compact thủ công","Skills/commands của OMP hiện trong composer"],
-  prompt:`Làm Phase 4 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
+- Xong: cập nhật docs/plans/omp-integration.html + STATE.md.`,
+        },
+        {
+          id: 4,
+          name: "Phase 4 — Bridge, extensions & gateway",
+          st: "todo",
+          goal: "Harness extensions + nuncioade_* tools + các nút điều khiển.",
+          tasks: [
+            {
+              t: "makeOmpExtensionUIContext (port makePiExtensionUIContext + askUserQuestions extra) → setToolUIContext(uiContext, true) từ CreateAgentSessionResult",
+              st: "todo",
+            },
+            {
+              t: "respondToUserInput round-trip (pending map — port PiPendingUserInput)",
+              st: "todo",
+            },
+            {
+              t: "Extension AskUserQuestion (harness/extensions/) chạy E2E dưới OMP qua legacy shim — điểm chứng minh harness sống",
+              st: "todo",
+            },
+            {
+              t: "Gateway MCP: dựng MCPManager + connectServers({nuncioade: …}) → createAgentSession({mcpManager}); bật enableMCP:true",
+              st: "todo",
+            },
+            { t: "stopTask → session.asyncJobManager.cancel(jobId)", st: "todo" },
+            { t: "compactThread → session.compact() (one-liner đã verify)", st: "todo" },
+            {
+              t: "listSkills / listCommands từ discoverSkills / discoverSlashCommands + getComposerCapabilities",
+              st: "todo",
+            },
+          ],
+          accept:
+            "<b>Kiểm tra:</b> trong thread OMP, nhờ agent dùng tool AskUserQuestion → dialog câu hỏi hiện trong ADE, trả lời được. Nhờ agent gọi một nuncioade_* tool → chạy. Bấm compact thủ công → thấy compaction status.",
+          unlock: [
+            "Extensions harness của mình chạy trên OMP trong ADE",
+            "nuncioade_* gateway tools",
+            "Nút compact thủ công",
+            "Skills/commands của OMP hiện trong composer",
+          ],
+          prompt: `Làm Phase 4 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
 - Port makePiExtensionUIContext (PiAdapter.ts:1466-1693) sang OMP: setToolUIContext(uiContext, true), giữ askUserQuestions feature-detect; respondToUserInput round-trip.
 - Verify extension harness/extensions/AskUserQuestion E2E dưới OMP (legacy @earendil-works shim) — nếu cần sửa extension, extension + bridge cùng MỘT commit (luật AGENTS.md).
 - Gateway MCP: MCPManager.connectServers với nuncioade gateway config (tham khảo buildOpenCodeMcpServer / mcpInjection.ts), truyền mcpManager vào createAgentSession, bật enableMCP:true.
 - stopTask → asyncJobManager.cancel; compactThread → session.compact(); listSkills/listCommands qua discoverSkills/discoverSlashCommands.
 - Acceptance: AskUserQuestion dialog E2E + nuncioade_* tool call + compact thủ công chạy.
-- Xong: cập nhật docs/plans/omp-integration.html + STATE.md.`
-},
-{
-  id:5, name:"Phase 5 — Hardening & daily-driver gate", st:"todo",
-  goal:"Từ \"chạy trong dev\" đến \"tin được làm daily driver\".",
-  tasks:[
-    {t:"Electron build thật (bun run build:desktop): native deps (pi-natives/brush, onnxruntime) load OK trong app backend — RISK #3", st:"todo"},
-    {t:"Resume session sau restart server (session file cursor — pattern extractResumeSessionFile)", st:"todo"},
-    {t:"Cân nhắc bật lại enableLsp / eval preflight theo settings (mỗi cờ một quyết định có ghi chú)", st:"todo"},
-    {t:"bun fmt + bun lint + bun typecheck + bun run test — một lượt cuối", st:"todo"},
-    {t:"Docs: STATE.md (M4 → done, bisect tool đổi sang omp CLI chính thức), DECISIONS.md entry chốt thiết kế adapter, AGENTS.md nếu có gì sai lệch", st:"todo"},
-    {t:"Dogfood: dùng OMP thread trong NuncioADE.app ít nhất vài ngày trước khi nghĩ tới release (user quyết định release, agent không tag)", st:"todo"},
-  ],
-  accept:"<b>Kiểm tra:</b> app build cài thật, thread OMP chạy trong app (không phải dev instance), restart app → thread resume được.",
-  unlock:["OMP là daily driver trong NuncioADE.app — mục tiêu OMP-first hoàn thành vòng đầu"],
-  prompt:`Làm Phase 5 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
+- Xong: cập nhật docs/plans/omp-integration.html + STATE.md.`,
+        },
+        {
+          id: 5,
+          name: "Phase 5 — Hardening & daily-driver gate",
+          st: "todo",
+          goal: 'Từ "chạy trong dev" đến "tin được làm daily driver".',
+          tasks: [
+            {
+              t: "Electron build thật (bun run build:desktop): native deps (pi-natives/brush, onnxruntime) load OK trong app backend — RISK #3",
+              st: "todo",
+            },
+            {
+              t: "Resume session sau restart server (session file cursor — pattern extractResumeSessionFile)",
+              st: "todo",
+            },
+            {
+              t: "Cân nhắc bật lại enableLsp / eval preflight theo settings (mỗi cờ một quyết định có ghi chú)",
+              st: "todo",
+            },
+            { t: "bun fmt + bun lint + bun typecheck + bun run test — một lượt cuối", st: "todo" },
+            {
+              t: "Docs: STATE.md (M4 → done, bisect tool đổi sang omp CLI chính thức), DECISIONS.md entry chốt thiết kế adapter, AGENTS.md nếu có gì sai lệch",
+              st: "todo",
+            },
+            {
+              t: "Dogfood: dùng OMP thread trong NuncioADE.app ít nhất vài ngày trước khi nghĩ tới release (user quyết định release, agent không tag)",
+              st: "todo",
+            },
+          ],
+          accept:
+            "<b>Kiểm tra:</b> app build cài thật, thread OMP chạy trong app (không phải dev instance), restart app → thread resume được.",
+          unlock: [
+            "OMP là daily driver trong NuncioADE.app — mục tiêu OMP-first hoàn thành vòng đầu",
+          ],
+          prompt: `Làm Phase 5 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
 - bun run build:desktop, cài và smoke-test thread OMP trong app build thật (chú ý native deps pi-natives/onnxruntime — RISK #3).
 - Implement resume session sau restart (session file cursor).
 - Rà lại feature flags (enableLsp, preflight) — mỗi cờ một ghi chú lý do.
 - Verify cuối: bun fmt + bun lint + bun typecheck + bun run test.
 - Cập nhật STATE.md (M4 done), append DECISIONS.md entry, docs/plans/omp-integration.html → done toàn bộ.
-- KHÔNG release/tag — đó là quyết định của user sau khi dogfood.`
-},
-];
+- KHÔNG release/tag — đó là quyết định của user sau khi dogfood.`,
+        },
+      ];
 
-/* ========================= COVERAGE DATA ========================= */
-const COV_DATA = [
-{s:"A. Contract adapter (ProviderAdapterShape) — bắt buộc thỏa để thành provider",rows:[
-{n:"<code>provider: \"omp\"</code> + <code>capabilities</code>",st:"v1",note:"Khai báo tĩnh. supportsTurnSteering=true (session.steer có thật), supportsRuntimeModelList=true. Các cờ khác mirror PiAdapter lúc đầu."},
-{n:"<code>startSession</code>",st:"v1",note:"createAgentSession({cwd, agentDir, hasUI:false, enableIrc:false, mcpManager?, sessionManager?}) — 1 call duy nhất, đơn giản hơn pi (không còn cặp Services/FromServices). Spike: 132ms.",spike:1},
-{n:"<code>sendTurn</code>",st:"v1",note:"session.prompt(text, {images}) — fire-and-forget, kết quả về qua subscribe. Giống hệt pattern pi.",spike:1},
-{n:"<code>steerTurn</code>",st:"v1",note:"session.steer(text, images) — agent-session.ts:5192."},
-{n:"<code>interruptTurn</code>",st:"v1",note:"session.abort({reason}) — spike xác nhận abort MỘT MÌNH đã reap process con (/bin/sleep 300 chết ngay, không cần dispose).",spike:1},
-{n:"<code>stopSession</code> / <code>stopAll</code>",st:"v1",note:"abort() + dispose() (agent-session.ts:3390). Idempotent theo contract. Spike verify không leak process.",spike:1},
-{n:"<code>respondToUserInput</code>",st:"v1",note:"Round-trip qua uiContext (pending map resolve) — port nguyên pattern PiAdapter (PiPendingUserInput)."},
-{n:"<code>respondToRequest</code> (approvals)",st:"v1",note:"v1 = unsupported no-op giống pi (OMP unopinionated, autoApprove ở SDK mode). Sau này có thể nối vào approval system của OMP nếu muốn."},
-{n:"<code>listSessions</code> / <code>hasSession</code> / <code>readThread</code>",st:"v1",note:"In-memory session map + mapMessageHistory tương đương (session.messages). Same as pi."},
-{n:"<code>listModels</code>",st:"v1",note:"ModelRegistry.getAvailable() — spike đã thấy registry hoạt động (resolve claude-fable-5 từ settings user).",spike:1},
-{n:"<code>listSkills</code> / <code>listCommands</code>",st:"free",note:"OMP export sẵn discoverSkills / discoverSlashCommands / discoverCustomTSCommands (sdk.ts:727,764,771) — chỉ cần map kết quả sang contract."},
-{n:"<code>stopTask</code> (dừng background task)",st:"v1",note:"Glue sang session.asyncJobManager.cancel(jobId) — móc nối đầu tiên cho tham vọng background tools. Contract NuncioADE ĐÃ chừa slot này sẵn (ProviderAdapter.ts:143)."},
-{n:"<code>compactThread</code>",st:"v1",note:"Nâng từ later → v1 sau khi verify: session.compact(instructions?) là method trực tiếp trên AgentSession (agent-session.ts:5084) — glue 1 dòng. Lưu ý: đây chỉ là nút compact THỦ CÔNG; auto-compaction (4 action: context-full/handoff/shake/snapcompact) chạy trong engine bất kể adapter, v1 đã map event auto_compaction_start/end."},
-{n:"<code>rollbackThread</code>",st:"later",note:"OMP sessionManager có branching/leafId như pi nhưng cần verify API 17.x. Pi làm qua leafId; port sau v1. Fallback: conversationRollback \"restart-session\" của NuncioADE dùng được trước."},
-{n:"<code>forkThread</code>",st:"later",note:"Session file + branching của OMP hỗ trợ về nguyên tắc; cần map cursor. Fallback conversation-history-fork của NuncioADE dùng được trước."},
-{n:"<code>readExternalThread</code>",st:"later",note:"Đọc session file OMP đã persist mà không cần binding — cần hiểu format storage (agent.db/history.db) trước."},
-{n:"<code>steerSubagent</code>",st:"later",note:"OMP có hub/IRC send tới subagent — khả thi và hay, nhưng sau v1."},
-{n:"<code>backgroundTask</code> (đẩy foreground → background)",st:"later",note:"OMP quyết async lúc gọi tool (async:true), chưa thấy API chuyển giữa chừng. Cần nghiên cứu thêm."},
-{n:"<code>listPlugins</code> / <code>readPlugin</code> / <code>listAgents</code> / <code>startReview</code> / <code>transcribeVoice</code>",st:"later",note:"OMP có plugins + agents dir — surface dần khi UI cần. Không chặn v1."},
-]},
-{s:"B. Event mapping — OMP AgentSessionEvent → ProviderRuntimeEvent",rows:[
-{n:"<code>agent_start</code> / <code>turn_start</code> / <code>turn_end</code>",st:"v1",note:"Khung turn lifecycle. Spike quan sát đủ.",spike:1},
-{n:"<code>message_start/update/end</code> (assistant + reasoning)",st:"v1",note:"→ item.started/updated/completed cho assistant_message & reasoning (phân biệt qua block type trong payload). Spike: 23 update events trong 1 turn.",spike:1},
-{n:"<code>tool_execution_start/update/end</code>",st:"v1",note:"→ item tool call với title/detail/exitCode — port toolLifecycleData của PiAdapter. Spike quan sát cả 3.",spike:1},
-{n:"<code>agent_end</code> + <code>isTerminal</code>",st:"v1",risk:1,note:"⚠ THAY ĐỔI SEMANTICS LỚN NHẤT: pi có agent_settled, OMP bỏ hẳn (0 hit trong source) — thay bằng agent_end.isTerminal (false = async delivery sắp resume). Toàn bộ turn-outcome/watchdog logic viết mới quanh cờ này, không copy từ pi được.",spike:1},
-{n:"Turn tự phát từ async delivery (async-result)",st:"v1",risk:1,note:"⚠ RISK #2: job xong → OMP tự inject follow-up turn KHÔNG QUA sendTurn (yield-queue idle flush, session/async-job-delivery.ts). Phải kiểm tra providerRuntimeEventIngress + Reconciler chấp nhận turn không do NuncioADE khởi tạo. Đây là điều kiện tiên quyết cho background tools."},
-{n:"<code>auto_compaction_start/end</code>",st:"v1",note:"→ status item context_compaction (pi đã có pattern compaction_end). 4 action: context-full/handoff/shake/snapcompact — hiển thị action trong title."},
-{n:"<code>auto_retry_start/end</code> + <code>retry_fallback_applied/succeeded</code>",st:"v1",note:"→ status item + phối hợp ompTurnFailure. Đây là turn-resilience mà branch app/pi-turn-resilience đang làm cho pi — OMP cho free ở tầng engine."},
-{n:"<code>notice</code> (info/warning/error)",st:"v1",note:"→ status item generic. Rẻ."},
-{n:"<code>thinking_level_changed</code>",st:"v1",note:"→ cập nhật session snapshot (thinking level hiện tại) — NuncioADE đã có chỗ hiển thị."},
-{n:"<code>todo_reminder</code> / <code>todo_auto_clear</code>",st:"v1",note:"Map cơ hội: NuncioADE có sẵn runtimeTaskList.ts — todos của OMP đậu vào concept task list hiện có, KHÔNG cần contract mới."},
-{n:"<code>irc_message</code>",st:"later",note:"Chat giữa các agent — v1 đi qua generic item + data. UI riêng khi làm sâu subagent."},
-{n:"<code>goal_updated</code> / <code>ttsr_triggered</code>",st:"later",note:"Goal mode & rule re-injection — generic item + data trước, UI sau nếu dùng."},
-]},
-{s:"C. Hạ tầng session & engine",rows:[
-{n:"Teardown process (bash brush kill-on-drop)",st:"free",note:"VERIFIED: OMP bash = brush-core (Rust) chạy in-process, track children native, kill-on-drop (bash-executor.ts:599). abort() reaps /bin/sleep 300 tức thì. KHÔNG CẦN port PiBashProcessSupervisor — xóa hẳn một mảng phức tạp so với pi. Lưu ý vui: `sleep` là builtin của brush nên không có OS process — spike phải dùng /bin/sleep mới thấy.",spike:1},
-{n:"Auth (đăng nhập provider)",st:"free",note:"discoverAuthStorage(~/.omp/agent) mặc định — dùng luôn login hiện có của user. Spike chạy bằng auth thật, không cấu hình gì."},
-{n:"Background jobs — nền tảng cho background tools",st:"free",note:"AsyncJobManager.register(type, label, run({jobId, signal, reportProgress})) + session.asyncJobManager public (agent-session.ts:1400). Extension/custom tool đăng ký job → kết quả tự deliver về session. ĐÂY là đường 'develop background tool' của mình: viết trong harness/extensions, không cần sửa engine. Adapter chỉ cần làm đúng 2 dòng risk ở mục B."},
-{n:"Model registry + thinking levels",st:"v1",note:"ModelRegistry + resolveThinkingLevelForModel của OMP (auto-thinking!). Bỏ được đống clamp thủ công của PiAdapter nếu OMP tự clamp — verify khi build."},
-{n:"Session persistence / resume",st:"v1",note:"sessionManager mặc định lưu dưới agentDir; resume qua session file như pi (extractResumeSessionFile pattern). Verify format khi build."},
-{n:"Token usage snapshot",st:"v1",note:"session.getSessionStats() (agent-session.ts:7725) — port normalizeTokenUsage, đối chiếu shape stats 17.x."},
-{n:"Phân loại lỗi turn (ompTurnFailure.ts)",st:"v1",note:"Bản sao có sửa của piTurnFailure — nhưng NHẸ hơn vì auto-retry/fallback đã nằm trong engine; adapter chủ yếu phân loại lỗi terminal."},
-{n:"Extension UI bridge (setToolUIContext + askUserQuestions)",st:"v1",note:"Port makePiExtensionUIContext → setToolUIContext(uiContext, hasUI) (CreateAgentSessionResult, sdk.ts:562). Acceptance: extension AskUserQuestion chạy E2E dưới OMP (legacy shim @earendil-works đã có sẵn trong engine)."},
-{n:"Gateway MCP injection (nuncioade_* tools)",st:"v1",note:"Đi đường CHUẨN như Claude/Codex/OpenCode: dựng MCPManager, connectServers({nuncioade: gatewayConfig}) rồi truyền qua createAgentSession({mcpManager}) — bỏ đường customTools đặc thù của pi. Đồng nhất codebase."},
-{n:"Native deps dưới desktop backend",st:"v1",risk:1,note:"⚠ RISK #3: @oh-my-pi/pi-natives (brush), onnxruntime-node (postinstall bị block vẫn chạy được spike — nhưng hindsight/embeddings có thể cần). Phải smoke-test trong app Electron build thật, không chỉ bun dev."},
-{n:"Cấu hình feature flags lúc nhúng",st:"v1",note:"Quyết định v1: enableIrc:false (tránh nhiễu registry trong server), enableLsp có thể bật sau, skipPythonPreflight:true, enableMCP:true (cho gateway + user servers). Mỗi cờ ghi rõ lý do trong code."},
-{n:"Lazy-load SDK + pin version chính xác",st:"v1",note:"Giữ pattern lazyModule của pi (OMP nặng hơn pi nhiều). Pin exact @oh-my-pi/* (17.1.3→17.1.6 trong vài ngày), track như engine-base thứ hai."},
-]},
-{s:"D. Delta trên đất NuncioADE (ngoài adapter)",rows:[
-{n:"<code>ProviderKind</code> + schemas trong packages/contracts",st:"v1",note:"Thêm \"omp\" vào union (Effect Schema, orchestration.ts:56). Chạm contracts = chạm WS protocol — làm sớm, một commit riêng, note kỹ cho upstream merge."},
-{n:"ProviderAdapterRegistry + ProviderService wiring",st:"v1",note:"Đăng ký OmpAdapterLive vào registry/layer stack — theo đúng khuôn PiAdapterLive (runtimeLayer.ts:81, ProviderAdapterRegistry.ts:46)."},
-{n:"Web UI: provider label/icon + model picker",st:"v1",note:"Tối thiểu: OMP hiện trong provider list, model picker đọc listModels. Không làm UI riêng cho event mới ở v1 (đúng Option 1)."},
-{n:"Settings: providers.omp.* (agentDir…)",st:"v1",note:"Mirror providers.pi.agentDir làm escape hatch."},
-{n:"Reconciler/lifecycle chấp nhận provider-initiated turns",st:"v1",risk:1,note:"⚠ Cùng gốc risk #2: providerRuntimeReconciliation + lifecycle coordinator phải không drop/quarantine turn tự phát. Kiểm chứng bằng test: bash async:true → job xong → follow-up turn hiển thị trong UI."},
-{n:"Docs: STATE.md M4 progress + DECISIONS khi chốt thiết kế",st:"v1",note:"Theo update triggers trong AGENTS.md — một phần của task, không phải việc riêng."},
-]},
-];
+      /* ========================= COVERAGE DATA ========================= */
+      const COV_DATA = [
+        {
+          s: "A. Contract adapter (ProviderAdapterShape) — bắt buộc thỏa để thành provider",
+          rows: [
+            {
+              n: '<code>provider: "omp"</code> + <code>capabilities</code>',
+              st: "v1",
+              note: "Khai báo tĩnh. supportsTurnSteering=true (session.steer có thật), supportsRuntimeModelList=true. Các cờ khác mirror PiAdapter lúc đầu.",
+            },
+            {
+              n: "<code>startSession</code>",
+              st: "v1",
+              note: "createAgentSession({cwd, agentDir, hasUI:false, enableIrc:false, mcpManager?, sessionManager?}) — 1 call duy nhất, đơn giản hơn pi (không còn cặp Services/FromServices). Spike: 132ms.",
+              spike: 1,
+            },
+            {
+              n: "<code>sendTurn</code>",
+              st: "v1",
+              note: "session.prompt(text, {images}) — fire-and-forget, kết quả về qua subscribe. Giống hệt pattern pi.",
+              spike: 1,
+            },
+            {
+              n: "<code>steerTurn</code>",
+              st: "v1",
+              note: "session.steer(text, images) — agent-session.ts:5192.",
+            },
+            {
+              n: "<code>interruptTurn</code>",
+              st: "v1",
+              note: "session.abort({reason}) — spike xác nhận abort MỘT MÌNH đã reap process con (/bin/sleep 300 chết ngay, không cần dispose).",
+              spike: 1,
+            },
+            {
+              n: "<code>stopSession</code> / <code>stopAll</code>",
+              st: "v1",
+              note: "abort() + dispose() (agent-session.ts:3390). Idempotent theo contract. Spike verify không leak process.",
+              spike: 1,
+            },
+            {
+              n: "<code>respondToUserInput</code>",
+              st: "v1",
+              note: "Round-trip qua uiContext (pending map resolve) — port nguyên pattern PiAdapter (PiPendingUserInput).",
+            },
+            {
+              n: "<code>respondToRequest</code> (approvals)",
+              st: "v1",
+              note: "v1 = unsupported no-op giống pi (OMP unopinionated, autoApprove ở SDK mode). Sau này có thể nối vào approval system của OMP nếu muốn.",
+            },
+            {
+              n: "<code>listSessions</code> / <code>hasSession</code> / <code>readThread</code>",
+              st: "v1",
+              note: "In-memory session map + mapMessageHistory tương đương (session.messages). Same as pi.",
+            },
+            {
+              n: "<code>listModels</code>",
+              st: "v1",
+              note: "ModelRegistry.getAvailable() — spike đã thấy registry hoạt động (resolve claude-fable-5 từ settings user).",
+              spike: 1,
+            },
+            {
+              n: "<code>listSkills</code> / <code>listCommands</code>",
+              st: "free",
+              note: "OMP export sẵn discoverSkills / discoverSlashCommands / discoverCustomTSCommands (sdk.ts:727,764,771) — chỉ cần map kết quả sang contract.",
+            },
+            {
+              n: "<code>stopTask</code> (dừng background task)",
+              st: "v1",
+              note: "Glue sang session.asyncJobManager.cancel(jobId) — móc nối đầu tiên cho tham vọng background tools. Contract NuncioADE ĐÃ chừa slot này sẵn (ProviderAdapter.ts:143).",
+            },
+            {
+              n: "<code>compactThread</code>",
+              st: "v1",
+              note: "Nâng từ later → v1 sau khi verify: session.compact(instructions?) là method trực tiếp trên AgentSession (agent-session.ts:5084) — glue 1 dòng. Lưu ý: đây chỉ là nút compact THỦ CÔNG; auto-compaction (4 action: context-full/handoff/shake/snapcompact) chạy trong engine bất kể adapter, v1 đã map event auto_compaction_start/end.",
+            },
+            {
+              n: "<code>rollbackThread</code>",
+              st: "later",
+              note: 'OMP sessionManager có branching/leafId như pi nhưng cần verify API 17.x. Pi làm qua leafId; port sau v1. Fallback: conversationRollback "restart-session" của NuncioADE dùng được trước.',
+            },
+            {
+              n: "<code>forkThread</code>",
+              st: "later",
+              note: "Session file + branching của OMP hỗ trợ về nguyên tắc; cần map cursor. Fallback conversation-history-fork của NuncioADE dùng được trước.",
+            },
+            {
+              n: "<code>readExternalThread</code>",
+              st: "later",
+              note: "Đọc session file OMP đã persist mà không cần binding — cần hiểu format storage (agent.db/history.db) trước.",
+            },
+            {
+              n: "<code>steerSubagent</code>",
+              st: "later",
+              note: "OMP có hub/IRC send tới subagent — khả thi và hay, nhưng sau v1.",
+            },
+            {
+              n: "<code>backgroundTask</code> (đẩy foreground → background)",
+              st: "later",
+              note: "OMP quyết async lúc gọi tool (async:true), chưa thấy API chuyển giữa chừng. Cần nghiên cứu thêm.",
+            },
+            {
+              n: "<code>listPlugins</code> / <code>readPlugin</code> / <code>listAgents</code> / <code>startReview</code> / <code>transcribeVoice</code>",
+              st: "later",
+              note: "OMP có plugins + agents dir — surface dần khi UI cần. Không chặn v1.",
+            },
+          ],
+        },
+        {
+          s: "B. Event mapping — OMP AgentSessionEvent → ProviderRuntimeEvent",
+          rows: [
+            {
+              n: "<code>agent_start</code> / <code>turn_start</code> / <code>turn_end</code>",
+              st: "v1",
+              note: "Khung turn lifecycle. Spike quan sát đủ.",
+              spike: 1,
+            },
+            {
+              n: "<code>message_start/update/end</code> (assistant + reasoning)",
+              st: "v1",
+              note: "→ item.started/updated/completed cho assistant_message & reasoning (phân biệt qua block type trong payload). Spike: 23 update events trong 1 turn.",
+              spike: 1,
+            },
+            {
+              n: "<code>tool_execution_start/update/end</code>",
+              st: "v1",
+              note: "→ item tool call với title/detail/exitCode — port toolLifecycleData của PiAdapter. Spike quan sát cả 3.",
+              spike: 1,
+            },
+            {
+              n: "<code>agent_end</code> + <code>isTerminal</code>",
+              st: "v1",
+              risk: 1,
+              note: "⚠ THAY ĐỔI SEMANTICS LỚN NHẤT: pi có agent_settled, OMP bỏ hẳn (0 hit trong source) — thay bằng agent_end.isTerminal (false = async delivery sắp resume). Toàn bộ turn-outcome/watchdog logic viết mới quanh cờ này, không copy từ pi được.",
+              spike: 1,
+            },
+            {
+              n: "Turn tự phát từ async delivery (async-result)",
+              st: "v1",
+              risk: 1,
+              note: "⚠ RISK #2: job xong → OMP tự inject follow-up turn KHÔNG QUA sendTurn (yield-queue idle flush, session/async-job-delivery.ts). Phải kiểm tra providerRuntimeEventIngress + Reconciler chấp nhận turn không do NuncioADE khởi tạo. Đây là điều kiện tiên quyết cho background tools.",
+            },
+            {
+              n: "<code>auto_compaction_start/end</code>",
+              st: "v1",
+              note: "→ status item context_compaction (pi đã có pattern compaction_end). 4 action: context-full/handoff/shake/snapcompact — hiển thị action trong title.",
+            },
+            {
+              n: "<code>auto_retry_start/end</code> + <code>retry_fallback_applied/succeeded</code>",
+              st: "v1",
+              note: "→ status item + phối hợp ompTurnFailure. Đây là turn-resilience mà branch app/pi-turn-resilience đang làm cho pi — OMP cho free ở tầng engine.",
+            },
+            {
+              n: "<code>notice</code> (info/warning/error)",
+              st: "v1",
+              note: "→ status item generic. Rẻ.",
+            },
+            {
+              n: "<code>thinking_level_changed</code>",
+              st: "v1",
+              note: "→ cập nhật session snapshot (thinking level hiện tại) — NuncioADE đã có chỗ hiển thị.",
+            },
+            {
+              n: "<code>todo_reminder</code> / <code>todo_auto_clear</code>",
+              st: "v1",
+              note: "Map cơ hội: NuncioADE có sẵn runtimeTaskList.ts — todos của OMP đậu vào concept task list hiện có, KHÔNG cần contract mới.",
+            },
+            {
+              n: "<code>irc_message</code>",
+              st: "later",
+              note: "Chat giữa các agent — v1 đi qua generic item + data. UI riêng khi làm sâu subagent.",
+            },
+            {
+              n: "<code>goal_updated</code> / <code>ttsr_triggered</code>",
+              st: "later",
+              note: "Goal mode & rule re-injection — generic item + data trước, UI sau nếu dùng.",
+            },
+          ],
+        },
+        {
+          s: "C. Hạ tầng session & engine",
+          rows: [
+            {
+              n: "Teardown process (bash brush kill-on-drop)",
+              st: "free",
+              note: "VERIFIED: OMP bash = brush-core (Rust) chạy in-process, track children native, kill-on-drop (bash-executor.ts:599). abort() reaps /bin/sleep 300 tức thì. KHÔNG CẦN port PiBashProcessSupervisor — xóa hẳn một mảng phức tạp so với pi. Lưu ý vui: `sleep` là builtin của brush nên không có OS process — spike phải dùng /bin/sleep mới thấy.",
+              spike: 1,
+            },
+            {
+              n: "Auth (đăng nhập provider)",
+              st: "free",
+              note: "discoverAuthStorage(~/.omp/agent) mặc định — dùng luôn login hiện có của user. Spike chạy bằng auth thật, không cấu hình gì.",
+            },
+            {
+              n: "Background jobs — nền tảng cho background tools",
+              st: "free",
+              note: "AsyncJobManager.register(type, label, run({jobId, signal, reportProgress})) + session.asyncJobManager public (agent-session.ts:1400). Extension/custom tool đăng ký job → kết quả tự deliver về session. ĐÂY là đường 'develop background tool' của mình: viết trong harness/extensions, không cần sửa engine. Adapter chỉ cần làm đúng 2 dòng risk ở mục B.",
+            },
+            {
+              n: "Model registry + thinking levels",
+              st: "v1",
+              note: "ModelRegistry + resolveThinkingLevelForModel của OMP (auto-thinking!). Bỏ được đống clamp thủ công của PiAdapter nếu OMP tự clamp — verify khi build.",
+            },
+            {
+              n: "Session persistence / resume",
+              st: "v1",
+              note: "sessionManager mặc định lưu dưới agentDir; resume qua session file như pi (extractResumeSessionFile pattern). Verify format khi build.",
+            },
+            {
+              n: "Token usage snapshot",
+              st: "v1",
+              note: "session.getSessionStats() (agent-session.ts:7725) — port normalizeTokenUsage, đối chiếu shape stats 17.x.",
+            },
+            {
+              n: "Phân loại lỗi turn (ompTurnFailure.ts)",
+              st: "v1",
+              note: "Bản sao có sửa của piTurnFailure — nhưng NHẸ hơn vì auto-retry/fallback đã nằm trong engine; adapter chủ yếu phân loại lỗi terminal.",
+            },
+            {
+              n: "Extension UI bridge (setToolUIContext + askUserQuestions)",
+              st: "v1",
+              note: "Port makePiExtensionUIContext → setToolUIContext(uiContext, hasUI) (CreateAgentSessionResult, sdk.ts:562). Acceptance: extension AskUserQuestion chạy E2E dưới OMP (legacy shim @earendil-works đã có sẵn trong engine).",
+            },
+            {
+              n: "Gateway MCP injection (nuncioade_* tools)",
+              st: "v1",
+              note: "Đi đường CHUẨN như Claude/Codex/OpenCode: dựng MCPManager, connectServers({nuncioade: gatewayConfig}) rồi truyền qua createAgentSession({mcpManager}) — bỏ đường customTools đặc thù của pi. Đồng nhất codebase.",
+            },
+            {
+              n: "Native deps dưới desktop backend",
+              st: "v1",
+              risk: 1,
+              note: "⚠ RISK #3: @oh-my-pi/pi-natives (brush), onnxruntime-node (postinstall bị block vẫn chạy được spike — nhưng hindsight/embeddings có thể cần). Phải smoke-test trong app Electron build thật, không chỉ bun dev.",
+            },
+            {
+              n: "Cấu hình feature flags lúc nhúng",
+              st: "v1",
+              note: "Quyết định v1: enableIrc:false (tránh nhiễu registry trong server), enableLsp có thể bật sau, skipPythonPreflight:true, enableMCP:true (cho gateway + user servers). Mỗi cờ ghi rõ lý do trong code.",
+            },
+            {
+              n: "Lazy-load SDK + pin version chính xác",
+              st: "v1",
+              note: "Giữ pattern lazyModule của pi (OMP nặng hơn pi nhiều). Pin exact @oh-my-pi/* (17.1.3→17.1.6 trong vài ngày), track như engine-base thứ hai.",
+            },
+          ],
+        },
+        {
+          s: "D. Delta trên đất NuncioADE (ngoài adapter)",
+          rows: [
+            {
+              n: "<code>ProviderKind</code> + schemas trong packages/contracts",
+              st: "v1",
+              note: 'Thêm "omp" vào union (Effect Schema, orchestration.ts:56). Chạm contracts = chạm WS protocol — làm sớm, một commit riêng, note kỹ cho upstream merge.',
+            },
+            {
+              n: "ProviderAdapterRegistry + ProviderService wiring",
+              st: "v1",
+              note: "Đăng ký OmpAdapterLive vào registry/layer stack — theo đúng khuôn PiAdapterLive (runtimeLayer.ts:81, ProviderAdapterRegistry.ts:46).",
+            },
+            {
+              n: "Web UI: provider label/icon + model picker",
+              st: "v1",
+              note: "Tối thiểu: OMP hiện trong provider list, model picker đọc listModels. Không làm UI riêng cho event mới ở v1 (đúng Option 1).",
+            },
+            {
+              n: "Settings: providers.omp.* (agentDir…)",
+              st: "v1",
+              note: "Mirror providers.pi.agentDir làm escape hatch.",
+            },
+            {
+              n: "Reconciler/lifecycle chấp nhận provider-initiated turns",
+              st: "v1",
+              risk: 1,
+              note: "⚠ Cùng gốc risk #2: providerRuntimeReconciliation + lifecycle coordinator phải không drop/quarantine turn tự phát. Kiểm chứng bằng test: bash async:true → job xong → follow-up turn hiển thị trong UI.",
+            },
+            {
+              n: "Docs: STATE.md M4 progress + DECISIONS khi chốt thiết kế",
+              st: "v1",
+              note: "Theo update triggers trong AGENTS.md — một phần của task, không phải việc riêng.",
+            },
+          ],
+        },
+      ];
 
-/* ========================= tabs ========================= */
-const sections = { plan: document.getElementById("view-plan"), coverage: document.getElementById("view-coverage") };
-function showTab(name) {
-  document.querySelectorAll(".tabs button").forEach(b =>
-    b.classList.toggle("on", b.dataset.tab === name));
-  Object.entries(sections).forEach(([k, el]) => el.classList.toggle("on", k === name));
-  history.replaceState(null, "", "#" + name);
-}
-document.querySelectorAll(".tabs button").forEach(b =>
-  b.addEventListener("click", () => showTab(b.dataset.tab)));
-if (location.hash === "#coverage") showTab("coverage");
+      /* ========================= tabs ========================= */
+      const sections = {
+        plan: document.getElementById("view-plan"),
+        coverage: document.getElementById("view-coverage"),
+      };
+      function showTab(name) {
+        document
+          .querySelectorAll(".tabs button")
+          .forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
+        Object.entries(sections).forEach(([k, el]) => el.classList.toggle("on", k === name));
+        history.replaceState(null, "", "#" + name);
+      }
+      document
+        .querySelectorAll(".tabs button")
+        .forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+      if (location.hash === "#coverage") showTab("coverage");
 
-/* ========================= plan render ========================= */
-const phasesEl = document.getElementById("phases");
-const STATUS_LABEL = { done: "done", doing: "đang làm", todo: "chưa làm" };
-PLAN_DATA.forEach(p => {
-  const el = document.createElement("div");
-  el.className = `phase ${p.st}`;
-  const tasks = p.tasks.map(t =>
-    `<div class="task ${t.st}"><span class="tdot"></span><span>${t.t}</span></div>`).join("");
-  const unlocks = p.unlock.length
-    ? `<div class="sec"><h4>Mở khóa sau phase này</h4><div class="unlock"><b>Dùng được:</b> ${p.unlock.join(" · ")}</div></div>` : "";
-  const promptSec = p.prompt
-    ? `<div class="sec"><h4>Prompt cho agent</h4><div class="promptbox">${p.prompt}</div></div>` : "";
-  el.innerHTML = `
+      /* ========================= plan render ========================= */
+      const phasesEl = document.getElementById("phases");
+      const STATUS_LABEL = { done: "done", doing: "đang làm", todo: "chưa làm" };
+      PLAN_DATA.forEach((p) => {
+        const el = document.createElement("div");
+        el.className = `phase ${p.st}`;
+        const tasks = p.tasks
+          .map(
+            (t) => `<div class="task ${t.st}"><span class="tdot"></span><span>${t.t}</span></div>`,
+          )
+          .join("");
+        const unlocks = p.unlock.length
+          ? `<div class="sec"><h4>Mở khóa sau phase này</h4><div class="unlock"><b>Dùng được:</b> ${p.unlock.join(" · ")}</div></div>`
+          : "";
+        const promptSec = p.prompt
+          ? `<div class="sec"><h4>Prompt cho agent</h4><div class="promptbox">${p.prompt}</div></div>`
+          : "";
+        el.innerHTML = `
     <div class="phase-head">
       <div class="phase-num">${p.id}</div>
       <div class="phase-title">${p.name}<small>${p.goal}</small></div>
@@ -428,88 +1131,98 @@ PLAN_DATA.forEach(p => {
       <div class="sec"><h4>Cách bạn tự kiểm tra</h4><div class="accept">${p.accept}</div></div>
       ${unlocks}${promptSec}
     </div>`;
-  el.querySelector(".phase-head").addEventListener("click", () => el.classList.toggle("open"));
-  phasesEl.appendChild(el);
-});
-const allTasks = PLAN_DATA.flatMap(p => p.tasks);
-const doneTasks = allTasks.filter(t => t.st === "done").length;
-const planPct = Math.round((doneTasks / allTasks.length) * 100);
-document.getElementById("planBarFill").style.width = planPct + "%";
-document.getElementById("planPct").textContent = planPct + "%";
-document.getElementById("planDetail").textContent =
-  `${doneTasks}/${allTasks.length} tasks · ${PLAN_DATA.filter(p => p.st === "done").length}/${PLAN_DATA.length} phases`;
-const unlocked = PLAN_DATA.filter(p => p.st === "done").flatMap(p => p.unlock);
-document.getElementById("unlockedList").innerHTML = unlocked.length
-  ? unlocked.map(u => `<li>${u}</li>`).join("")
-  : `<li class="none">Chưa có — Phase 2 sẽ mở khóa "chat với OMP trong ADE"</li>`;
-const next = PLAN_DATA.find(p => p.st !== "done");
-document.getElementById("nextName").textContent = next ? next.name : "M4 HOÀN THÀNH 🎉";
-document.getElementById("nextPrompt").textContent = next?.prompt ?? "Dogfood và tận hưởng.";
-const nextPhaseEl = next && phasesEl.children[next.id];
-if (nextPhaseEl) nextPhaseEl.classList.add("open");
-document.getElementById("copyBtn").addEventListener("click", async () => {
-  await navigator.clipboard.writeText(next?.prompt ?? "");
-  const ok = document.getElementById("copied");
-  ok.style.display = "inline";
-  setTimeout(() => { ok.style.display = "none"; }, 1500);
-});
+        el.querySelector(".phase-head").addEventListener("click", () =>
+          el.classList.toggle("open"),
+        );
+        phasesEl.appendChild(el);
+      });
+      const allTasks = PLAN_DATA.flatMap((p) => p.tasks);
+      const doneTasks = allTasks.filter((t) => t.st === "done").length;
+      const planPct = Math.round((doneTasks / allTasks.length) * 100);
+      document.getElementById("planBarFill").style.width = planPct + "%";
+      document.getElementById("planPct").textContent = planPct + "%";
+      document.getElementById("planDetail").textContent =
+        `${doneTasks}/${allTasks.length} tasks · ${PLAN_DATA.filter((p) => p.st === "done").length}/${PLAN_DATA.length} phases`;
+      const unlocked = PLAN_DATA.filter((p) => p.st === "done").flatMap((p) => p.unlock);
+      document.getElementById("unlockedList").innerHTML = unlocked.length
+        ? unlocked.map((u) => `<li>${u}</li>`).join("")
+        : `<li class="none">Chưa có — Phase 2 sẽ mở khóa "chat với OMP trong ADE"</li>`;
+      const next = PLAN_DATA.find((p) => p.st !== "done");
+      document.getElementById("nextName").textContent = next ? next.name : "M4 HOÀN THÀNH 🎉";
+      document.getElementById("nextPrompt").textContent = next?.prompt ?? "Dogfood và tận hưởng.";
+      const nextPhaseEl = next && phasesEl.children[next.id];
+      if (nextPhaseEl) nextPhaseEl.classList.add("open");
+      document.getElementById("copyBtn").addEventListener("click", async () => {
+        await navigator.clipboard.writeText(next?.prompt ?? "");
+        const ok = document.getElementById("copied");
+        ok.style.display = "inline";
+        setTimeout(() => {
+          ok.style.display = "none";
+        }, 1500);
+      });
 
-/* ========================= coverage render ========================= */
-const covList = document.getElementById("covList");
-let covRows = [];
-COV_DATA.forEach(sec => {
-  const h = document.createElement("h2");
-  const inScope = sec.rows.filter(r => r.st === "v1" || r.st === "free").length;
-  h.innerHTML = sec.s + ` <span class="cnt">(${inScope}/${sec.rows.length} trong Option 1)</span>`;
-  covList.appendChild(h);
-  sec.rows.forEach(r => {
-    const el = document.createElement("div");
-    el.className = "row";
-    el.dataset.st = r.st;
-    el.dataset.risk = r.risk ? "1" : "";
-    el.dataset.spike = r.spike ? "1" : "";
-    const chips =
-      `<span class="chip ${r.st}">${r.st}</span>` +
-      (r.risk ? `<span class="chip risk">⚠ risk</span>` : "") +
-      (r.spike ? `<span class="chip spike">spike ✓</span>` : "");
-    el.innerHTML = `<div class="row-head"><div class="row-name">${r.n}</div>${chips}</div>
+      /* ========================= coverage render ========================= */
+      const covList = document.getElementById("covList");
+      let covRows = [];
+      COV_DATA.forEach((sec) => {
+        const h = document.createElement("h2");
+        const inScope = sec.rows.filter((r) => r.st === "v1" || r.st === "free").length;
+        h.innerHTML =
+          sec.s + ` <span class="cnt">(${inScope}/${sec.rows.length} trong Option 1)</span>`;
+        covList.appendChild(h);
+        sec.rows.forEach((r) => {
+          const el = document.createElement("div");
+          el.className = "row";
+          el.dataset.st = r.st;
+          el.dataset.risk = r.risk ? "1" : "";
+          el.dataset.spike = r.spike ? "1" : "";
+          const chips =
+            `<span class="chip ${r.st}">${r.st}</span>` +
+            (r.risk ? `<span class="chip risk">⚠ risk</span>` : "") +
+            (r.spike ? `<span class="chip spike">spike ✓</span>` : "");
+          el.innerHTML = `<div class="row-head"><div class="row-name">${r.n}</div>${chips}</div>
       <div class="row-note">${r.note}</div>`;
-    el.addEventListener("click", () => el.classList.toggle("open"));
-    covList.appendChild(el);
-    covRows.push(el);
-  });
-});
-const covAll = COV_DATA.flatMap(s => s.rows);
-const covV1 = covAll.filter(r => r.st === "v1").length;
-const covFree = covAll.filter(r => r.st === "free").length;
-const covPct = Math.round(((covV1 + covFree) / covAll.length) * 100);
-document.getElementById("covBar").innerHTML =
-  `<div class="seg-v1" style="width:${(covV1 / covAll.length) * 100}%"></div>` +
-  `<div class="seg-free" style="width:${(covFree / covAll.length) * 100}%"></div>`;
-document.getElementById("covLabel").innerHTML =
-  `<b>${covV1 + covFree}/${covAll.length}</b> hạng mục (${covPct}%) — trong đó ${covFree} mục engine cho sẵn`;
-let covFilter = "all";
-const q = document.getElementById("q");
-function applyCov() {
-  const needle = q.value.toLowerCase();
-  covRows.forEach(el => {
-    const okF =
-      covFilter === "all" ? true :
-      covFilter === "risk" ? el.dataset.risk === "1" :
-      covFilter === "spike" ? el.dataset.spike === "1" :
-      el.dataset.st === covFilter;
-    const okQ = !needle || el.textContent.toLowerCase().includes(needle);
-    el.classList.toggle("hidden", !(okF && okQ));
-  });
-}
-document.querySelectorAll(".controls button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    covFilter = btn.dataset.f;
-    document.querySelectorAll(".controls button").forEach(b => b.classList.toggle("on", b === btn));
-    applyCov();
-  });
-});
-q.addEventListener("input", applyCov);
-</script>
-</body>
+          el.addEventListener("click", () => el.classList.toggle("open"));
+          covList.appendChild(el);
+          covRows.push(el);
+        });
+      });
+      const covAll = COV_DATA.flatMap((s) => s.rows);
+      const covV1 = covAll.filter((r) => r.st === "v1").length;
+      const covFree = covAll.filter((r) => r.st === "free").length;
+      const covPct = Math.round(((covV1 + covFree) / covAll.length) * 100);
+      document.getElementById("covBar").innerHTML =
+        `<div class="seg-v1" style="width:${(covV1 / covAll.length) * 100}%"></div>` +
+        `<div class="seg-free" style="width:${(covFree / covAll.length) * 100}%"></div>`;
+      document.getElementById("covLabel").innerHTML =
+        `<b>${covV1 + covFree}/${covAll.length}</b> hạng mục (${covPct}%) — trong đó ${covFree} mục engine cho sẵn`;
+      let covFilter = "all";
+      const q = document.getElementById("q");
+      function applyCov() {
+        const needle = q.value.toLowerCase();
+        covRows.forEach((el) => {
+          const okF =
+            covFilter === "all"
+              ? true
+              : covFilter === "risk"
+                ? el.dataset.risk === "1"
+                : covFilter === "spike"
+                  ? el.dataset.spike === "1"
+                  : el.dataset.st === covFilter;
+          const okQ = !needle || el.textContent.toLowerCase().includes(needle);
+          el.classList.toggle("hidden", !(okF && okQ));
+        });
+      }
+      document.querySelectorAll(".controls button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          covFilter = btn.dataset.f;
+          document
+            .querySelectorAll(".controls button")
+            .forEach((b) => b.classList.toggle("on", b === btn));
+          applyCov();
+        });
+      });
+      q.addEventListener("input", applyCov);
+    </script>
+  </body>
 </html>

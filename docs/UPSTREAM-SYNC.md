@@ -40,7 +40,7 @@ git merge vX.Y.Z --no-edit
 | `apps/**`, `packages/**` we never touched                                                                        | **Take theirs** (`git checkout --theirs`).                                                                                                                                         |
 | `apps/**`, `packages/**` we modified (bridge changes — check `git log main --oneline -- <file>` for our commits) | Real merge: keep upstream's restructuring AND re-apply our bridge change. Read both sides; do not blind-pick. Our bridge changes are small and noted in their commit messages.     |
 | `bun.lock`, `package.json` deps                                                                                  | Take theirs, then re-apply any of our own additions (grep for `@nuncio/` and packages upstream lacks), then `bun install` to regenerate the lock.                                  |
-| `"version"` in the four release package.json files                                                               | **Always keep ours** (ADE's own 0.0.x line; the merged NuncioADE tag is recorded in `UPSTREAM-BASE` instead).                                                                         |
+| `"version"` in the four release package.json files                                                               | **Always keep ours** (ADE's own 0.0.x line; the merged NuncioADE tag is recorded in `UPSTREAM-BASE` instead).                                                                      |
 
 After resolving: `git commit` (keep the merge commit; do not squash).
 

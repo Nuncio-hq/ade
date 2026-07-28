@@ -1669,7 +1669,8 @@ export const checkAntigravityProviderStatus = (
       authStatus: "unknown",
       version: parsedVersion,
       checkedAt,
-      message: "Antigravity CLI is installed, but NuncioADE could not verify login by listing models.",
+      message:
+        "Antigravity CLI is installed, but NuncioADE could not verify login by listing models.",
     } satisfies ServerProviderStatus;
   });
 

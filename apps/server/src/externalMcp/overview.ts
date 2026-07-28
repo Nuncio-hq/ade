@@ -75,7 +75,9 @@ export function buildExternalMcpOverviewNextSteps(
   return [
     "Call nuncioade_capabilities with a projectId to list the exact provider/model targets available to this integration.",
     ...(capabilities.has("tasks:create") ? ["Create work with nuncioade_create_task."] : []),
-    ...(capabilities.has("tasks:wait") ? ["Follow permitted work with nuncioade_wait_for_task."] : []),
+    ...(capabilities.has("tasks:wait")
+      ? ["Follow permitted work with nuncioade_wait_for_task."]
+      : []),
     ...(capabilities.has("tasks:read")
       ? ["Read permitted task results with nuncioade_read_task."]
       : []),

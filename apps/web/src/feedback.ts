@@ -109,9 +109,11 @@ export function formatFeedbackSummary(input: {
     .filter((row): row is [string, string] => row[1] !== null && row[1] !== "")
     .map(([label, value]) => `${label}: ${value}`);
 
-  return [`${lead} in NuncioADE ${diagnostics.appVersion}${usageContext}.`, "", ...detailLines].join(
-    "\n",
-  );
+  return [
+    `${lead} in NuncioADE ${diagnostics.appVersion}${usageContext}.`,
+    "",
+    ...detailLines,
+  ].join("\n");
 }
 
 export function buildFeedbackSubmission(input: {

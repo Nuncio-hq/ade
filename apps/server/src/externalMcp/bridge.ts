@@ -172,7 +172,9 @@ function parseRuntimeState(raw: string, sourcePath: string): PersistedServerRunt
     }
     return state as PersistedServerRuntimeState;
   } catch (cause) {
-    throw new ExternalMcpBridgeError(`Invalid NuncioADE runtime-state file: ${sourcePath}`, { cause });
+    throw new ExternalMcpBridgeError(`Invalid NuncioADE runtime-state file: ${sourcePath}`, {
+      cause,
+    });
   }
 }
 
