@@ -775,20 +775,20 @@
         {
           id: 5,
           name: "Phase 5 — Hardening & daily-driver gate",
-          st: "todo",
+          st: "wip",
           goal: 'Từ "chạy trong dev" đến "tin được làm daily driver".',
           tasks: [
             {
-              t: "Electron build thật (bun run build:desktop): native deps (pi-natives/brush, onnxruntime) load OK trong app backend — RISK #3",
-              st: "todo",
+              t: "Electron build thật: RISK #3 ĐÃ NỔ — app build + cài OK, pi-natives/onnxruntime unpack đúng, NHƯNG SDK OMP là Bun-only (export ./src/index.ts; 19 file bun:*, 145 file Bun.*) → Electron Node v24 trả ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING, model list rỗng. Lối ra: sidecar Bun (docs/plans/omp-sidecar-spec.md, phase 6).",
+              st: "done",
             },
             {
-              t: "Resume session sau restart server (session file cursor — pattern extractResumeSessionFile)",
-              st: "todo",
+              t: "Resume session sau restart: mint session file rồi open (create() ghi terminal breadcrumb không tắt được → omp CLI của user bị trỏ vào session Synara), + initialCwd/suppressBreadcrumb, 2 test",
+              st: "done",
             },
             {
-              t: "Cân nhắc bật lại enableLsp / eval preflight theo settings (mỗi cờ một quyết định có ghi chú)",
-              st: "todo",
+              t: "Feature flags có ghi chú lý do: enableLsp BẬT (lsp.lazy mặc định true nên startup chỉ discovery), enableIrc tắt, enableMCP bật, skipPythonPreflight bật (probe chỉ chạy khi JS eval tắt)",
+              st: "done",
             },
             { t: "bun fmt + bun lint + bun typecheck + bun run test — một lượt cuối", st: "todo" },
             {
@@ -801,7 +801,7 @@
             },
           ],
           accept:
-            "<b>Kiểm tra:</b> app build cài thật, thread OMP chạy trong app (không phải dev instance), restart app → thread resume được.",
+            "<b>Đã chạy 2026-07-28:</b> dmg build + cài + mở app thật (isolated SYNARA_HOME), backend boot OK, native deps unpack đúng — nhưng OMP model list rỗng vì SDK Bun-only. Phần dev-side (resume + flags + Installed CLIs) đã xanh. Daily-driver gate mở lại sau phase 6.3.",
           unlock: [
             "OMP là daily driver trong NuncioADE.app — mục tiêu OMP-first hoàn thành vòng đầu",
           ],
@@ -812,6 +812,42 @@
 - Verify cuối: bun fmt + bun lint + bun typecheck + bun run test.
 - Cập nhật STATE.md (M4 done), append DECISIONS.md entry, docs/plans/omp-integration.html → done toàn bộ.
 - KHÔNG release/tag — đó là quyết định của user sau khi dogfood.`,
+        },
+        {
+          id: 6,
+          name: "Phase 6 — Bun sidecar (mở khoá app đóng gói)",
+          st: "todo",
+          goal: "SDK OMP sống trong binary Bun tự chứa; Synara ở lại Node trong asar.",
+          tasks: [
+            {
+              t: "packages/omp-sidecar (@nuncio/omp-sidecar): skeleton + protocol types + handshake hello{protocolVersion,engineVersion} + script compile",
+              st: "todo",
+            },
+            {
+              t: "Chuyển session host / event mapping / extension UI context / gateway tools vào sidecar; OmpAdapter co lại thành supervisor + client NDJSON (đổi seam loadSdk → spawnSidecar)",
+              st: "todo",
+            },
+            {
+              t: "Đóng gói: extraResources cho binary + đặt pi_natives.<platform>.node cạnh binary + resolver dev/prod (NUNCIO_OMP_SIDECAR_PATH); bỏ @oh-my-pi khỏi apps/server",
+              st: "todo",
+            },
+            {
+              t: "Supervisor: restart backoff, resume sau restart, lỗi nổi lên bằng runtime.warning (không im lặng), reap orphan",
+              st: "todo",
+            },
+          ],
+          accept:
+            "<b>Kiểm tra:</b> trong NuncioADE.app build thật — model list OMP có dữ liệu, chat stream, ask dialog trả lời được, synara_* chạy; giết sidecar giữa turn → turn báo failed, turn kế tiếp resume đủ lịch sử.",
+          unlock: [
+            "OMP chạy trong app đóng gói — mở lại daily-driver gate",
+            "Bộ nhớ ~8–55 MiB mỗi thread thay vì ~420 MiB (đo thật)",
+            "Cách ly lỗi: engine chết không kéo theo server",
+          ],
+          prompt: `Làm Phase 6 của M4 theo docs/plans/omp-sidecar-spec.md (branch app/omp-adapter):
+- Đọc spec trước; kiến trúc, protocol, packaging, failure mode đã chốt ở đó.
+- 6.1 skeleton + protocol + compile; 6.2 chuyển engine host vào sidecar, adapter thành client; 6.3 đóng gói + smoke test trong app thật; 6.4 supervisor + resume.
+- Giữ nguyên hành vi ProviderAdapterShape: OmpAdapter.turnLifecycle.test.ts phải xanh với seam mới.
+- KHÔNG release/tag.`,
         },
       ];
 

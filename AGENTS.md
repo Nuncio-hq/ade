@@ -107,6 +107,7 @@ Nuncio/
 ├── ade/                      # this repo = the product (Synara fork)
 │   ├── apps/{server,web,desktop} # inherited from Synara — modify minimally
 │   ├── packages/                 # inherited from Synara — modify minimally
+│   │   └── omp-sidecar/          #   ★ ours (@nuncio/omp-sidecar) — Bun host for the OMP SDK
 │   └── harness/                  # ★ ours — OMP harness, does not exist upstream
 │       ├── extensions/           #   extensions (core deliverable; pi-API compatible, run on OMP via its legacy shims)
 │       ├── skills/ prompts/      #   optional engine resources
@@ -145,7 +146,7 @@ If a tradeoff is required, choose correctness and robustness over short-term con
 
 ## Engine Focus (OMP-first)
 
-- **OMP (oh-my-pi) is the primary engine**, integrated via direct SDK (no CLI/ACP wrapper): a new `OmpAdapter` over `@oh-my-pi/pi-coding-agent` (npm 17.x; SDK exports `createAgentSession`, `SessionManager`, `ModelRegistry`). Decided 2026-07-28, docs-only so far — status and milestone live in `docs/STATE.md`.
+- **OMP (oh-my-pi) is the primary engine**, integrated via its **direct SDK** (no CLI/ACP wrapper) — but the SDK is **Bun-only** (its runtime entry is TypeScript source and it uses `bun:*` / `Bun.*` throughout), and the packaged backend is Node, so the SDK is hosted in a compiled **Bun sidecar we own** (`@nuncio/omp-sidecar`) that `OmpAdapter` spawns and supervises like the other child-process adapters. Synara's server stays Node, inside asar. Design: `docs/plans/omp-sidecar-spec.md`; status/milestone: `docs/STATE.md`.
 - **Consume OMP from npm, never fork its source.** Custom behavior goes through OMP's extension points (extensions, skills, plugins, hooks). OMP ships legacy `@earendil-works/*` shims, so pi-written extensions in `harness/extensions/` run on OMP.
 - **The pi provider is frozen**: keeps working through upstream syncs, gets no new investment. Key files: `apps/server/src/provider/Layers/PiAdapter.ts`, `apps/server/src/provider/Services/PiAdapter.ts`, `apps/server/src/provider/piTurnFailure.ts`. Do not retarget PiAdapter to `@oh-my-pi/*` — the APIs diverged (`createAgentSessionRuntime` does not exist in OMP); OMP integration is a separate adapter.
 - Both engines are intentionally unopinionated harnesses: do not add permission or plan-mode semantics on top of them. Pi has no static default model (`getDefaultModel("pi")` returns `null`); models come dynamically from the engine's `ModelRegistry` — same policy for OmpAdapter.

@@ -160,3 +160,26 @@
   engines (Synara provider threads, Devin CLI/Cloud) only where they win —
   isolated parallel worktrees, Claude Code harness inheritance, visual-proof
   async runs. Recorded as DELEGATION.md §0.
+
+- **2026-07-28 — OMP SDK runs in a Bun sidecar; Synara's server stays Node.**
+  Supersedes the "direct SDK, in-process" sub-decision of the 2026-07-28
+  OMP-adoption entry — the SDK choice stands, its _hosting_ changes. Why: the
+  published `@oh-my-pi/pi-coding-agent` is Bun-only (runtime entry is
+  `./src/index.ts`; 19 files import `bun:*`, 145 use `Bun.*`), and the packaged
+  backend is Node (`apps/desktop/src/main.ts:3246`), so a real NuncioADE.app
+  build starts with an empty OMP model list — M4 phases 1–4 only ever worked
+  because the dev server runs under Bun. Three options were measured on
+  hardware, 3 sessions each: in-process SDK 137ms/431MiB (unshippable),
+  `omp --mode rpc` 895ms/1264MiB (one session per process, and `modes/rpc/`
+  exposes no `askDialog` so the native `ask` tool degrades to single-choice
+  select), compiled Bun sidecar **107ms/397MiB with the rich dialog intact** —
+  proven end to end from a binary with zero `node_modules` (auth, model, native
+  brush shell, full event stream). Moving the _whole_ backend to Bun was
+  rejected: `bun build --compile` dies on `NodeSqliteClient.ts`'s static
+  `node:sqlite` import, so it would force the server out of asar and diverge in
+  packaging/signing — upstream's active patch area (`main.ts` took 5 of 41
+  commits since v0.6.0, 7 hunks in the band around the spawn site). The sidecar
+  touches one packaging file upstream has not changed since v0.6.0. Trade
+  accepted: +~91MiB app size, a stdio protocol we own, and one engine crash
+  taking down all OMP threads at once (they resume from session files). Spec:
+  `docs/plans/omp-sidecar-spec.md`; tracker phase 6.
