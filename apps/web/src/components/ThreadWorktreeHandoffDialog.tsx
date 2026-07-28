@@ -86,7 +86,7 @@ export function ThreadWorktreeHandoffDialog({
                     onOpenChange(false);
                   }
                 }}
-                placeholder="synara/feature-name"
+                placeholder="nuncioade/feature-name"
               />
             </label>
           </form>

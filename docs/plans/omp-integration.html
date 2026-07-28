@@ -719,7 +719,7 @@
           id: 4,
           name: "Phase 4 — Bridge, extensions & gateway",
           st: "done",
-          goal: "Harness extensions + synara_* tools + các nút điều khiển.",
+          goal: "Harness extensions + nuncioade_* tools + các nút điều khiển.",
           tasks: [
             {
               t: "makeOmpExtensionUIContext (port makePiExtensionUIContext + askUserQuestions extra) → setToolUIContext(uiContext, true) từ CreateAgentSessionResult",
@@ -744,7 +744,7 @@
               st: "done",
             },
             {
-              t: 'Gateway policy allowlist: thêm "omp" vào PROVIDERS_WITH_THREAD_SCOPED_SYNARA_MCP (harnessPolicy.ts) — thiếu nó thì tool cài đủ nhưng policy vẫn bảo model "Synara MCP control is unavailable" và model từ chối dùng.',
+              t: 'Gateway policy allowlist: thêm "omp" vào PROVIDERS_WITH_THREAD_SCOPED_NUNCIO_MCP (harnessPolicy.ts) — thiếu nó thì tool cài đủ nhưng policy vẫn bảo model "NuncioADE MCP control is unavailable" và model từ chối dùng.',
               st: "done",
             },
             {
@@ -757,19 +757,19 @@
             },
           ],
           accept:
-            '<b>ĐÃ CHẠY 2026-07-28 (.ade-dev, model openai-codex/gpt-5.4-mini):</b> (1) native <code>ask</code> → dialog trong ADE → trả lời <code>Red</code> → <code>Completed tool · Ask User selected: Red</code>; với <code>recommended:1</code> dialog hiện <code>Prod (Recommended)</code> và engine nhận lại label sạch <code>Prod</code>. (2) Compat proof: <code>runtime.warning extension/ui-limited-warning</code> liệt kê extension load được — đã xác nhận <code>AskUserQuestion/index.ts</code> (pi-lineage, @earendil-works/*) chạy dưới legacy shim với <code>tools:["AskUserQuestion"]</code>; sau đó gỡ symlink vì OMP đã có native ask. (3) <code>synara_context</code> + <code>synara_list_threads limit:3</code> chạy sạch, trả đúng title thread. (4) <code>/compact</code> ×2 → session JSONL của OMP có 2 record <code>"type":"compaction"</code>. Skills/commands OMP hiện trong composer (slash menu).',
+            '<b>ĐÃ CHẠY 2026-07-28 (.ade-dev, model openai-codex/gpt-5.4-mini):</b> (1) native <code>ask</code> → dialog trong ADE → trả lời <code>Red</code> → <code>Completed tool · Ask User selected: Red</code>; với <code>recommended:1</code> dialog hiện <code>Prod (Recommended)</code> và engine nhận lại label sạch <code>Prod</code>. (2) Compat proof: <code>runtime.warning extension/ui-limited-warning</code> liệt kê extension load được — đã xác nhận <code>AskUserQuestion/index.ts</code> (pi-lineage, @earendil-works/*) chạy dưới legacy shim với <code>tools:["AskUserQuestion"]</code>; sau đó gỡ symlink vì OMP đã có native ask. (3) <code>nuncioade_context</code> + <code>nuncioade_list_threads limit:3</code> chạy sạch, trả đúng title thread. (4) <code>/compact</code> ×2 → session JSONL của OMP có 2 record <code>"type":"compaction"</code>. Skills/commands OMP hiện trong composer (slash menu).',
           unlock: [
             "Extensions harness của mình chạy trên OMP trong ADE",
-            "synara_* gateway tools",
+            "nuncioade_* gateway tools",
             "Nút compact thủ công",
             "Skills/commands của OMP hiện trong composer",
           ],
           prompt: `Làm Phase 4 của M4 theo docs/plans/omp-integration.html (tab Plan, branch app/omp-adapter):
 - Port makePiExtensionUIContext (PiAdapter.ts:1466-1693) sang OMP: setToolUIContext(uiContext, true), giữ askUserQuestions feature-detect; respondToUserInput round-trip.
 - Compat proof: load 1 extension pi từ harness/extensions/ dưới OMP (legacy @earendil-works shim) + 1 tool call — chỉ chứng minh shim sống; KHÔNG dùng extension AskUserQuestion làm đường hỏi-user chính (OMP có native ask tool, bridge qua setToolUIContext). Nếu phải sửa extension: extension + bridge cùng MỘT commit (luật AGENTS.md).
-- Gateway MCP: MCPManager.connectServers với synara gateway config (tham khảo buildOpenCodeMcpServer / mcpInjection.ts), truyền mcpManager vào createAgentSession, bật enableMCP:true.
+- Gateway MCP: MCPManager.connectServers với nuncioade gateway config (tham khảo buildOpenCodeMcpServer / mcpInjection.ts), truyền mcpManager vào createAgentSession, bật enableMCP:true.
 - stopTask → asyncJobManager.cancel; compactThread → session.compact(); listSkills/listCommands qua discoverSkills/discoverSlashCommands.
-- Acceptance: dialog hỏi-user E2E qua native ask tool + extension pi load dưới shim (compat proof) + synara_* tool call + compact thủ công chạy.
+- Acceptance: dialog hỏi-user E2E qua native ask tool + extension pi load dưới shim (compat proof) + nuncioade_* tool call + compact thủ công chạy.
 - Xong: cập nhật docs/plans/omp-integration.html + STATE.md.`,
         },
         {
@@ -783,7 +783,7 @@
               st: "done",
             },
             {
-              t: "Resume session sau restart: mint session file rồi open (create() ghi terminal breadcrumb không tắt được → omp CLI của user bị trỏ vào session Synara), + initialCwd/suppressBreadcrumb, 2 test",
+              t: "Resume session sau restart: mint session file rồi open (create() ghi terminal breadcrumb không tắt được → omp CLI của user bị trỏ vào session NuncioADE), + initialCwd/suppressBreadcrumb, 2 test",
               st: "done",
             },
             {
@@ -801,7 +801,7 @@
             },
           ],
           accept:
-            "<b>Đã chạy 2026-07-28:</b> dmg build + cài + mở app thật (isolated SYNARA_HOME), backend boot OK, native deps unpack đúng — nhưng OMP model list rỗng vì SDK Bun-only. Phần dev-side (resume + flags + Installed CLIs) đã xanh. Daily-driver gate mở lại sau phase 6.3.",
+            "<b>Đã chạy 2026-07-28:</b> dmg build + cài + mở app thật (isolated NUNCIO_HOME), backend boot OK, native deps unpack đúng — nhưng OMP model list rỗng vì SDK Bun-only. Phần dev-side (resume + flags + Installed CLIs) đã xanh. Daily-driver gate mở lại sau phase 6.3.",
           unlock: [
             "OMP là daily driver trong NuncioADE.app — mục tiêu OMP-first hoàn thành vòng đầu",
           ],
@@ -817,7 +817,7 @@
           id: 6,
           name: "Phase 6 — Bun sidecar (mở khoá app đóng gói)",
           st: "done",
-          goal: "SDK OMP sống trong binary Bun tự chứa; Synara ở lại Node trong asar.",
+          goal: "SDK OMP sống trong binary Bun tự chứa; NuncioADE ở lại Node trong asar.",
           tasks: [
             {
               t: "packages/omp-sidecar (@nuncio/omp-sidecar): skeleton + protocol types + handshake hello{protocolVersion,engineVersion} + script compile",
@@ -919,7 +919,7 @@
             {
               n: "<code>stopTask</code> (dừng background task)",
               st: "v1",
-              note: "Glue sang session.asyncJobManager.cancel(jobId) — móc nối đầu tiên cho tham vọng background tools. Contract Synara ĐÃ chừa slot này sẵn (ProviderAdapter.ts:143).",
+              note: "Glue sang session.asyncJobManager.cancel(jobId) — móc nối đầu tiên cho tham vọng background tools. Contract NuncioADE ĐÃ chừa slot này sẵn (ProviderAdapter.ts:143).",
             },
             {
               n: "<code>compactThread</code>",
@@ -929,12 +929,12 @@
             {
               n: "<code>rollbackThread</code>",
               st: "later",
-              note: 'OMP sessionManager có branching/leafId như pi nhưng cần verify API 17.x. Pi làm qua leafId; port sau v1. Fallback: conversationRollback "restart-session" của Synara dùng được trước.',
+              note: 'OMP sessionManager có branching/leafId như pi nhưng cần verify API 17.x. Pi làm qua leafId; port sau v1. Fallback: conversationRollback "restart-session" của NuncioADE dùng được trước.',
             },
             {
               n: "<code>forkThread</code>",
               st: "later",
-              note: "Session file + branching của OMP hỗ trợ về nguyên tắc; cần map cursor. Fallback conversation-history-fork của Synara dùng được trước.",
+              note: "Session file + branching của OMP hỗ trợ về nguyên tắc; cần map cursor. Fallback conversation-history-fork của NuncioADE dùng được trước.",
             },
             {
               n: "<code>readExternalThread</code>",
@@ -990,7 +990,7 @@
               n: "Turn tự phát từ async delivery (async-result)",
               st: "v1",
               risk: 1,
-              note: "⚠ RISK #2: job xong → OMP tự inject follow-up turn KHÔNG QUA sendTurn (yield-queue idle flush, session/async-job-delivery.ts). Phải kiểm tra providerRuntimeEventIngress + Reconciler chấp nhận turn không do Synara khởi tạo. Đây là điều kiện tiên quyết cho background tools.",
+              note: "⚠ RISK #2: job xong → OMP tự inject follow-up turn KHÔNG QUA sendTurn (yield-queue idle flush, session/async-job-delivery.ts). Phải kiểm tra providerRuntimeEventIngress + Reconciler chấp nhận turn không do NuncioADE khởi tạo. Đây là điều kiện tiên quyết cho background tools.",
             },
             {
               n: "<code>auto_compaction_start/end</code>",
@@ -1010,12 +1010,12 @@
             {
               n: "<code>thinking_level_changed</code>",
               st: "v1",
-              note: "→ cập nhật session snapshot (thinking level hiện tại) — Synara đã có chỗ hiển thị.",
+              note: "→ cập nhật session snapshot (thinking level hiện tại) — NuncioADE đã có chỗ hiển thị.",
             },
             {
               n: "<code>todo_reminder</code> / <code>todo_auto_clear</code>",
               st: "v1",
-              note: "Map cơ hội: Synara có sẵn runtimeTaskList.ts — todos của OMP đậu vào concept task list hiện có, KHÔNG cần contract mới.",
+              note: "Map cơ hội: NuncioADE có sẵn runtimeTaskList.ts — todos của OMP đậu vào concept task list hiện có, KHÔNG cần contract mới.",
             },
             {
               n: "<code>irc_message</code>",
@@ -1074,9 +1074,9 @@
               note: "Port makePiExtensionUIContext → setToolUIContext(uiContext, hasUI) (CreateAgentSessionResult, sdk.ts:562). Acceptance: dialog hỏi-user E2E qua NATIVE ask tool của OMP; extension AskUserQuestion trong harness/ chỉ còn vai trò compat proof cho legacy shim, không phải đường hỏi-user chính.",
             },
             {
-              n: "Gateway MCP injection (synara_* tools)",
+              n: "Gateway MCP injection (nuncioade_* tools)",
               st: "v1",
-              note: "Đi đường CHUẨN như Claude/Codex/OpenCode: dựng MCPManager, connectServers({synara: gatewayConfig}) rồi truyền qua createAgentSession({mcpManager}) — bỏ đường customTools đặc thù của pi. Đồng nhất codebase.",
+              note: "Đi đường CHUẨN như Claude/Codex/OpenCode: dựng MCPManager, connectServers({nuncioade: gatewayConfig}) rồi truyền qua createAgentSession({mcpManager}) — bỏ đường customTools đặc thù của pi. Đồng nhất codebase.",
             },
             {
               n: "Native deps dưới desktop backend",
@@ -1097,7 +1097,7 @@
           ],
         },
         {
-          s: "D. Delta trên đất Synara (ngoài adapter)",
+          s: "D. Delta trên đất NuncioADE (ngoài adapter)",
           rows: [
             {
               n: "<code>ProviderKind</code> + schemas trong packages/contracts",

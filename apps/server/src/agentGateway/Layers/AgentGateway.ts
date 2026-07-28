@@ -1,10 +1,10 @@
 /**
- * AgentGatewayLive - Synara app-control MCP tool surface.
+ * AgentGatewayLive - NuncioADE app-control MCP tool surface.
  *
- * Implements the `synara_*` tools served over `POST /mcp` (streamable HTTP,
+ * Implements the `nuncioade_*` tools served over `POST /mcp` (streamable HTTP,
  * stateless JSON responses). Every provider session gets this endpoint plus a
  * thread-bound bearer token injected at session start, so any agent running in
- * a Synara thread can list/read/create/steer threads and manage heartbeat
+ * a NuncioADE thread can list/read/create/steer threads and manage heartbeat
  * automations - the same host-tool pattern the Codex desktop app uses.
  *
  * All tools delegate to existing services (OrchestrationEngine dispatch,
@@ -17,13 +17,13 @@ import { randomUUID } from "node:crypto";
 
 import {
   CommandId,
-  SYNARA_GATEWAY_MAX_THREADS_PER_OPERATION,
+  NUNCIO_GATEWAY_MAX_THREADS_PER_OPERATION,
   MessageId,
   ThreadId,
   type ProviderKind,
   type ServerProviderStatus,
   type TurnDispatchMode,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { Effect, Layer, Option } from "effect";
 
 import { GitCore } from "../../git/Services/GitCore.ts";
@@ -40,7 +40,7 @@ import { ThreadDiagnosticsQuery } from "../../diagnostics/Services/ThreadDiagnos
 import { AgentGateway, type AgentGatewayShape } from "../Services/AgentGateway.ts";
 import { AgentGatewayCredentials } from "../Services/AgentGatewayCredentials.ts";
 import { AgentGatewayOperationRepository } from "../Services/AgentGatewayOperationRepository.ts";
-import { SYNARA_GATEWAY_HARNESS_POLICY } from "../harnessPolicy.ts";
+import { NUNCIO_GATEWAY_HARNESS_POLICY } from "../harnessPolicy.ts";
 import { ProviderDiscoveryService } from "../../provider/Services/ProviderDiscoveryService.ts";
 import { ProviderHealth } from "../../provider/Services/ProviderHealth.ts";
 import { ServerSettingsService } from "../../serverSettings.ts";
@@ -71,7 +71,7 @@ import { makeThreadReadTools } from "../threadReadTools.ts";
 import { makeThreadDiagnosticTools } from "../threadDiagnosticTools.ts";
 import { pruneProjectedArchivedManagedWorktrees } from "../../managedWorktrees.ts";
 
-const AGENT_GATEWAY_INSTRUCTIONS = SYNARA_GATEWAY_HARNESS_POLICY;
+const AGENT_GATEWAY_INSTRUCTIONS = NUNCIO_GATEWAY_HARNESS_POLICY;
 
 export const makeAgentGateway = Effect.gen(function* () {
   const credentials = yield* AgentGatewayCredentials;
@@ -201,9 +201,9 @@ export const makeAgentGateway = Effect.gen(function* () {
     requiredCapability: "thread:write",
     requiresActiveTurn: true,
     definition: {
-      name: "synara_create_threads",
+      name: "nuncioade_create_threads",
       description:
-        "Create an exact batch of 1–20 standalone Synara threads. Worktree threads use a detached HEAD at baseRef (or the selected checkout's HEAD) and copy local checkout changes plus .worktreeinclude files when the ref is that checkout's HEAD. Validation/preflight failures create nothing and may be corrected with the same requestId; durable retries replay the exact operation.",
+        "Create an exact batch of 1–20 standalone NuncioADE threads. Worktree threads use a detached HEAD at baseRef (or the selected checkout's HEAD) and copy local checkout changes plus .worktreeinclude files when the ref is that checkout's HEAD. Validation/preflight failures create nothing and may be corrected with the same requestId; durable retries replay the exact operation.",
       inputSchema: {
         type: "object",
         properties: {
@@ -215,7 +215,7 @@ export const makeAgentGateway = Effect.gen(function* () {
           threads: {
             type: "array",
             minItems: 1,
-            maxItems: SYNARA_GATEWAY_MAX_THREADS_PER_OPERATION,
+            maxItems: NUNCIO_GATEWAY_MAX_THREADS_PER_OPERATION,
             items: {
               type: "object",
               properties: {
@@ -245,7 +245,7 @@ export const makeAgentGateway = Effect.gen(function* () {
         additionalProperties: false,
       },
       annotations: {
-        title: "Create Synara threads",
+        title: "Create NuncioADE threads",
         readOnlyHint: false,
         destructiveHint: true,
         idempotentHint: true,
@@ -265,9 +265,9 @@ export const makeAgentGateway = Effect.gen(function* () {
     requiredCapability: "thread:write",
     requiresActiveTurn: true,
     definition: {
-      name: "synara_create_thread",
+      name: "nuncioade_create_thread",
       description:
-        "Create exactly one standalone Synara thread. Worktree threads start at a detached HEAD. For two or more threads use one synara_create_threads call instead.",
+        "Create exactly one standalone NuncioADE thread. Worktree threads start at a detached HEAD. For two or more threads use one nuncioade_create_threads call instead.",
       inputSchema: {
         type: "object",
         properties: {
@@ -296,7 +296,7 @@ export const makeAgentGateway = Effect.gen(function* () {
         additionalProperties: false,
       },
       annotations: {
-        title: "Create a Synara thread",
+        title: "Create a NuncioADE thread",
         readOnlyHint: false,
         destructiveHint: true,
         idempotentHint: true,
@@ -364,9 +364,9 @@ export const makeAgentGateway = Effect.gen(function* () {
     requiredCapability: "thread:write",
     requiresActiveTurn: true,
     definition: {
-      name: "synara_send_message",
+      name: "nuncioade_send_message",
       description:
-        'Send a Synara follow-up message to an existing thread. mode "queue" (default) waits for the current turn; "steer" redirects a running turn where the provider supports it (otherwise it is queued).',
+        'Send a NuncioADE follow-up message to an existing thread. mode "queue" (default) waits for the current turn; "steer" redirects a running turn where the provider supports it (otherwise it is queued).',
       inputSchema: {
         type: "object",
         properties: {
@@ -377,7 +377,7 @@ export const makeAgentGateway = Effect.gen(function* () {
         required: ["threadId", "message"],
         additionalProperties: false,
       },
-      annotations: { title: "Send a Synara message", ...WRITE_TOOL_ANNOTATIONS },
+      annotations: { title: "Send a NuncioADE message", ...WRITE_TOOL_ANNOTATIONS },
     },
     handler: (args, context) =>
       Effect.gen(function* () {
@@ -421,8 +421,8 @@ export const makeAgentGateway = Effect.gen(function* () {
     requiredCapability: "thread:write",
     requiresActiveTurn: true,
     definition: {
-      name: "synara_interrupt_thread",
-      description: "Interrupt the running turn of a Synara thread.",
+      name: "nuncioade_interrupt_thread",
+      description: "Interrupt the running turn of a NuncioADE thread.",
       inputSchema: {
         type: "object",
         properties: {
@@ -431,7 +431,7 @@ export const makeAgentGateway = Effect.gen(function* () {
         required: ["threadId"],
         additionalProperties: false,
       },
-      annotations: { title: "Interrupt a Synara thread", ...WRITE_TOOL_ANNOTATIONS },
+      annotations: { title: "Interrupt a NuncioADE thread", ...WRITE_TOOL_ANNOTATIONS },
     },
     handler: (args, context) =>
       Effect.gen(function* () {
@@ -440,7 +440,9 @@ export const makeAgentGateway = Effect.gen(function* () {
         const target = yield* requireThreadShell(threadId);
         // Stopping a higher-privileged thread's work is still driving it.
         yield* assertCallerMayDriveThread(caller, target);
-        yield* orchestrationEngine
+        const activeTurnId = target.session?.activeTurnId ?? null;
+        const hadActiveTurn = activeTurnId !== null || target.latestTurn?.state === "running";
+        const dispatched = yield* orchestrationEngine
           .dispatch({
             type: "thread.turn.interrupt",
             commandId: CommandId.makeUnsafe(`agent:${randomUUID()}:interrupt`),
@@ -448,7 +450,16 @@ export const makeAgentGateway = Effect.gen(function* () {
             createdAt: isoNow(),
           })
           .pipe(Effect.mapError((error) => new ToolInputError(errorText(error))));
-        return mcpToolResultJson({ threadId: target.id, interrupted: true });
+        // The interrupt is only *requested* here: the provider settles the turn
+        // asynchronously. Reporting a constant `interrupted: true` told callers
+        // the turn had stopped even when there was no turn to stop.
+        return mcpToolResultJson({
+          threadId: target.id,
+          interruptRequested: true,
+          hadActiveTurn,
+          activeTurnId,
+          eventSequence: dispatched.sequence,
+        });
       }).pipe(Effect.catch((error) => Effect.succeed(mcpToolResultError(errorText(error))))),
   };
 
@@ -456,8 +467,8 @@ export const makeAgentGateway = Effect.gen(function* () {
     requiredCapability: "thread:write",
     requiresActiveTurn: true,
     definition: {
-      name: "synara_set_thread_title",
-      description: "Rename a Synara thread.",
+      name: "nuncioade_set_thread_title",
+      description: "Rename a NuncioADE thread.",
       inputSchema: {
         type: "object",
         properties: {
@@ -467,7 +478,7 @@ export const makeAgentGateway = Effect.gen(function* () {
         required: ["threadId", "title"],
         additionalProperties: false,
       },
-      annotations: { title: "Rename a Synara thread", ...WRITE_TOOL_ANNOTATIONS },
+      annotations: { title: "Rename a NuncioADE thread", ...WRITE_TOOL_ANNOTATIONS },
     },
     handler: (args, context) =>
       Effect.gen(function* () {
@@ -492,9 +503,9 @@ export const makeAgentGateway = Effect.gen(function* () {
     requiredCapability: "thread:write",
     requiresActiveTurn: true,
     definition: {
-      name: "synara_set_thread_archived",
+      name: "nuncioade_set_thread_archived",
       description:
-        "Archive or unarchive a Synara thread. Defaults to your own thread when threadId is omitted.",
+        "Archive or unarchive a NuncioADE thread. Defaults to your own thread when threadId is omitted.",
       inputSchema: {
         type: "object",
         properties: {
@@ -504,7 +515,7 @@ export const makeAgentGateway = Effect.gen(function* () {
         required: ["archived"],
         additionalProperties: false,
       },
-      annotations: { title: "Update a Synara thread", ...WRITE_TOOL_ANNOTATIONS },
+      annotations: { title: "Update a NuncioADE thread", ...WRITE_TOOL_ANNOTATIONS },
     },
     handler: (args, context) =>
       Effect.gen(function* () {

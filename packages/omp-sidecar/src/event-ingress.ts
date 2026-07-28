@@ -3,7 +3,7 @@
 // Layer: Sidecar engine (OMP)
 // Exports: compactProviderRuntimeEventForIngress, providerRuntimeEventBytes
 
-import type { ProviderRuntimeEvent } from "@synara/contracts";
+import type { ProviderRuntimeEvent } from "@nuncio/contracts";
 
 const PROVIDER_RUNTIME_INGRESS_EVENT_MAX_BYTES = 512 * 1024;
 
@@ -42,7 +42,7 @@ export function compactProviderRuntimeEventForIngress(
       ...(event.raw.method !== undefined ? { method: event.raw.method } : {}),
       ...(event.raw.messageType !== undefined ? { messageType: event.raw.messageType } : {}),
       payload: {
-        synaraTruncated: true,
+        nuncioadeTruncated: true,
         reason: "provider runtime event exceeded the callback ingress size limit",
         originalBytes,
       },

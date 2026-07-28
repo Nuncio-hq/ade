@@ -26,7 +26,7 @@ describe("resolveWorkspaceFileOpenTarget", () => {
     );
   });
 
-  it("maps Synara public asset URLs to their workspace files", () => {
+  it("maps NuncioADE public asset URLs to their workspace files", () => {
     expect(
       resolveWorkspaceFileOpenTarget("/central-icons-reversed/magnifying-glass.svg", "/repo/app"),
     ).toBe("apps/web/public/central-icons-reversed/magnifying-glass.svg");
@@ -48,13 +48,13 @@ describe("resolveWorkspaceFileOpenTarget", () => {
 });
 
 describe("resolveScratchPreviewFileOpenTarget", () => {
-  const scratchPdf = "/private/tmp/synara-codex-workspaces/thread-1/report.pdf";
+  const scratchPdf = "/private/tmp/nuncioade-codex-workspaces/thread-1/report.pdf";
 
   it("returns absolute scratch-workspace preview paths unchanged", () => {
     expect(resolveScratchPreviewFileOpenTarget(scratchPdf)).toBe(scratchPdf);
     expect(
-      resolveScratchPreviewFileOpenTarget("/tmp/synara-codex-workspaces/thread-1/shot.png"),
-    ).toBe("/tmp/synara-codex-workspaces/thread-1/shot.png");
+      resolveScratchPreviewFileOpenTarget("/tmp/nuncioade-codex-workspaces/thread-1/shot.png"),
+    ).toBe("/tmp/nuncioade-codex-workspaces/thread-1/shot.png");
   });
 
   it("strips :line and :line:col position suffixes", () => {
@@ -64,7 +64,7 @@ describe("resolveScratchPreviewFileOpenTarget", () => {
 
   it("returns null for scratch-workspace files without an in-app binary preview", () => {
     expect(
-      resolveScratchPreviewFileOpenTarget("/tmp/synara-codex-workspaces/thread-1/notes.ts"),
+      resolveScratchPreviewFileOpenTarget("/tmp/nuncioade-codex-workspaces/thread-1/notes.ts"),
     ).toBeNull();
   });
 
@@ -75,13 +75,13 @@ describe("resolveScratchPreviewFileOpenTarget", () => {
   it("returns null for relative paths", () => {
     expect(resolveScratchPreviewFileOpenTarget("docs/report.pdf")).toBeNull();
     expect(
-      resolveScratchPreviewFileOpenTarget("synara-codex-workspaces/thread-1/a.pdf"),
+      resolveScratchPreviewFileOpenTarget("nuncioade-codex-workspaces/thread-1/a.pdf"),
     ).toBeNull();
   });
 });
 
 describe("resolveDockFileOpenTarget", () => {
-  const scratchPdf = "/private/tmp/synara-codex-workspaces/thread-1/report.pdf";
+  const scratchPdf = "/private/tmp/nuncioade-codex-workspaces/thread-1/report.pdf";
 
   it("opens scratch preview files even when no workspace is attached", () => {
     expect(resolveDockFileOpenTarget(scratchPdf, null)).toBe(scratchPdf);

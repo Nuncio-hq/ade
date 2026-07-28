@@ -28,54 +28,54 @@ describe("storageOriginMigration", () => {
   });
 
   it("imports missing keys without overwriting current-origin state", async () => {
-    globalThis.localStorage.setItem("synara:theme", "current");
-    const { importSynaraStorageSnapshot } = await import("./storageOriginMigration");
+    globalThis.localStorage.setItem("nuncioade:theme", "current");
+    const { importNuncioADEStorageSnapshot } = await import("./storageOriginMigration");
 
     expect(
-      importSynaraStorageSnapshot({
+      importNuncioADEStorageSnapshot({
         version: 1,
         exportedAt: "2026-07-09T00:00:00.000Z",
         entries: {
-          "synara:theme": "snapshot",
-          "synara:composer-drafts:v1": "draft",
+          "nuncioade:theme": "snapshot",
+          "nuncioade:composer-drafts:v1": "draft",
         },
       }),
     ).toBe(true);
-    expect(globalThis.localStorage.getItem("synara:theme")).toBe("current");
-    expect(globalThis.localStorage.getItem("synara:composer-drafts:v1")).toBe("draft");
+    expect(globalThis.localStorage.getItem("nuncioade:theme")).toBe("current");
+    expect(globalThis.localStorage.getItem("nuncioade:composer-drafts:v1")).toBe("draft");
   });
 
   it("rejects an invalid snapshot before writing any entry", async () => {
-    const { importSynaraStorageSnapshot } = await import("./storageOriginMigration");
+    const { importNuncioADEStorageSnapshot } = await import("./storageOriginMigration");
     expect(
-      importSynaraStorageSnapshot({
+      importNuncioADEStorageSnapshot({
         version: 1,
         exportedAt: "2026-07-09T00:00:00.000Z",
         entries: {
-          "synara:theme": "dark",
+          "nuncioade:theme": "dark",
           "foreign:theme": "light",
         },
       }),
     ).toBe(false);
-    expect(globalThis.localStorage.getItem("synara:theme")).toBeNull();
+    expect(globalThis.localStorage.getItem("nuncioade:theme")).toBeNull();
   });
 
   it("imports snapshots containing large composer drafts", async () => {
-    const { importSynaraStorageSnapshot } = await import("./storageOriginMigration");
+    const { importNuncioADEStorageSnapshot } = await import("./storageOriginMigration");
     const largeDraft = "x".repeat(2 * 1024 * 1024);
 
     expect(
-      importSynaraStorageSnapshot({
+      importNuncioADEStorageSnapshot({
         version: 1,
         exportedAt: "2026-07-09T00:00:00.000Z",
-        entries: { "synara:composer-drafts:v1": largeDraft },
+        entries: { "nuncioade:composer-drafts:v1": largeDraft },
       }),
     ).toBe(true);
-    expect(globalThis.localStorage.getItem("synara:composer-drafts:v1")).toBe(largeDraft);
+    expect(globalThis.localStorage.getItem("nuncioade:composer-drafts:v1")).toBe(largeDraft);
   });
 
   it("keeps the snapshot retryable after a partial storage failure", async () => {
-    const { importSynaraStorageSnapshot } = await import("./storageOriginMigration");
+    const { importNuncioADEStorageSnapshot } = await import("./storageOriginMigration");
     let writes = 0;
     const storage = createMemoryStorage();
     const setItem = storage.setItem.bind(storage);
@@ -87,13 +87,53 @@ describe("storageOriginMigration", () => {
     const snapshot = {
       version: 1 as const,
       exportedAt: "2026-07-09T00:00:00.000Z",
-      entries: { "synara:theme": "dark", "synara:composer-drafts:v1": "draft" },
+      entries: { "nuncioade:theme": "dark", "nuncioade:composer-drafts:v1": "draft" },
     };
 
-    expect(importSynaraStorageSnapshot(snapshot, storage)).toBe(false);
+    expect(importNuncioADEStorageSnapshot(snapshot, storage)).toBe(false);
     storage.setItem = setItem;
-    expect(importSynaraStorageSnapshot(snapshot, storage)).toBe(true);
-    expect(storage.getItem("synara:composer-drafts:v1")).toBe("draft");
+    expect(importNuncioADEStorageSnapshot(snapshot, storage)).toBe(true);
+    expect(storage.getItem("nuncioade:composer-drafts:v1")).toBe("draft");
+  });
+
+  it("migrates legacy-prefixed keys without clobbering current state", async () => {
+    const { LEGACY_STORAGE_KEY_PREFIXES, migrateLegacyStorageKeyPrefixes } =
+      await import("./storageOriginMigration");
+    const [legacyColon, legacyDot] = LEGACY_STORAGE_KEY_PREFIXES;
+    globalThis.localStorage.setItem(`${legacyDot}editor.chatPaneWidth`, "320");
+    globalThis.localStorage.setItem(`${legacyColon}theme`, "light");
+    globalThis.localStorage.setItem("nuncioade:theme", "dark");
+    globalThis.localStorage.setItem("foreign:key", "keep");
+
+    expect(migrateLegacyStorageKeyPrefixes()).toBe(2);
+    expect(globalThis.localStorage.getItem("nuncioade.editor.chatPaneWidth")).toBe("320");
+    expect(globalThis.localStorage.getItem("nuncioade:theme")).toBe("dark");
+    expect(globalThis.localStorage.getItem(`${legacyDot}editor.chatPaneWidth`)).toBeNull();
+    expect(globalThis.localStorage.getItem(`${legacyColon}theme`)).toBeNull();
+    expect(globalThis.localStorage.getItem("foreign:key")).toBe("keep");
+  });
+
+  it("legacy key migration is idempotent", async () => {
+    const { LEGACY_STORAGE_KEY_PREFIXES, migrateLegacyStorageKeyPrefixes } =
+      await import("./storageOriginMigration");
+    const [legacyDot] = LEGACY_STORAGE_KEY_PREFIXES.slice(1);
+    globalThis.localStorage.setItem(`${legacyDot}openUsage.enabled`, "true");
+
+    expect(migrateLegacyStorageKeyPrefixes()).toBe(1);
+    expect(migrateLegacyStorageKeyPrefixes()).toBe(0);
+    expect(globalThis.localStorage.getItem("nuncioade.openUsage.enabled")).toBe("true");
+  });
+
+  it("migrates legacy keys during bootstrap even without a desktop bridge", async () => {
+    const mod = await import("./storageOriginMigration");
+    const [legacyDot] = mod.LEGACY_STORAGE_KEY_PREFIXES.slice(1);
+    globalThis.localStorage.setItem(`${legacyDot}openUsage.enabled`, "true");
+
+    vi.resetModules();
+    await import("./storageOriginMigration");
+
+    expect(globalThis.localStorage.getItem("nuncioade.openUsage.enabled")).toBe("true");
+    expect(globalThis.localStorage.getItem(`${legacyDot}openUsage.enabled`)).toBeNull();
   });
 
   it("acknowledges the desktop snapshot only after a complete bootstrap import", async () => {
@@ -104,7 +144,7 @@ describe("storageOriginMigration", () => {
           readSnapshot: () => ({
             version: 1,
             exportedAt: "2026-07-09T00:00:00.000Z",
-            entries: { "synara:theme": "dark" },
+            entries: { "nuncioade:theme": "dark" },
           }),
           acknowledgeSnapshot,
         },
@@ -113,7 +153,7 @@ describe("storageOriginMigration", () => {
 
     await import("./storageOriginMigration");
     await vi.waitFor(() => expect(acknowledgeSnapshot).toHaveBeenCalledOnce());
-    expect(globalThis.localStorage.getItem("synara:theme")).toBe("dark");
+    expect(globalThis.localStorage.getItem("nuncioade:theme")).toBe("dark");
   });
 
   it("does not acknowledge when renderer storage rejects a write", async () => {
@@ -130,7 +170,7 @@ describe("storageOriginMigration", () => {
           readSnapshot: () => ({
             version: 1,
             exportedAt: "2026-07-09T00:00:00.000Z",
-            entries: { "synara:theme": "dark" },
+            entries: { "nuncioade:theme": "dark" },
           }),
           acknowledgeSnapshot,
         },

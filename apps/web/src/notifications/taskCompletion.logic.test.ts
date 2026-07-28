@@ -6,7 +6,7 @@ import {
   ProjectId,
   ThreadId,
   TurnId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import {
   buildInputNeededCopy,
   buildTaskCompletionCopy,

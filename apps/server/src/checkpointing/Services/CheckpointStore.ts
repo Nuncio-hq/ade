@@ -14,7 +14,7 @@ import { ServiceMap } from "effect";
 import type { Effect } from "effect";
 
 import type { CheckpointStoreError } from "../Errors.ts";
-import { CheckpointRef } from "@synara/contracts";
+import { CheckpointRef } from "@nuncio/contracts";
 
 export interface CaptureCheckpointInput {
   readonly cwd: string;
@@ -124,7 +124,9 @@ export interface CheckpointStoreShape {
   /**
    * Delete the provided checkpoint refs.
    *
-   * Best-effort delete: missing refs are tolerated.
+   * Missing refs are tolerated (deleting an absent ref is a no-op for Git), but
+   * a ref that exists and could not be deleted fails the effect: callers use
+   * this to protect snapshots that are a user's only way back.
    */
   readonly deleteCheckpointRefs: (
     input: DeleteCheckpointRefsInput,
@@ -135,5 +137,5 @@ export interface CheckpointStoreShape {
  * CheckpointStore - Service tag for checkpoint persistence and restore operations.
  */
 export class CheckpointStore extends ServiceMap.Service<CheckpointStore, CheckpointStoreShape>()(
-  "synara/checkpointing/Services/CheckpointStore",
+  "nuncioade/checkpointing/Services/CheckpointStore",
 ) {}

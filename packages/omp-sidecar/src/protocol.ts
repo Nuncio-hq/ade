@@ -1,11 +1,11 @@
 // FILE: protocol.ts
-// Purpose: Wire contract between Synara's Node server and the Bun sidecar that
+// Purpose: Wire contract between NuncioADE's Node server and the Bun sidecar that
 //          hosts the OMP SDK. NDJSON over stdio: one JSON object per line.
 // Layer: Shared protocol (imported as types by both sides)
 //
 // This module must stay free of engine imports: the Node server type-imports it,
 // and pulling `@oh-my-pi/*` in here would drag a Bun-only package into Node's
-// resolution graph. Only `@synara/contracts` is allowed.
+// resolution graph. Only `@nuncio/contracts` is allowed.
 
 import type {
   ProviderListCommandsResult,
@@ -14,13 +14,13 @@ import type {
   ProviderRuntimeEvent,
   ProviderSession,
   ProviderUserInputAnswers,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 
 /**
  * Structural mirror of the server's `ProviderThreadSnapshot`
  * (`apps/server/src/provider/Services/ProviderAdapter.ts`). Declared here rather
  * than imported because a package may not depend on an app — and rather than
- * added to `@synara/contracts`, which would duplicate an existing definition in
+ * added to `@nuncio/contracts`, which would duplicate an existing definition in
  * upstream ground. Field-compatible, so the client passes it straight through.
  */
 export interface OmpSidecarThreadSnapshot {
@@ -48,7 +48,7 @@ export interface OmpSidecarStartSessionParams {
   readonly model?: string;
   readonly thinkingLevel?: string;
   readonly agentDir?: string;
-  /** Thread-scoped Synara MCP endpoint; absent when the gateway is unavailable. */
+  /** Thread-scoped NuncioADE MCP endpoint; absent when the gateway is unavailable. */
   readonly gateway?: { readonly url: string; readonly bearerToken: string };
 }
 

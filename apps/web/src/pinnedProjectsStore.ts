@@ -3,7 +3,7 @@
 // Layer: UI state store
 // Exports: usePinnedProjectsStore
 
-import { MAX_PINNED_PROJECTS, type ProjectId } from "@synara/contracts";
+import { MAX_PINNED_PROJECTS, type ProjectId } from "@nuncio/contracts";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createLocalStorageStateStorage } from "./persistedLocalStorage";
@@ -16,7 +16,7 @@ interface PinnedProjectsStoreState {
   prunePinnedProjects: (projectIds: readonly ProjectId[]) => void;
 }
 
-const PINNED_PROJECTS_STORAGE_KEY = "synara:pinned-projects:v1";
+const PINNED_PROJECTS_STORAGE_KEY = "nuncioade:pinned-projects:v1";
 const PINNED_PROJECTS_OPTIONS = { maxCount: MAX_PINNED_PROJECTS } as const;
 
 export const usePinnedProjectsStore = create<PinnedProjectsStoreState>()(

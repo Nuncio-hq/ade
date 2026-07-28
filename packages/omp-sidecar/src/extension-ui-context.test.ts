@@ -1,10 +1,10 @@
 // FILE: ompExtensionUiContext.test.ts
 // Purpose: Pins the OMP extension/ask UI bridge — question projection, answer
 //          mapping back to engine values, cancel semantics, and the TUI-only
-//          surface that Synara deliberately does not implement.
+//          surface that NuncioADE deliberately does not implement.
 // Layer: @nuncio/omp-sidecar tests
 
-import type { ProviderUserInputAnswers, UserInputQuestion } from "@synara/contracts";
+import type { ProviderUserInputAnswers, UserInputQuestion } from "@nuncio/contracts";
 import { describe, expect, it } from "vitest";
 
 import { makeOmpExtensionUiContext, type OmpUserInputRequest } from "./extension-ui-context";
@@ -154,7 +154,7 @@ describe("makeOmpExtensionUiContext", () => {
     ]);
 
     // The suffix is the only way the generic contract can carry `recommended`,
-    // and the preview must not be dropped just because Synara has one slot.
+    // and the preview must not be dropped just because NuncioADE has one slot.
     expect(recorded.requests[0]?.questions[0]?.options).toEqual([
       { label: "Server", description: "Server" },
       { label: "Web (Recommended)", description: "the app\n\napps/web/src/**" },
@@ -203,7 +203,7 @@ describe("makeOmpExtensionUiContext", () => {
     expect(result?.kind === "submit" && result.results[0]?.selectedOptions).toEqual([]);
   });
 
-  it("keeps the harness askUserQuestions extra answering in Synara's own shape", async () => {
+  it("keeps the harness askUserQuestions extra answering in NuncioADE's own shape", async () => {
     const { context, recorded } = makeContext(() => ({ Scope: "Server" }));
 
     const answers = await context.askUserQuestions([

@@ -24,14 +24,14 @@ import {
   type ProviderStartOptions,
   type ThreadEnvironmentMode,
   type TurnId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import {
   automationContinuationThreadId,
   automationContinuesThread,
   automationOwnsItsThread,
   automationRequiresTargetThread,
-} from "@synara/shared/automationMode";
-import { providerStartOptionsFromServerSettings } from "@synara/shared/serverSettings";
+} from "@nuncio/shared/automationMode";
+import { providerStartOptionsFromServerSettings } from "@nuncio/shared/serverSettings";
 import { Cause, Effect, Layer, Option, PubSub, Queue, Stream } from "effect";
 
 import { GitCore } from "../../git/Services/GitCore.ts";

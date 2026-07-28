@@ -6,7 +6,7 @@
 // Layer: @nuncio/omp-sidecar tests
 // Depends on: the `loadSdk` seam driving fake AgentSession events.
 
-import type { ProviderRuntimeEvent } from "@synara/contracts";
+import type { ProviderRuntimeEvent } from "@nuncio/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { createOmpSidecarSessionHost } from "./session-host";

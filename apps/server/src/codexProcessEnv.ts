@@ -1,5 +1,5 @@
 // FILE: codexProcessEnv.ts
-// Purpose: Builds the exact environment used when Synara launches Codex subprocesses.
+// Purpose: Builds the exact environment used when NuncioADE launches Codex subprocesses.
 // Layer: Server runtime utility
 // Exports: Codex process env builder and browser-plugin overlay helpers.
 // Depends on: Codex home path helpers, shared Codex config parsing, login-shell env reader.
@@ -7,21 +7,24 @@
 import * as fs from "node:fs/promises";
 import path from "node:path";
 
-import { readActiveCodexProviderEnvKey } from "@synara/shared/codexConfig";
+import { readActiveCodexProviderEnvKey } from "@nuncio/shared/codexConfig";
 import {
   readEnvironmentFromLoginShell,
   resolveLoginShell,
   type ShellEnvironmentReader,
-} from "@synara/shared/shell";
+} from "@nuncio/shared/shell";
 
-import { resolveBaseCodexHomePath, resolveSynaraCodexHomeOverlayPath } from "./codexHomePaths.ts";
+import {
+  resolveBaseCodexHomePath,
+  resolveNuncioADECodexHomeOverlayPath,
+} from "./codexHomePaths.ts";
 import { buildProviderChildEnvironment } from "./providerChildEnvironment.ts";
 
 const CODEX_PROCESS_SHELL_ENV_NAMES = ["PATH", "SSH_AUTH_SOCK"] as const;
 const NODE_REPL_SANDBOX_ALLOWED_UNIX_SOCKETS = "NODE_REPL_SANDBOX_ALLOWED_UNIX_SOCKETS";
 const NODE_REPL_MCP_SERVER_HEADER = "[mcp_servers.node_repl]";
 const CODEX_OVERLAY_SHARED_STATE_FILES = new Set(["auth.json"]);
-const SYNARA_CONFIG_SUPPRESSIONS_FILE = "synara-config-suppressions-v1.json";
+const NUNCIO_CONFIG_SUPPRESSIONS_FILE = "nuncioade-config-suppressions-v1.json";
 const MAX_CONFIG_SUPPRESSION_SECTIONS = 32;
 const MAX_CONFIG_SUPPRESSION_HEADER_LENGTH = 256;
 const codexOverlayPreparationQueues = new Map<string, Promise<void>>();
@@ -42,7 +45,7 @@ export function resolveCodexBrowserUsePipePath(
   } = {},
 ): string {
   const env = input.env ?? process.env;
-  const configured = env.SYNARA_BROWSER_USE_PIPE_PATH?.trim();
+  const configured = env.NUNCIO_BROWSER_USE_PIPE_PATH?.trim();
   if (configured) {
     return configured;
   }
@@ -59,7 +62,9 @@ function isSafePluginSectionHeader(value: unknown): value is string {
   );
 }
 
-export async function readSynaraConfigSuppressions(markerPath: string): Promise<readonly string[]> {
+export async function readNuncioADEConfigSuppressions(
+  markerPath: string,
+): Promise<readonly string[]> {
   try {
     const parsed = JSON.parse(await fs.readFile(markerPath, "utf8")) as unknown;
     if (typeof parsed !== "object" || parsed === null) return [];
@@ -136,7 +141,7 @@ export function disableCodexConfigSections(
   return output.join("\n");
 }
 
-async function writeSynaraConfigSuppressions(
+async function writeNuncioADEConfigSuppressions(
   markerPath: string,
   sectionHeaders: readonly string[],
 ): Promise<void> {
@@ -237,20 +242,33 @@ export function appendCodexConfigSection(config: string, section: string): strin
   return base.length > 0 ? `${base}\n\n${trimmedSection}\n` : `${trimmedSection}\n`;
 }
 
-export const SYNARA_MANAGED_CODEX_CONFIG_BEGIN = "# >>> synara managed config >>>";
-export const SYNARA_MANAGED_CODEX_CONFIG_END = "# <<< synara managed config <<<";
+export const NUNCIO_MANAGED_CODEX_CONFIG_BEGIN = "# >>> nuncioade managed config >>>";
+export const NUNCIO_MANAGED_CODEX_CONFIG_END = "# <<< nuncioade managed config <<<";
+
+// Marker pair written by the pre-rebrand identity into overlay config.toml
+// files on disk; recognized so old blocks self-heal instead of being orphaned
+// and duplicated. rebrand-exempt pins the literals.
+export const LEGACY_MANAGED_CODEX_CONFIG_BEGIN = "# >>> synara managed config >>>"; // rebrand-exempt
+export const LEGACY_MANAGED_CODEX_CONFIG_END = "# <<< synara managed config <<<"; // rebrand-exempt
+
+export function normalizeLegacyManagedCodexConfigMarkers(config: string): string {
+  return config
+    .replaceAll(LEGACY_MANAGED_CODEX_CONFIG_BEGIN, NUNCIO_MANAGED_CODEX_CONFIG_BEGIN)
+    .replaceAll(LEGACY_MANAGED_CODEX_CONFIG_END, NUNCIO_MANAGED_CODEX_CONFIG_END);
+}
 
 export function extractManagedCodexConfigSection(config: string): string | undefined {
-  const begin = config.indexOf(SYNARA_MANAGED_CODEX_CONFIG_BEGIN);
+  const normalizedConfig = normalizeLegacyManagedCodexConfigMarkers(config);
+  const begin = normalizedConfig.indexOf(NUNCIO_MANAGED_CODEX_CONFIG_BEGIN);
   if (begin === -1) {
     return undefined;
   }
-  const contentStart = begin + SYNARA_MANAGED_CODEX_CONFIG_BEGIN.length;
-  const end = config.indexOf(SYNARA_MANAGED_CODEX_CONFIG_END, contentStart);
+  const contentStart = begin + NUNCIO_MANAGED_CODEX_CONFIG_BEGIN.length;
+  const end = normalizedConfig.indexOf(NUNCIO_MANAGED_CODEX_CONFIG_END, contentStart);
   if (end === -1) {
     return undefined;
   }
-  const content = config.slice(contentStart, end).trim();
+  const content = normalizedConfig.slice(contentStart, end).trim();
   return content.length > 0 ? content : undefined;
 }
 
@@ -517,16 +535,17 @@ export function mergeShellEnvPolicyExclude(config: string, envVarName: string): 
 }
 
 function appendManagedCodexConfigSection(config: string, section: string): string {
+  const normalizedConfig = normalizeLegacyManagedCodexConfigMarkers(config);
   const tables = splitTomlTables(section.trim()).filter((table) => {
     const header = table.split("\n")[0]?.trim();
-    return header === undefined || !configHasTomlTableHeader(config, header);
+    return header === undefined || !configHasTomlTableHeader(normalizedConfig, header);
   });
   if (tables.length === 0) {
-    return config;
+    return normalizedConfig;
   }
   return appendCodexConfigSection(
-    config,
-    `${SYNARA_MANAGED_CODEX_CONFIG_BEGIN}\n${tables.join("\n\n")}\n${SYNARA_MANAGED_CODEX_CONFIG_END}`,
+    normalizedConfig,
+    `${NUNCIO_MANAGED_CODEX_CONFIG_BEGIN}\n${tables.join("\n\n")}\n${NUNCIO_MANAGED_CODEX_CONFIG_END}`,
   );
 }
 
@@ -550,13 +569,13 @@ async function serializeCodexOverlayPreparation<A>(
   }
 }
 
-async function prepareSynaraCodexHomeOverlayUnlocked(input: {
+async function prepareNuncioADECodexHomeOverlayUnlocked(input: {
   readonly env: NodeJS.ProcessEnv;
   readonly homePath?: string;
   readonly appendConfigToml?: string;
 }): Promise<string | undefined> {
   const sourceHomePath = resolveBaseCodexHomePath(input.env, input.homePath);
-  const overlayHomePath = resolveSynaraCodexHomeOverlayPath(input.env, sourceHomePath);
+  const overlayHomePath = resolveNuncioADECodexHomeOverlayPath(input.env, sourceHomePath);
   if (path.resolve(sourceHomePath) === path.resolve(overlayHomePath)) {
     return undefined;
   }
@@ -592,11 +611,11 @@ async function prepareSynaraCodexHomeOverlayUnlocked(input: {
     }
     throw cause;
   });
-  const suppressionMarkerPath = path.join(overlayHomePath, SYNARA_CONFIG_SUPPRESSIONS_FILE);
+  const suppressionMarkerPath = path.join(overlayHomePath, NUNCIO_CONFIG_SUPPRESSIONS_FILE);
   const suppressedSections = [
     ...new Set([
       ...findConflictingLocalBrowserPluginSections(sourceConfig),
-      ...(await readSynaraConfigSuppressions(suppressionMarkerPath)),
+      ...(await readNuncioADEConfigSuppressions(suppressionMarkerPath)),
     ]),
   ].slice(0, MAX_CONFIG_SUPPRESSION_SECTIONS);
   const overlayConfigPath = path.join(overlayHomePath, "config.toml");
@@ -628,23 +647,23 @@ async function prepareSynaraCodexHomeOverlayUnlocked(input: {
     [NODE_REPL_SANDBOX_ALLOWED_UNIX_SOCKETS],
   );
   await fs.writeFile(overlayConfigPath, overlayConfig, "utf8");
-  await writeSynaraConfigSuppressions(suppressionMarkerPath, suppressedSections);
+  await writeNuncioADEConfigSuppressions(suppressionMarkerPath, suppressedSections);
 
   return overlayHomePath;
 }
 
-async function prepareSynaraCodexHomeOverlay(input: {
+async function prepareNuncioADECodexHomeOverlay(input: {
   readonly env: NodeJS.ProcessEnv;
   readonly homePath?: string;
   readonly appendConfigToml?: string;
 }): Promise<string | undefined> {
   const sourceHomePath = resolveBaseCodexHomePath(input.env, input.homePath);
-  const overlayHomePath = resolveSynaraCodexHomeOverlayPath(input.env, sourceHomePath);
+  const overlayHomePath = resolveNuncioADECodexHomeOverlayPath(input.env, sourceHomePath);
   if (path.resolve(sourceHomePath) === path.resolve(overlayHomePath)) {
     return undefined;
   }
   return serializeCodexOverlayPreparation(overlayHomePath, () =>
-    prepareSynaraCodexHomeOverlayUnlocked(input),
+    prepareNuncioADECodexHomeOverlayUnlocked(input),
   );
 }
 
@@ -658,7 +677,7 @@ export async function buildCodexProcessEnv(
   } = {},
 ): Promise<NodeJS.ProcessEnv> {
   const baseEnv = { ...(input.env ?? process.env) };
-  const overlayHomePath = await prepareSynaraCodexHomeOverlay({
+  const overlayHomePath = await prepareNuncioADECodexHomeOverlay({
     env: baseEnv,
     ...(input.homePath ? { homePath: input.homePath } : {}),
     ...(input.appendConfigToml ? { appendConfigToml: input.appendConfigToml } : {}),

@@ -1,5 +1,5 @@
 // FILE: ompGatewayTools.test.ts
-// Purpose: Pins the OMP projection of the Synara gateway catalog — top-level
+// Purpose: Pins the OMP projection of the NuncioADE gateway catalog — top-level
 //          tool names, non-strict schemas, and dispatch back through MCP.
 // Layer: @nuncio/omp-sidecar tests
 
@@ -16,8 +16,8 @@ const connection: AgentGatewayMcpConnection = {
 const catalog = {
   tools: [
     {
-      name: "synara_list_threads",
-      description: "List Synara threads.",
+      name: "nuncioade_list_threads",
+      description: "List NuncioADE threads.",
       inputSchema: {
         type: "object",
         properties: { limit: { type: "number" }, model: { type: "string" } },
@@ -50,14 +50,14 @@ describe("buildOmpAgentGatewayCustomTools", () => {
     const tools = await buildOmpAgentGatewayCustomTools({ connection, fetch });
 
     const tool = tools[0];
-    expect(tool?.name).toBe("synara_list_threads");
+    expect(tool?.name).toBe("nuncioade_list_threads");
     // Discoverable tools hide behind `xd://` devices, but the harness policy
-    // tells the model to call `synara_*` by name.
+    // tells the model to call `nuncioade_*` by name.
     expect(tool?.loadMode).toBe("essential");
     // Strict structured output would force every optional property to be
     // present; models then send "" and the gateway rejects the call.
     expect(tool?.strict).toBe(false);
-    expect(tool?.mcpServerName).toBe("synara");
+    expect(tool?.mcpServerName).toBe("nuncioade");
   });
 
   it("dispatches a call through the gateway and surfaces its content", async () => {
@@ -78,7 +78,7 @@ describe("buildOmpAgentGatewayCustomTools", () => {
       jsonrpc: "2.0",
       id: requests[1]?.id,
       method: "tools/call",
-      params: { name: "synara_list_threads", arguments: { limit: 2 } },
+      params: { name: "nuncioade_list_threads", arguments: { limit: 2 } },
     });
     expect(result?.content).toEqual([{ type: "text", text: "two threads" }]);
   });

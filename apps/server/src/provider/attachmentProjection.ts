@@ -3,8 +3,8 @@
 // Layer: Provider adapter utility
 // Depends on: attachmentStore path resolution and shared byte formatting.
 
-import type { ChatAttachment, ChatFileAttachment, ChatImageAttachment } from "@synara/contracts";
-import { formatBytes } from "@synara/shared/formatBytes";
+import type { ChatAttachment, ChatFileAttachment, ChatImageAttachment } from "@nuncio/contracts";
+import { formatBytes } from "@nuncio/shared/formatBytes";
 
 import { resolveProviderAttachmentPath } from "./providerAttachmentPaths.ts";
 

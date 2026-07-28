@@ -1,4 +1,4 @@
-import type { OrchestrationEvent } from "@synara/contracts";
+import type { OrchestrationEvent } from "@nuncio/contracts";
 import { Effect, PubSub, Stream } from "effect";
 import { describe, expect, it } from "vitest";
 

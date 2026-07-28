@@ -1,6 +1,6 @@
 // FILE: tool-projection.ts
 // Purpose: Project pi-lineage tool calls (bash/read/edit/write/grep/find/ls)
-//          into canonical Synara runtime item types, titles, detail text, and
+//          into canonical NuncioADE runtime item types, titles, detail text, and
 //          lifecycle data payloads.
 // Layer: Sidecar engine projection (OMP)
 // Exports: AgentToolItemType, toolItemType, toolTitle, toolDetailText, toolLifecycleData

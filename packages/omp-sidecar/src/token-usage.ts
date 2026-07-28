@@ -3,7 +3,7 @@
 // Layer: Sidecar engine (OMP)
 // Exports: finite/positive token guards, usage percent math, and token-usage snapshot normalization.
 
-import type { ThreadTokenUsageSnapshot } from "@synara/contracts";
+import type { ThreadTokenUsageSnapshot } from "@nuncio/contracts";
 import type { AgentSession } from "@oh-my-pi/pi-coding-agent";
 
 export function nonNegativeInteger(value: unknown): number | undefined {

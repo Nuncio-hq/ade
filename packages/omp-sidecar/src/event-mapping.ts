@@ -19,7 +19,7 @@ import type {
   RuntimeItemId,
   ThreadTokenUsageSnapshot,
   TurnId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import type { AgentToolItemType } from "./tool-projection";
 
 import { makeRuntimeTaskListItem } from "./runtime-task-list";
@@ -278,9 +278,9 @@ export function armTurnWatchdog(
 }
 
 /**
- * OMP can start a turn Synara never asked for: when an async job finishes,
+ * OMP can start a turn NuncioADE never asked for: when an async job finishes,
  * the job manager injects the result as a follow-up prompt. If that lands
- * after the previous turn already settled there is no open Synara turn to
+ * after the previous turn already settled there is no open NuncioADE turn to
  * attribute the events to, so mint one. Every later event — items and the
  * final `turn.completed` — is keyed off this id, which is what keeps the
  * ingress guard in provider/terminalTurnApplicability.ts from dropping the
@@ -760,7 +760,7 @@ export function handleSessionEvent(context: OmpSessionContext, event: AgentSessi
       }
       // OMP has no `agent_settled`: `isTerminal === false` means an async
       // delivery will resume this session with a follow-up turn, so the
-      // Synara turn stays open across the gap — same turn id on both sides
+      // NuncioADE turn stays open across the gap — same turn id on both sides
       // is what keeps the ingress from dropping the follow-up.
       if (event.isTerminal === false) {
         context.pendingAsyncDelivery = true;
@@ -803,7 +803,7 @@ export function handleSessionEvent(context: OmpSessionContext, event: AgentSessi
     }
     default:
       // `ttsr_triggered`, `irc_message` and `goal_updated` have no canonical
-      // Synara surface yet (coverage map: "later"); ignoring them never
+      // NuncioADE surface yet (coverage map: "later"); ignoring them never
       // breaks the turn lifecycle.
       return;
   }

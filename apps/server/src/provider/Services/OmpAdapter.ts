@@ -2,7 +2,7 @@
  * OmpAdapter - OMP (oh-my-pi) direct SDK implementation of the generic provider
  * adapter contract.
  *
- * Like pi, OMP is treated as an unopinionated harness: Synara does not add
+ * Like pi, OMP is treated as an unopinionated harness: NuncioADE does not add
  * permissions or plan-mode semantics on top of it.
  *
  * @module OmpAdapter
@@ -17,5 +17,5 @@ export interface OmpAdapterShape extends ProviderAdapterShape<ProviderAdapterErr
 }
 
 export class OmpAdapter extends ServiceMap.Service<OmpAdapter, OmpAdapterShape>()(
-  "synara/provider/Services/OmpAdapter",
+  "nuncioade/provider/Services/OmpAdapter",
 ) {}

@@ -3,7 +3,7 @@
 // Layer: Web utility tests
 // Exports: Vitest suites for providerUpdates.ts
 
-import type { ProviderKind, ServerProviderStatus, ServerSettings } from "@synara/contracts";
+import type { ProviderKind, ServerProviderStatus, ServerSettings } from "@nuncio/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -80,7 +80,7 @@ function serverSettings(overrides: Partial<ServerSettings["providers"]> = {}): S
 }
 
 describe("getVisibleProviderUpdateStatuses", () => {
-  it("excludes providers hidden from Synara so unchecked providers do not nag", () => {
+  it("excludes providers hidden from NuncioADE so unchecked providers do not nag", () => {
     const result = getVisibleProviderUpdateStatuses({
       providers: [providerStatus("codex"), providerStatus("pi")],
       hiddenProviders: ["pi"],

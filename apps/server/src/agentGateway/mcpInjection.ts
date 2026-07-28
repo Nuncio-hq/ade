@@ -1,11 +1,11 @@
 /**
- * Provider-facing config builders for the Synara agent gateway.
+ * Provider-facing config builders for the NuncioADE agent gateway.
  *
  * One shared module shapes the same MCP connection (endpoint URL + per-thread
  * bearer token) into every provider's native MCP configuration format so the
  * injection rules cannot drift between adapters:
  *
- * - Codex: `[mcp_servers.synara]` TOML block (streamable HTTP +
+ * - Codex: `[mcp_servers.nuncioade]` TOML block (streamable HTTP +
  *   `bearer_token_env_var` resolved from the per-session process env).
  * - Claude Agent SDK: `mcpServers` record with an HTTP entry.
  * - ACP agents (cursor/grok/droid): `mcpServers` session entries; HTTP when
@@ -18,14 +18,14 @@ import type * as Acp from "@agentclientprotocol/sdk";
 
 import type { AgentGatewayMcpConnection } from "./Services/AgentGatewayCredentials";
 
-export const SYNARA_MCP_SERVER_NAME = "synara";
-export const SYNARA_AGENT_GATEWAY_TOKEN_ENV = "SYNARA_AGENT_GATEWAY_TOKEN";
-export const SYNARA_AGENT_GATEWAY_URL_ENV = "SYNARA_AGENT_GATEWAY_URL";
+export const NUNCIO_MCP_SERVER_NAME = "nuncioade";
+export const NUNCIO_AGENT_GATEWAY_TOKEN_ENV = "NUNCIO_AGENT_GATEWAY_TOKEN";
+export const NUNCIO_AGENT_GATEWAY_URL_ENV = "NUNCIO_AGENT_GATEWAY_URL";
 
 /**
  * Codex reads MCP servers from `config.toml`; the config file is shared by all
  * sessions of one Codex home, so the token is never written into it. Instead
- * the block references an env var that Synara sets per app-server process.
+ * the block references an env var that NuncioADE sets per app-server process.
  *
  * The shell_environment_policy table keeps that env var out of exec tool
  * subprocesses: codex defaults to `ignore_default_excludes = true`, so the
@@ -35,12 +35,12 @@ export const SYNARA_AGENT_GATEWAY_URL_ENV = "SYNARA_AGENT_GATEWAY_URL";
  */
 export function buildCodexMcpConfigToml(endpointUrl: string): string {
   return [
-    `[mcp_servers.${SYNARA_MCP_SERVER_NAME}]`,
+    `[mcp_servers.${NUNCIO_MCP_SERVER_NAME}]`,
     `url = ${JSON.stringify(endpointUrl)}`,
-    `bearer_token_env_var = ${JSON.stringify(SYNARA_AGENT_GATEWAY_TOKEN_ENV)}`,
+    `bearer_token_env_var = ${JSON.stringify(NUNCIO_AGENT_GATEWAY_TOKEN_ENV)}`,
     "",
     "[shell_environment_policy]",
-    `exclude = [${JSON.stringify(SYNARA_AGENT_GATEWAY_TOKEN_ENV)}]`,
+    `exclude = [${JSON.stringify(NUNCIO_AGENT_GATEWAY_TOKEN_ENV)}]`,
   ].join("\n");
 }
 
@@ -61,7 +61,7 @@ export interface OpenCodeMcpRemoteServerConfig {
 /**
  * OpenCode's dynamic `mcp.add` endpoint is process/directory scoped rather
  * than session scoped. Callers must only install this config into a provider
- * server that is proven to be dedicated to the owning Synara thread.
+ * server that is proven to be dedicated to the owning NuncioADE thread.
  */
 export function buildOpenCodeMcpServer(
   connection: AgentGatewayMcpConnection,
@@ -131,19 +131,19 @@ async function postAgentGatewayJsonRpc(input: {
     ...(input.signal === undefined ? {} : { signal: input.signal }),
   });
   if (!response.ok) {
-    throw new Error(`Synara MCP request failed with HTTP ${String(response.status)}.`);
+    throw new Error(`NuncioADE MCP request failed with HTTP ${String(response.status)}.`);
   }
   const payload: unknown = await response.json();
   if (!isRecord(payload) || payload.jsonrpc !== "2.0") {
-    throw new Error("Synara MCP returned an invalid JSON-RPC response.");
+    throw new Error("NuncioADE MCP returned an invalid JSON-RPC response.");
   }
   if ("error" in payload) {
     const failure = payload as unknown as JsonRpcFailure;
-    throw new Error(failure.error?.message || "Synara MCP request failed.");
+    throw new Error(failure.error?.message || "NuncioADE MCP request failed.");
   }
   const success = payload as unknown as JsonRpcSuccess;
   if (success.id !== id || !("result" in success)) {
-    throw new Error("Synara MCP returned a mismatched JSON-RPC response.");
+    throw new Error("NuncioADE MCP returned a mismatched JSON-RPC response.");
   }
   return success.result;
 }
@@ -159,7 +159,7 @@ export async function listAgentGatewayMcpTools(input: {
     method: "tools/list",
   });
   if (!isRecord(result) || !Array.isArray(result.tools)) {
-    throw new Error("Synara MCP tools/list returned an invalid tool catalog.");
+    throw new Error("NuncioADE MCP tools/list returned an invalid tool catalog.");
   }
   return result.tools.map((value) => {
     if (
@@ -168,7 +168,7 @@ export async function listAgentGatewayMcpTools(input: {
       typeof value.description !== "string" ||
       !isRecord(value.inputSchema)
     ) {
-      throw new Error("Synara MCP tools/list returned an invalid tool descriptor.");
+      throw new Error("NuncioADE MCP tools/list returned an invalid tool descriptor.");
     }
     return {
       name: value.name,
@@ -199,7 +199,7 @@ export function buildClaudeMcpServers(
   connection: AgentGatewayMcpConnection,
 ): Record<string, ClaudeMcpHttpServerConfig> {
   return {
-    [SYNARA_MCP_SERVER_NAME]: {
+    [NUNCIO_MCP_SERVER_NAME]: {
       type: "http",
       url: connection.url,
       headers: { Authorization: `Bearer ${connection.bearerToken}` },
@@ -233,7 +233,7 @@ export interface AcpInitializeCapabilitiesView {
  * falls back to the stdio->HTTP proxy script otherwise (stdio is the ACP
  * baseline every agent must accept).
  */
-export function buildAcpSynaraMcpServers(input: {
+export function buildAcpNuncioADEMcpServers(input: {
   readonly connection: AgentGatewayMcpConnection;
   readonly initializeResult: AcpInitializeCapabilitiesView;
   readonly stdioProxy: AcpStdioProxySpawn;
@@ -243,7 +243,7 @@ export function buildAcpSynaraMcpServers(input: {
     return [
       {
         type: "http",
-        name: SYNARA_MCP_SERVER_NAME,
+        name: NUNCIO_MCP_SERVER_NAME,
         url: input.connection.url,
         headers: [{ name: "Authorization", value: `Bearer ${input.connection.bearerToken}` }],
       },
@@ -251,12 +251,12 @@ export function buildAcpSynaraMcpServers(input: {
   }
   return [
     {
-      name: SYNARA_MCP_SERVER_NAME,
+      name: NUNCIO_MCP_SERVER_NAME,
       command: input.stdioProxy.command,
       args: [...input.stdioProxy.args],
       env: [
-        { name: SYNARA_AGENT_GATEWAY_URL_ENV, value: input.connection.url },
-        { name: SYNARA_AGENT_GATEWAY_TOKEN_ENV, value: input.connection.bearerToken },
+        { name: NUNCIO_AGENT_GATEWAY_URL_ENV, value: input.connection.url },
+        { name: NUNCIO_AGENT_GATEWAY_TOKEN_ENV, value: input.connection.bearerToken },
       ],
     },
   ];

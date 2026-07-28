@@ -27,7 +27,7 @@ export const defaultAppSnapHelperPath = join(
   desktopDirectory,
   ".electron-runtime",
   "appsnap",
-  "synara-appsnap-helper",
+  "nuncioade-appsnap-helper",
 );
 
 const frameworkArguments = [
@@ -83,7 +83,7 @@ function run(command, arguments_, options = {}) {
 
 function buildFingerprint({ arch, release, sources, targets }) {
   const hash = createHash("sha256");
-  hash.update("synara-appsnap-helper-build-v1\0");
+  hash.update("nuncioade-appsnap-helper-build-v1\0");
   hash.update(arch);
   hash.update("\0");
   hash.update(release ? "release" : "debug");
@@ -149,7 +149,7 @@ export function buildAppSnapHelper({
     return resolvedOutputPath;
   }
 
-  const temporaryDirectory = mkdtempSync(join(tmpdir(), "synara-appsnap-helper-"));
+  const temporaryDirectory = mkdtempSync(join(tmpdir(), "nuncioade-appsnap-helper-"));
   const moduleCacheDirectory = join(temporaryDirectory, "module-cache");
   const buildEnvironment = {
     ...process.env,
@@ -160,7 +160,7 @@ export function buildAppSnapHelper({
   try {
     const thinBinaries = [];
     for (const target of targets) {
-      const thinBinary = join(temporaryDirectory, `synara-appsnap-helper-${target.arch}`);
+      const thinBinary = join(temporaryDirectory, `nuncioade-appsnap-helper-${target.arch}`);
       const optimizationArguments = release
         ? ["-O", "-whole-module-optimization"]
         : ["-Onone", "-g"];
@@ -170,7 +170,7 @@ export function buildAppSnapHelper({
           "swiftc",
           ...optimizationArguments,
           "-module-name",
-          "SynaraAppSnapHelper",
+          "NuncioADEAppSnapHelper",
           "-target",
           target.target,
           ...frameworkArguments,
@@ -183,7 +183,7 @@ export function buildAppSnapHelper({
       thinBinaries.push(thinBinary);
     }
 
-    const unsignedBinary = join(temporaryDirectory, "synara-appsnap-helper");
+    const unsignedBinary = join(temporaryDirectory, "nuncioade-appsnap-helper");
     if (thinBinaries.length === 1) {
       copyFileSync(thinBinaries[0], unsignedBinary);
     } else {

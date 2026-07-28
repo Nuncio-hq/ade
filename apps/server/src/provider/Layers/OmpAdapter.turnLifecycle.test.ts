@@ -11,7 +11,7 @@ import {
   EventId,
   ThreadId,
   TurnId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import {
   encodeSidecarFrame,
   OMP_SIDECAR_PROTOCOL_VERSION,

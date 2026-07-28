@@ -1,4 +1,4 @@
-import { ProjectId, ThreadId } from "@synara/contracts";
+import { ProjectId, ThreadId } from "@nuncio/contracts";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -9,8 +9,8 @@ import {
 
 const paths = {
   homeDir: "/Users/tester",
-  chatWorkspaceRoot: "/Users/tester/Documents/Synara/Chats",
-  studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+  chatWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Chats",
+  studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
 };
 
 function successfulHandler() {
@@ -25,7 +25,7 @@ describe("startFreshChatForActiveSurface", () => {
     await startFreshChatForActiveSurface({
       activeProject: {
         kind: "studio",
-        cwd: "/Users/tester/Documents/Synara/Studio",
+        cwd: "/Users/tester/Documents/NuncioADE/Studio",
       },
       isStudioRoute: false,
       paths,

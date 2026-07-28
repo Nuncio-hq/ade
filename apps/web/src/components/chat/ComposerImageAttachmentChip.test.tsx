@@ -61,7 +61,7 @@ describe("ComposerImageAttachmentChip", () => {
         appName: "Visual Studio Code",
         bundleIdentifier: "com.microsoft.VSCode",
         appIconDataUrl: "data:image/png;base64,aWNvbg==",
-        windowTitle: "AppSnapCoordinator.tsx — synara",
+        windowTitle: "AppSnapCoordinator.tsx — nuncioade",
       },
     };
     const markup = renderToStaticMarkup(
@@ -80,7 +80,7 @@ describe("ComposerImageAttachmentChip", () => {
     expect(markup).toContain("object-contain");
     expect(markup).not.toContain("object-cover");
     // Provenance collapses to one line joining distinct app + window labels.
-    expect(markup).toContain("AppSnapCoordinator.tsx — synara / Visual Studio Code");
+    expect(markup).toContain("AppSnapCoordinator.tsx — nuncioade / Visual Studio Code");
     expect(markup).toContain("data:image/png;base64,aWNvbg==");
     expect(markup).toContain("Preview AppSnap from Visual Studio Code");
     expect(markup).toContain("Remove AppSnap from Visual Studio Code");
@@ -136,7 +136,7 @@ describe("ComposerImageAttachmentChip", () => {
         captureId: "capture-legacy",
         capturedAt: "2026-07-12T19:59:33.000Z",
         appName: "Safari",
-        windowTitle: "Synara",
+        windowTitle: "NuncioADE",
       } as unknown as ComposerImageSource,
     };
     const markup = renderToStaticMarkup(
@@ -151,6 +151,6 @@ describe("ComposerImageAttachmentChip", () => {
 
     expect(markup).toContain("w-52");
     expect(markup).toContain("Preview AppSnap from Safari");
-    expect(markup).toContain("Synara / Safari");
+    expect(markup).toContain("NuncioADE / Safari");
   });
 });

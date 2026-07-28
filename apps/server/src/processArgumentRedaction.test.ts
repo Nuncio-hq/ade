@@ -18,9 +18,9 @@ describe("redactSensitiveProcessArgs", () => {
   it("redacts external MCP pairing codes and credentials from process diagnostics", () => {
     expect(
       redactSensitiveProcessArgs(
-        "synara mcp pair --code syn_pair_v1_short-lived syn_mcp_v1_client-secret",
+        "nuncioade mcp pair --code syn_pair_v1_short-lived syn_mcp_v1_client-secret",
       ),
-    ).toBe("synara mcp pair --code [redacted] [redacted]");
+    ).toBe("nuncioade mcp pair --code [redacted] [redacted]");
   });
 
   it("leaves unrelated process arguments unchanged", () => {

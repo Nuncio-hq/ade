@@ -36,25 +36,25 @@ import {
   OrchestrationThreadActivity,
   ProviderInteractionMode,
   RuntimeMode,
-} from "@synara/contracts";
-import { automationRequiresTargetThread } from "@synara/shared/automationMode";
-import { getModelCapabilities, normalizeModelSlug } from "@synara/shared/model";
-import { resolveTailUserMessageEditTarget } from "@synara/shared/conversationEdit";
-import { threadExportBlockedReason } from "@synara/shared/threadExport";
-import { pendingRequestInstanceKey } from "@synara/shared/threadSummary";
+} from "@nuncio/contracts";
+import { automationRequiresTargetThread } from "@nuncio/shared/automationMode";
+import { getModelCapabilities, normalizeModelSlug } from "@nuncio/shared/model";
+import { resolveTailUserMessageEditTarget } from "@nuncio/shared/conversationEdit";
+import { threadExportBlockedReason } from "@nuncio/shared/threadExport";
+import { pendingRequestInstanceKey } from "@nuncio/shared/threadSummary";
 import {
   buildPromptThreadTitleFallback,
   GENERIC_CHAT_THREAD_TITLE,
-} from "@synara/shared/chatThreads";
+} from "@nuncio/shared/chatThreads";
 import {
   resolveThreadWorkspaceState,
   resolveThreadBranchSourceCwd,
   resolveThreadWorkspaceCwd as resolveSharedThreadWorkspaceCwd,
-} from "@synara/shared/threadEnvironment";
+} from "@nuncio/shared/threadEnvironment";
 import {
   deriveAssociatedWorktreeMetadata,
   workspaceRootsEqual,
-} from "@synara/shared/threadWorkspace";
+} from "@nuncio/shared/threadWorkspace";
 import {
   lazy,
   Suspense,
@@ -278,7 +278,7 @@ import { useThreadHandoff } from "../hooks/useThreadHandoff";
 import { useThreadUnblock } from "../hooks/useThreadUnblock";
 import { useTurnDiffSummaries } from "../hooks/useTurnDiffSummaries";
 import BranchToolbar, { RuntimeUsageControls } from "./BranchToolbar";
-import { SynaraLogo } from "./SynaraLogo";
+import { NuncioADELogo } from "./NuncioADELogo";
 import { ThreadWorktreeHandoffDialog } from "./ThreadWorktreeHandoffDialog";
 import {
   formatShortcutLabel,
@@ -1099,7 +1099,7 @@ function composerPromptStillMatchesRestoredQueuedDraft(
 
 // Builds an ephemeral transcript bubble for the conversational automation-setup
 // exchange. These never reach a provider and are not persisted; they render the
-// back-and-forth (user request, Synara's clarifying questions) inline like Codex.
+// back-and-forth (user request, NuncioADE's clarifying questions) inline like Codex.
 function makeAutomationSetupBubble(role: "user" | "assistant", text: string): ChatMessage {
   return {
     id: newMessageId(),
@@ -2759,6 +2759,16 @@ export default function ChatView({
   const activeWorktreeSetup = localDispatch?.worktreeSetup ?? null;
   const isPreparingWorktree = activeWorktreeSetup !== null;
   const hasLiveTurn = phase === "running";
+  // Providers that clear `activeTurnId` on every terminal event (Claude) would
+  // otherwise leave the transcript with no active turn while work is still in
+  // progress, collapsing the newest answer into a closed "Worked for" disclosure.
+  // The latest turn is the transcript's own notion of "current", so fall back to it.
+  const activeTurnIdForTranscript = activeThread?.session?.activeTurnId ?? activeLatestTurnId;
+  // Defence in depth against a session stuck at "running" with no turn to
+  // complete: nothing would ever drain the composer queue, so messages routed
+  // into it would be swallowed. Server-side reconciliation settles these
+  // sessions; this keeps the composer usable until it does.
+  const hasQueueableLiveTurn = hasLiveTurn && activeThread?.session?.activeTurnId != null;
   const {
     automationProjects,
     automationThreads,
@@ -4908,7 +4918,7 @@ export default function ChatView({
         toastManager.add({
           type: "warning",
           title: "Select a unique phrase to mark it.",
-          description: "Try including a few more words so Synara can find the exact place.",
+          description: "Try including a few more words so NuncioADE can find the exact place.",
         });
         return;
       }
@@ -5614,6 +5624,21 @@ export default function ChatView({
     });
   }, [activeThread]);
 
+  // A rejected interrupt (orchestration dispatch timeout, dead runtime) leaves the
+  // UI spinning with no explanation, so the stop affordances report it.
+  const onInterruptFromStopControl = useCallback(() => {
+    void onInterrupt().catch((error: unknown) => {
+      toastManager.add({
+        type: "error",
+        title: "Could not stop the current response",
+        description:
+          error instanceof Error
+            ? error.message
+            : "The interrupt request failed. Try again in a moment.",
+      });
+    });
+  }, [onInterrupt]);
+
   const onStopWorkflowRun = useCallback(async () => {
     const api = readNativeApi();
     if (!api || !activeThread || !workflowRunState) return;
@@ -5747,7 +5772,7 @@ export default function ChatView({
       ) {
         event.preventDefault();
         event.stopPropagation();
-        void onInterrupt();
+        onInterruptFromStopControl();
         return;
       }
       // Ctrl+B mirrors the native CLI: background all foreground running
@@ -6004,7 +6029,7 @@ export default function ChatView({
     terminalWorkspaceTerminalTabActive,
     onToggleBrowser,
     onToggleDiff,
-    onInterrupt,
+    onInterruptFromStopControl,
     onSplitSurface,
     showGitActions,
     isGitRepo,
@@ -6195,7 +6220,7 @@ export default function ChatView({
       }
       const confirmed = await api.dialogs.confirm(
         [
-          "Undo the latest file changes shown in this card?",
+          "Undo the file changes shown in this card?",
           "Earlier file changes will remain available to undo.",
           "Messages and provider conversation history will be kept.",
           "This action cannot be undone.",
@@ -6205,32 +6230,38 @@ export default function ChatView({
 
       setIsRevertingCheckpoint(true);
       setThreadError(activeThread.id, null);
-      const turnCount = Math.max(...turnCounts);
+      // The card can merge several turns. The server refuses to undo a turn while
+      // newer file changes are still applied, so revert newest-first and stop at
+      // the first failure rather than leaving the card half-undone silently.
+      const orderedTurnCounts = [...new Set(turnCounts)].toSorted((left, right) => right - left);
       const requestedAt = new Date().toISOString();
       setPendingFileUndo({
         threadId: activeThread.id,
-        turnCount,
+        turnCounts: orderedTurnCounts,
         existingFailureActivityIds: activeThread.activities
           .filter((activity) => activity.kind === "checkpoint.revert.failed")
           .map((activity) => activity.id),
       });
-      try {
-        await api.orchestration.dispatchCommand({
-          type: "thread.checkpoint.revert",
-          commandId: newCommandId(),
-          threadId: activeThread.id,
-          turnCount,
-          scope: "files",
-          createdAt: requestedAt,
-        });
-      } catch (err) {
+      const dispatchReverts = async () => {
+        for (const turnCount of orderedTurnCounts) {
+          await api.orchestration.dispatchCommand({
+            type: "thread.checkpoint.revert",
+            commandId: newCommandId(),
+            threadId: activeThread.id,
+            turnCount,
+            scope: "files",
+            createdAt: requestedAt,
+          });
+        }
+      };
+      await dispatchReverts().catch((err: unknown) => {
         setPendingFileUndo(null);
         setIsRevertingCheckpoint(false);
         setThreadError(
           activeThread.id,
           err instanceof Error ? err.message : "Failed to undo file changes.",
         );
-      }
+      });
     },
     [activeThread, hasLiveTurn, isConnecting, isRevertingCheckpoint, isSendBusy, setThreadError],
   );
@@ -6347,7 +6378,7 @@ export default function ChatView({
                 type: "warning",
                 title: "Thread note not added",
                 description:
-                  "The automation was created, but Synara could not add the activity note.",
+                  "The automation was created, but NuncioADE could not add the activity note.",
               });
             }
           })();
@@ -6367,7 +6398,7 @@ export default function ChatView({
             type: "error",
             title: "Could not create automation",
             description:
-              error instanceof Error ? error.message : "Synara could not save the automation.",
+              error instanceof Error ? error.message : "NuncioADE could not save the automation.",
           });
           return false;
         })
@@ -6441,7 +6472,7 @@ export default function ChatView({
           toastManager.add({
             type: "error",
             title: "Could not create chat",
-            description: "Synara could not promote this draft before saving the automation.",
+            description: "NuncioADE could not promote this draft before saving the automation.",
           });
           return null;
         }
@@ -6468,7 +6499,7 @@ export default function ChatView({
           description:
             error instanceof Error
               ? error.message
-              : "Synara could not promote this draft before saving the automation.",
+              : "NuncioADE could not promote this draft before saving the automation.",
         });
         return null;
       }
@@ -6865,7 +6896,7 @@ export default function ChatView({
         interactionModeForSend = followUp.interactionMode;
         trimmedPromptForSend = followUp.text.trim();
       } else {
-        if (hasLiveTurn && dispatchMode === "queue") {
+        if (hasQueueableLiveTurn && dispatchMode === "queue") {
           clearComposerInput(activeThread.id);
           scheduleComposerFocus();
           enqueueQueuedComposerTurn(activeThread.id, {
@@ -7127,7 +7158,7 @@ export default function ChatView({
       });
     }
 
-    if (hasLiveTurn && dispatchMode === "queue" && queuedChatTurn === null) {
+    if (hasQueueableLiveTurn && dispatchMode === "queue" && queuedChatTurn === null) {
       clearComposerInput(activeThread.id);
       scheduleComposerFocus();
       const queuedImagesForPersistence = await Promise.all(
@@ -8475,7 +8506,7 @@ export default function ChatView({
 
   useEffect(() => {
     if (
-      hasLiveTurn ||
+      hasQueueableLiveTurn ||
       phase === "disconnected" ||
       isSendBusy ||
       isConnecting ||
@@ -8518,7 +8549,7 @@ export default function ChatView({
     isConnecting,
     isSendBusy,
     pendingUserInputs.length,
-    hasLiveTurn,
+    hasQueueableLiveTurn,
     queuedAutoDispatchTick,
     queuedComposerTurns,
     queuedSteerGate,
@@ -10730,7 +10761,7 @@ export default function ChatView({
                           variant="prominent"
                           size="icon-xs"
                           className="sm:size-[26px]"
-                          onClick={() => void onInterrupt()}
+                          onClick={onInterruptFromStopControl}
                           aria-label="Stop generation"
                           title="Stop the current response. On Mac, press Ctrl+C to interrupt."
                         >
@@ -11076,7 +11107,7 @@ export default function ChatView({
                       CHAT_COLUMN_FRAME_CLASS_NAME,
                     )}
                   >
-                    <SynaraLogo aria-label="Synara logo" className="size-10" />
+                    <NuncioADELogo aria-label="NuncioADE logo" className="size-10" />
                     <h2
                       data-testid="empty-landing-heading"
                       className="text-[26px] font-normal leading-[1.15] tracking-[-0.015em] text-foreground/95 sm:text-[30px]"
@@ -11142,7 +11173,7 @@ export default function ChatView({
                 <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
                   <ChatTranscriptPane
                     activeThreadId={activeThread.id}
-                    activeTurnId={activeThread.session?.activeTurnId ?? null}
+                    activeTurnId={activeTurnIdForTranscript}
                     agentActivityDetail={openAgentActivityDetail}
                     hasMessages={timelineEntries.length > 0}
                     isWorking={isWorking}

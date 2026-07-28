@@ -5,7 +5,7 @@ import type {
   OrchestrationThread,
   ProjectKind,
   ThreadMarker,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import {
   EventId,
   MAX_PINNED_PROJECTS,
@@ -14,17 +14,17 @@ import {
   SPACES_MAX_COUNT,
   THREAD_MARKERS_MAX_COUNT,
   TurnId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import {
   deriveAssociatedWorktreeMetadata,
   deriveAssociatedWorktreeMetadataPatch,
   workspaceRootsEqual,
-} from "@synara/shared/threadWorkspace";
-import { doThreadMarkerRangesOverlap } from "@synara/shared/threadMarkers";
+} from "@nuncio/shared/threadWorkspace";
+import { doThreadMarkerRangesOverlap } from "@nuncio/shared/threadMarkers";
 import {
   collectTailTurnIds,
   resolveTailUserMessageEditTarget,
-} from "@synara/shared/conversationEdit";
+} from "@nuncio/shared/conversationEdit";
 import { Effect } from "effect";
 
 import { OrchestrationCommandInvariantError } from "./Errors.ts";
@@ -975,6 +975,11 @@ export const decideOrchestrationCommand = Effect.fn("decideOrchestrationCommand"
         },
       };
 
+      // Imported messages keep their source-thread timestamps so the transcript still
+      // reads chronologically. They are not activity in this thread: the retention
+      // clock floors on the new thread's own createdAt/updatedAt (see
+      // `threadRetention.getThreadLastActivityMs`) so a handoff of an old
+      // conversation is never born past the retention cutoff.
       const importedMessageEvents: ReadonlyArray<Omit<OrchestrationEvent, "sequence">> =
         command.importedMessages.map((message) => ({
           ...withEventBase({
@@ -1061,6 +1066,11 @@ export const decideOrchestrationCommand = Effect.fn("decideOrchestrationCommand"
         },
       };
 
+      // Imported messages keep their source-thread timestamps so the transcript still
+      // reads chronologically. They are not activity in this thread: the retention
+      // clock floors on the new thread's own createdAt/updatedAt (see
+      // `threadRetention.getThreadLastActivityMs`) so a fork of an old conversation
+      // is never born past the retention cutoff.
       const importedMessageEvents: ReadonlyArray<Omit<OrchestrationEvent, "sequence">> =
         command.importedMessages.map((message) => ({
           ...withEventBase({

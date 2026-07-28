@@ -6,7 +6,7 @@
 
 import nodePath from "node:path";
 
-import type { ServerProviderUsageLimit, ServerProviderUsageLine } from "@synara/contracts";
+import type { ServerProviderUsageLimit, ServerProviderUsageLine } from "@nuncio/contracts";
 
 import { decodeKeychainJson, readJsonFile, readKeychainPassword } from "../credentials";
 import { fetchJson, isAuthFailureStatus } from "../http";
@@ -182,7 +182,7 @@ export const codexUsageFetcher: ProviderUsageFetcher = {
         headers: {
           Authorization: `Bearer ${auth.accessToken}`,
           Accept: "application/json",
-          "User-Agent": "Synara",
+          "User-Agent": "NuncioADE",
           ...(auth.accountId ? { "ChatGPT-Account-Id": auth.accountId } : {}),
         },
       });

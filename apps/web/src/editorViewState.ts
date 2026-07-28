@@ -3,11 +3,11 @@
 //          directories, center mode) so re-entering the editor view restores it.
 // Layer: Web UI state persistence
 
-import type { ProjectId, ProviderKind, ThreadId } from "@synara/contracts";
+import type { ProjectId, ProviderKind, ThreadId } from "@nuncio/contracts";
 import { isProviderKind } from "./providerOrdering";
 
-const EDITOR_VIEW_STATE_STORAGE_KEY = "synara.editor.viewStateByThreadId";
-const EDITOR_RAIL_CHAT_TABS_STORAGE_KEY = "synara.editor.railChatTabsByProjectId";
+const EDITOR_VIEW_STATE_STORAGE_KEY = "nuncioade.editor.viewStateByThreadId";
+const EDITOR_RAIL_CHAT_TABS_STORAGE_KEY = "nuncioade.editor.railChatTabsByProjectId";
 const MAX_PERSISTED_THREADS = 50;
 const MAX_EDITOR_RAIL_CHAT_TABS = 8;
 

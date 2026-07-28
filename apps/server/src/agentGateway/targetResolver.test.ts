@@ -1,5 +1,5 @@
 import { assert, describe, it } from "@effect/vitest";
-import type { ModelSelection, ProviderKind, ProviderModelDescriptor } from "@synara/contracts";
+import type { ModelSelection, ProviderKind, ProviderModelDescriptor } from "@nuncio/contracts";
 import { Effect } from "effect";
 
 import type { ProviderDiscoveryServiceShape } from "../provider/Services/ProviderDiscoveryService.ts";
@@ -519,7 +519,7 @@ describe("agent gateway target resolver", () => {
     }),
   );
 
-  it.effect("fails closed before discovery when Synara disables a provider", () =>
+  it.effect("fails closed before discovery when NuncioADE disables a provider", () =>
     Effect.gen(function* () {
       let discoveryCalls = 0;
       const trackedDiscovery = {

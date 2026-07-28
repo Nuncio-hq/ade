@@ -25,7 +25,7 @@ import {
   type ProviderUserInputAnswers,
   type RuntimeMode,
   type ThreadTokenUsageSnapshot,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 
 import crypto from "node:crypto";
 
@@ -590,7 +590,7 @@ export function createOmpSidecarSessionHost(
           ...makeEventBase(context, false),
           type: "runtime.warning",
           payload: {
-            message: `OMP extension UI API '${method}' is not supported in Synara yet.`,
+            message: `OMP extension UI API '${method}' is not supported in NuncioADE yet.`,
             detail: { method },
           },
           raw: {
@@ -687,7 +687,7 @@ export function createOmpSidecarSessionHost(
           connection: input.gateway,
         });
       } catch (cause) {
-        gatewayConnectError = toMessage(cause, "Synara MCP catalog load failed.");
+        gatewayConnectError = toMessage(cause, "NuncioADE MCP catalog load failed.");
       }
     }
 
@@ -704,8 +704,8 @@ export function createOmpSidecarSessionHost(
 
     // `SessionManager.create` stamps a terminal breadcrumb that cannot
     // be suppressed (#resetToNewSession → #rememberBreadcrumb). Inside
-    // Synara that crumb is inherited from whatever terminal launched
-    // the server, so the user's own `omp` CLI would resume a Synara
+    // NuncioADE that crumb is inherited from whatever terminal launched
+    // the server, so the user's own `omp` CLI would resume a NuncioADE
     // thread's session. Minting the file explicitly avoids the crumb
     // and hands back a resume cursor before the first turn, so a crash
     // right after start is still resumable.
@@ -730,7 +730,7 @@ export function createOmpSidecarSessionHost(
       // Only override when the user picked a level; otherwise the
       // engine resolves it from its own settings/model roles.
       ...(thinkingLevel ? { thinkingLevel } : {}),
-      // Synara IS the UI. The engine gates its interactive surface on
+      // NuncioADE IS the UI. The engine gates its interactive surface on
       // this flag — the native `ask` tool is only constructed when it is
       // true (tools/ask.ts) — and setToolUIContext below supplies the
       // context those surfaces render through.
@@ -738,7 +738,7 @@ export function createOmpSidecarSessionHost(
       // On. The engine's own `lsp.lazy` setting (default true) keeps
       // startup to discovery — language servers spawn on the first
       // `lsp` call, not per session — so the cost is bounded by the
-      // user's setting rather than by a policy Synara invents. Off
+      // user's setting rather than by a policy NuncioADE invents. Off
       // would silently drop OMP's code-intelligence tool entirely.
       enableLsp: true,
       // Off. IRC registers the session on the shared agent hub; a
@@ -746,7 +746,7 @@ export function createOmpSidecarSessionHost(
       // user's roster with sessions they never addressed.
       enableIrc: false,
       // On. The engine discovers and owns the user's MCP servers;
-      // Synara's gateway comes in beside them as custom tools.
+      // NuncioADE's gateway comes in beside them as custom tools.
       enableMCP: true,
       ...(gatewayTools.length > 0 ? { customTools: [...gatewayTools] } : {}),
       // On. The preflight only probes python/ruby/julia when JS eval is
@@ -788,13 +788,13 @@ export function createOmpSidecarSessionHost(
     const gatewayConnection = input.gateway;
     if (!gatewayControlAvailable && gatewayConnection) {
       // Losing the gateway silently would leave the thread unable to drive
-      // Synara while the model is told, without explanation, that Synara
+      // NuncioADE while the model is told, without explanation, that NuncioADE
       // control is unavailable.
       context.offerRuntimeEvent({
         ...makeEventBase(context, false),
         type: "runtime.warning",
         payload: {
-          message: "Synara MCP control is unavailable in this OMP session.",
+          message: "NuncioADE MCP control is unavailable in this OMP session.",
           detail: {
             reason: gatewayConnectError ?? "unknown",
             url: gatewayConnection.url,
@@ -828,7 +828,7 @@ export function createOmpSidecarSessionHost(
         type: "runtime.warning",
         payload: {
           message:
-            "OMP extensions are loaded with Synara's limited UI bridge. select/confirm/input/notify/status and the ask dialog are supported; TUI-only widgets and editor hooks are ignored.",
+            "OMP extensions are loaded with NuncioADE's limited UI bridge. select/confirm/input/notify/status and the ask dialog are supported; TUI-only widgets and editor hooks are ignored.",
           detail: { extensionCount: loadedExtensions.length, extensions },
         },
         raw: {

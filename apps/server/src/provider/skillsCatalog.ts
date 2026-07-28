@@ -1,17 +1,17 @@
 // FILE: skillsCatalog.ts
 // Purpose: Generic Agent Skill discovery primitives (frontmatter parsing, SKILL.md
-//          walking) plus the unified cross-provider skills catalog backing Synara
-//          portable skills. Aggregates `~/.synara/skills` with every provider-native
+//          walking) plus the unified cross-provider skills catalog backing NuncioADE
+//          portable skills. Aggregates `~/.nuncioade/skills` with every provider-native
 //          skills folder, deduping by name with provider-native copies winning for
 //          the active provider.
 // Layer: Server provider discovery helper
 // Exports: parseSkillFrontmatter, collectSkillsFromRoots, discoverSkillsCatalog,
-//          mergeSkillsIntoCatalog, filterDisabledSkills, ensureSynaraSkillsDir
+//          mergeSkillsIntoCatalog, filterDisabledSkills, ensureNuncioADESkillsDir
 
 import * as fs from "node:fs/promises";
 import * as nodePath from "node:path";
 
-import type { ProviderKind, ProviderSkillDescriptor } from "@synara/contracts";
+import type { ProviderKind, ProviderSkillDescriptor } from "@nuncio/contracts";
 
 type FrontmatterValue = string | boolean;
 
@@ -304,8 +304,8 @@ export interface SkillsCatalogDiscoveryInput {
   /** Optional workspace cwd; when present, project-level skill folders are included. */
   readonly cwd?: string | null;
   readonly homeDir: string;
-  /** Synara base dir (usually `~/.synara`); skills live in `{base}/skills`. */
-  readonly synaraBaseDir: string;
+  /** NuncioADE base dir (usually `~/.nuncioade`); skills live in `{base}/skills`. */
+  readonly nuncioadeBaseDir: string;
   /** Provider whose native copies should win when the same skill exists in several roots. */
   readonly provider?: ProviderKind | null;
   /** Settings needs every origin; composer/provider pickers keep one winner by name. */
@@ -315,12 +315,12 @@ export interface SkillsCatalogDiscoveryInput {
 }
 
 export interface SkillsCatalogRootInput extends SkillsCatalogDiscoveryInput {
-  /** Native provider scans can opt out; the catalog itself always includes Synara. */
-  readonly includeSynaraRoot?: boolean;
+  /** Native provider scans can opt out; the catalog itself always includes NuncioADE. */
+  readonly includeNuncioADERoot?: boolean;
 }
 
 const HOME_ORIGIN_ORDER = [
-  "synara",
+  "nuncioade",
   "codex",
   "claude",
   "cursor",
@@ -346,27 +346,27 @@ interface SkillsCatalogCacheEntry {
 
 const skillsCatalogCache = new Map<string, SkillsCatalogCacheEntry>();
 const skillsCatalogInflight = new Map<string, Promise<ReadonlyArray<ProviderSkillDescriptor>>>();
-const ensuredSynaraSkillsDirs = new Set<string>();
+const ensuredNuncioADESkillsDirs = new Set<string>();
 
 export function clearSkillsCatalogCacheForTests(): void {
   skillsCatalogCache.clear();
   skillsCatalogInflight.clear();
-  ensuredSynaraSkillsDirs.clear();
+  ensuredNuncioADESkillsDirs.clear();
 }
 
-export function synaraSkillsDir(synaraBaseDir: string): string {
-  return nodePath.join(synaraBaseDir, "skills");
+export function nuncioadeSkillsDir(nuncioadeBaseDir: string): string {
+  return nodePath.join(nuncioadeBaseDir, "skills");
 }
 
 // Creates the portable skills folder on first use so users have a drop-in target.
-export async function ensureSynaraSkillsDir(synaraBaseDir: string): Promise<string> {
-  const dir = synaraSkillsDir(synaraBaseDir);
-  if (ensuredSynaraSkillsDirs.has(dir)) {
+export async function ensureNuncioADESkillsDir(nuncioadeBaseDir: string): Promise<string> {
+  const dir = nuncioadeSkillsDir(nuncioadeBaseDir);
+  if (ensuredNuncioADESkillsDirs.has(dir)) {
     return dir;
   }
   try {
     await fs.mkdir(dir, { recursive: true });
-    ensuredSynaraSkillsDirs.add(dir);
+    ensuredNuncioADESkillsDirs.add(dir);
   } catch {
     // Discovery still works without the folder; reads simply return nothing.
   }
@@ -381,12 +381,12 @@ interface SkillOriginRootSpec {
 }
 
 const SKILL_ORIGIN_ROOTS = {
-  synara: {
-    homeRoots: (input) => [synaraSkillsDir(input.synaraBaseDir)],
-    projectRootNames: [".synara"],
+  nuncioade: {
+    homeRoots: (input) => [nuncioadeSkillsDir(input.nuncioadeBaseDir)],
+    projectRootNames: [".nuncioade"],
   },
   codex: {
-    // Keep Synara's existing Codex-local root. Official Codex discovery uses
+    // Keep NuncioADE's existing Codex-local root. Official Codex discovery uses
     // `.agents/skills`, which is represented separately by the shared origin.
     homeRoots: (input) => [nodePath.join(input.homeDir, ".codex", "skills")],
     projectRootNames: [".codex"],
@@ -456,7 +456,7 @@ function projectRootNamesForOrigin(origin: SkillsHomeOrigin): readonly string[] 
   return SKILL_ORIGIN_ROOTS[origin].projectRootNames;
 }
 
-// Native copies first so an agent keeps using its own skill, then Synara as the
+// Native copies first so an agent keeps using its own skill, then NuncioADE as the
 // portable fallback, then the remaining provider homes for cross-provider reuse.
 function preferredOriginsForProvider(
   provider: ProviderKind | null | undefined,
@@ -466,19 +466,19 @@ function preferredOriginsForProvider(
 
 function orderedOriginsForProvider(
   provider: ProviderKind | null | undefined,
-  includeSynaraRoot = true,
+  includeNuncioADERoot = true,
   includeRemainingOrigins = true,
 ): SkillsHomeOrigin[] {
   const preferred = preferredOriginsForProvider(provider);
   const ordered = [...preferred];
-  if (includeSynaraRoot && !ordered.includes("synara")) {
-    ordered.push("synara");
+  if (includeNuncioADERoot && !ordered.includes("nuncioade")) {
+    ordered.push("nuncioade");
   }
   if (!includeRemainingOrigins) {
-    return ordered.filter((origin) => includeSynaraRoot || origin !== "synara");
+    return ordered.filter((origin) => includeNuncioADERoot || origin !== "nuncioade");
   }
   for (const origin of HOME_ORIGIN_ORDER) {
-    if (!includeSynaraRoot && origin === "synara") {
+    if (!includeNuncioADERoot && origin === "nuncioade") {
       continue;
     }
     if (!ordered.includes(origin)) {
@@ -536,7 +536,7 @@ function rootsForOrderedOrigins(
 export function skillsCatalogRoots(input: SkillsCatalogRootInput): SkillRoot[] {
   return rootsForOrderedOrigins(
     input,
-    orderedOriginsForProvider(input.provider, input.includeSynaraRoot !== false),
+    orderedOriginsForProvider(input.provider, input.includeNuncioADERoot !== false),
   );
 }
 
@@ -551,7 +551,7 @@ export async function discoverSkillsCatalog(
     input.cwd?.trim() ?? "",
     input.provider ?? "",
     input.homeDir,
-    input.synaraBaseDir,
+    input.nuncioadeBaseDir,
     input.includeDuplicateOrigins ? "all-origins" : "deduped",
   ].join("\u0000");
 
@@ -568,7 +568,7 @@ export async function discoverSkillsCatalog(
   }
 
   const scan = (async () => {
-    await ensureSynaraSkillsDir(input.synaraBaseDir);
+    await ensureNuncioADESkillsDir(input.nuncioadeBaseDir);
     const skills = input.includeDuplicateOrigins
       ? await collectSkillDescriptorsFromRoots(skillsCatalogRoots(input))
       : await collectSkillsFromRoots(skillsCatalogRoots(input));

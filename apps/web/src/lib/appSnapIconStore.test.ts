@@ -9,13 +9,13 @@ import {
 describe("AppSnap icon cache guards", () => {
   it("evicts the oldest icons once the cache exceeds its cap", () => {
     const entries = Array.from({ length: 102 }, (_, index) => ({
-      bundleIdentifier: `dev.synara.test-${index}`,
+      bundleIdentifier: `dev.nuncioade.test-${index}`,
       updatedAt: index,
     }));
 
     expect(selectAppSnapIconEvictionKeys(entries)).toEqual([
-      "dev.synara.test-0",
-      "dev.synara.test-1",
+      "dev.nuncioade.test-0",
+      "dev.nuncioade.test-1",
     ]);
   });
 

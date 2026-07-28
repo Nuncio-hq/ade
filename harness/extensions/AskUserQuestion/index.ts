@@ -99,12 +99,12 @@ type ExecuteContextLike = {
   sessionManager?: { getSessionFile?: () => string | undefined };
 };
 
-// Synara's PiAdapter augments the extension UI bridge with a structured
+// NuncioADE's PiAdapter augments the extension UI bridge with a structured
 // AskUserQuestion entry point (`extension/ui/askUserQuestion`). Detecting it
-// routes the whole dialog through Synara's pending user-input panel instead of
-// the TUI dialog. Answers arrive keyed by question header in Synara's
+// routes the whole dialog through NuncioADE's pending user-input panel instead of
+// the TUI dialog. Answers arrive keyed by question header in NuncioADE's
 // ProviderUserInputAnswers shape.
-type SynaraAskUserQuestions = (
+type NuncioADEAskUserQuestions = (
   questions: Array<{
     header: string;
     question: string;
@@ -114,15 +114,15 @@ type SynaraAskUserQuestions = (
   opts?: { signal?: AbortSignal },
 ) => Promise<Record<string, unknown>>;
 
-function synaraAskUserQuestions(ui: unknown): SynaraAskUserQuestions | undefined {
+function nuncioadeAskUserQuestions(ui: unknown): NuncioADEAskUserQuestions | undefined {
   if (typeof ui !== "object" || ui === null) return undefined;
   const candidate = (ui as Record<string, unknown>).askUserQuestions;
-  return typeof candidate === "function" ? (candidate as SynaraAskUserQuestions) : undefined;
+  return typeof candidate === "function" ? (candidate as NuncioADEAskUserQuestions) : undefined;
 }
 
-// Normalize Synara answers (string | string[] | {selected, choiceNotes}) into
+// Normalize NuncioADE answers (string | string[] | {selected, choiceNotes}) into
 // the RemoteAskAnswer shape so state reconstruction shares one code path.
-function synaraAnswersToRemoteShape(rawAnswers: Record<string, unknown>): RemoteAskAnswer {
+function nuncioadeAnswersToRemoteShape(rawAnswers: Record<string, unknown>): RemoteAskAnswer {
   const normalized: RemoteAskAnswer = {};
   for (const [header, answer] of Object.entries(rawAnswers)) {
     if (typeof answer === "string" || Array.isArray(answer)) {
@@ -1063,12 +1063,12 @@ export default function AskUserQuestion(pi: ExtensionAPI) {
         return cancelledResult(questions, [], "AskUserQuestion was aborted.");
       }
 
-      // Synara path: hand the whole question set to Synara's structured
+      // NuncioADE path: hand the whole question set to NuncioADE's structured
       // user-input flow and skip the TUI/Pocket Pi machinery entirely.
-      const synaraAsk = synaraAskUserQuestions((ctx as { ui?: unknown }).ui);
-      if (synaraAsk) {
+      const nuncioadeAsk = nuncioadeAskUserQuestions((ctx as { ui?: unknown }).ui);
+      if (nuncioadeAsk) {
         try {
-          const rawAnswers = await synaraAsk(
+          const rawAnswers = await nuncioadeAsk(
             questions.map((question) => ({
               header: question.header,
               question: question.question,
@@ -1089,13 +1089,13 @@ export default function AskUserQuestion(pi: ExtensionAPI) {
           }
           return answeredResult(
             questions,
-            remoteAnswerToStates(questions, synaraAnswersToRemoteShape(rawAnswers)),
+            remoteAnswerToStates(questions, nuncioadeAnswersToRemoteShape(rawAnswers)),
           );
         } catch (err) {
           return cancelledResult(
             questions,
             createInitialNavigationState(questions).states,
-            `Synara user-input request failed: ${errMsg(err)}`,
+            `NuncioADE user-input request failed: ${errMsg(err)}`,
           );
         }
       }

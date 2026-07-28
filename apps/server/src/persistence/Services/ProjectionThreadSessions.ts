@@ -12,7 +12,7 @@ import {
   OrchestrationSessionStatus,
   ThreadId,
   TurnId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { Option, Schema, ServiceMap } from "effect";
 import type { Effect } from "effect";
 
@@ -71,4 +71,4 @@ export interface ProjectionThreadSessionRepositoryShape {
 export class ProjectionThreadSessionRepository extends ServiceMap.Service<
   ProjectionThreadSessionRepository,
   ProjectionThreadSessionRepositoryShape
->()("synara/persistence/Services/ProjectionThreadSessions/ProjectionThreadSessionRepository") {}
+>()("nuncioade/persistence/Services/ProjectionThreadSessions/ProjectionThreadSessionRepository") {}

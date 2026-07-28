@@ -1,4 +1,4 @@
-import type { ThreadId } from "@synara/contracts";
+import type { ThreadId } from "@nuncio/contracts";
 
 interface TerminalRetentionThread {
   id: ThreadId;

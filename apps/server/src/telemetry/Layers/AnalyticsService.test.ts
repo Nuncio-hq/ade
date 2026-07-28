@@ -39,16 +39,16 @@ it.layer(NodeServices.layer)("AnalyticsService test", (it) => {
     Effect.gen(function* () {
       const capturedRequests: Array<RecordedBatchRequest> = [];
       const serverConfigLayer = ServerConfig.layerTest(process.cwd(), {
-        prefix: "synara-telemetry-base-",
+        prefix: "nuncioade-telemetry-base-",
       });
 
       const telemetryLayer = AnalyticsServiceLayerLive.pipe(Layer.provideMerge(serverConfigLayer));
       const configLayer = ConfigProvider.layer(
         ConfigProvider.fromUnknown({
-          SYNARA_TELEMETRY_ENABLED: true,
-          SYNARA_POSTHOG_KEY: "phc_test_key",
-          SYNARA_POSTHOG_HOST: "",
-          SYNARA_TELEMETRY_FLUSH_BATCH_SIZE: 20,
+          NUNCIO_TELEMETRY_ENABLED: true,
+          NUNCIO_POSTHOG_KEY: "phc_test_key",
+          NUNCIO_POSTHOG_HOST: "",
+          NUNCIO_TELEMETRY_FLUSH_BATCH_SIZE: 20,
         }),
       );
       const batchServerLayer = HttpServer.serve(

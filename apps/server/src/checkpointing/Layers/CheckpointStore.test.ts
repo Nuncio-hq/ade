@@ -10,7 +10,7 @@ import { CheckpointStoreLive } from "./CheckpointStore.ts";
 import { CheckpointStore } from "../Services/CheckpointStore.ts";
 import { GitCore, type GitCoreShape } from "../../git/Services/GitCore.ts";
 import { GitCommandError } from "../../git/Errors.ts";
-import { CheckpointRef } from "@synara/contracts";
+import { CheckpointRef } from "@nuncio/contracts";
 
 async function waitFor(predicate: () => boolean, timeoutMs = 1_000): Promise<void> {
   const started = Date.now();
@@ -66,7 +66,7 @@ describe("CheckpointStoreLive", () => {
         const store = yield* CheckpointStore;
         const input = {
           cwd: "/repo",
-          checkpointRef: CheckpointRef.makeUnsafe("refs/synara-checkpoints/thread/message"),
+          checkpointRef: CheckpointRef.makeUnsafe("refs/nuncioade-checkpoints/thread/message"),
         };
 
         const first = yield* store.captureCheckpoint(input).pipe(Effect.forkChild);
@@ -123,7 +123,7 @@ describe("CheckpointStoreLive", () => {
         const store = yield* CheckpointStore;
         const input = {
           cwd: "/repo",
-          checkpointRef: CheckpointRef.makeUnsafe("refs/synara-checkpoints/thread/message"),
+          checkpointRef: CheckpointRef.makeUnsafe("refs/nuncioade-checkpoints/thread/message"),
         };
 
         const first = yield* store.captureCheckpoint(input).pipe(Effect.forkChild);
@@ -151,8 +151,8 @@ describe("CheckpointStoreLive", () => {
   });
 
   it("skips the capture when skipIfExists is set and the ref already exists", async () => {
-    const existingRef = "refs/synara-checkpoints/thread/existing";
-    const missingRef = "refs/synara-checkpoints/thread/missing";
+    const existingRef = "refs/nuncioade-checkpoints/thread/existing";
+    const missingRef = "refs/nuncioade-checkpoints/thread/missing";
     const execute = vi.fn<GitCoreShape["execute"]>((input) => {
       const args = input.args.join(" ");
       if (args === `rev-parse --verify --quiet ${existingRef}^{commit}`) {
@@ -209,8 +209,8 @@ describe("CheckpointStoreLive", () => {
   });
 
   it("restores the worktree patch when resetting the index fails during file undo", async () => {
-    const fromRef = CheckpointRef.makeUnsafe("refs/synara-checkpoints/thread/turn/start");
-    const toRef = CheckpointRef.makeUnsafe("refs/synara-checkpoints/thread/turn/end");
+    const fromRef = CheckpointRef.makeUnsafe("refs/nuncioade-checkpoints/thread/turn/start");
+    const toRef = CheckpointRef.makeUnsafe("refs/nuncioade-checkpoints/thread/turn/end");
     const commands: string[] = [];
     const execute = vi.fn<GitCoreShape["execute"]>((input) => {
       const args = input.args.join(" ");
@@ -270,5 +270,72 @@ describe("CheckpointStoreLive", () => {
     expect(result).toBe("GitCommandError");
     expect(commands.filter((command) => command.startsWith("apply "))).toHaveLength(2);
     expect(commands.at(-1)).toMatch(/^apply --whitespace=nowarn -- /);
+  });
+
+  it("fails when a checkpoint ref cannot be deleted", async () => {
+    const lockedRef = CheckpointRef.makeUnsafe("refs/nuncioade/checkpoints/thread/turn/locked");
+    const deletableRef = CheckpointRef.makeUnsafe("refs/nuncioade/checkpoints/thread/turn/ok");
+    const execute = vi.fn<GitCoreShape["execute"]>((input) => {
+      const args = input.args.join(" ");
+      if (args === `update-ref -d ${lockedRef}`) {
+        return Effect.succeed({ code: 1, stdout: "", stderr: "cannot lock ref\n" });
+      }
+      if (args === `update-ref -d ${deletableRef}`) {
+        return Effect.succeed({ code: 0, stdout: "", stderr: "" });
+      }
+      throw new Error(`Unexpected git args: ${args}`);
+    });
+    const layer = CheckpointStoreLive.pipe(
+      Layer.provide(Layer.succeed(GitCore, { execute } as unknown as GitCoreShape)),
+      Layer.provide(NodeServices.layer),
+    );
+    runtime = ManagedRuntime.make(layer);
+
+    const result = await runtime.runPromise(
+      Effect.gen(function* () {
+        const store = yield* CheckpointStore;
+        return yield* store
+          .deleteCheckpointRefs({ cwd: "/repo", checkpointRefs: [deletableRef, lockedRef] })
+          .pipe(
+            Effect.map(() => "success" as const),
+            Effect.catch((error) => Effect.succeed(error.message)),
+          );
+      }),
+    );
+
+    // Every ref is still attempted; one loser must not abandon the batch.
+    expect(execute).toHaveBeenCalledTimes(2);
+    expect(result).not.toBe("success");
+    expect(result).toContain(lockedRef);
+    expect(result).toContain("cannot lock ref");
+    expect(result).not.toContain(deletableRef);
+  });
+
+  it("tolerates deleting checkpoint refs that are already absent", async () => {
+    // `git update-ref -d` exits 0 for a ref that does not exist, so the
+    // exit-code check must not turn best-effort cleanup into a hard failure.
+    const missingRef = CheckpointRef.makeUnsafe("refs/nuncioade/checkpoints/thread/turn/gone");
+    const execute = vi.fn<GitCoreShape["execute"]>(() =>
+      Effect.succeed({ code: 0, stdout: "", stderr: "" }),
+    );
+    const layer = CheckpointStoreLive.pipe(
+      Layer.provide(Layer.succeed(GitCore, { execute } as unknown as GitCoreShape)),
+      Layer.provide(NodeServices.layer),
+    );
+    runtime = ManagedRuntime.make(layer);
+
+    const result = await runtime.runPromise(
+      Effect.gen(function* () {
+        const store = yield* CheckpointStore;
+        return yield* store
+          .deleteCheckpointRefs({ cwd: "/repo", checkpointRefs: [missingRef] })
+          .pipe(
+            Effect.map(() => "success" as const),
+            Effect.catch((error) => Effect.succeed(error.message)),
+          );
+      }),
+    );
+
+    expect(result).toBe("success");
   });
 });

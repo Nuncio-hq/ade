@@ -1,4 +1,4 @@
-import type { ProviderKind, ThreadId } from "@synara/contracts";
+import type { ProviderKind, ThreadId } from "@nuncio/contracts";
 import { Cause, Effect } from "effect";
 
 import type { EventNdjsonLogger } from "../Layers/EventNdjsonLogger.ts";
@@ -10,15 +10,19 @@ import type {
 
 export const ACP_LOG_REDACTED_VALUE = "[REDACTED]";
 
-const SENSITIVE_ENTRY_NAMES = new Set(["authorization", "synara_agent_gateway_token"]);
+// Lowercased `NUNCIO_AGENT_GATEWAY_TOKEN`. The rebrand codemod rewrote the
+// literal here as if it were product prose, which silently unhooked the
+// structured `{name, value}` redaction and leaked the bearer token into the
+// request NDJSON while the string regexes below kept working.
+const SENSITIVE_ENTRY_NAMES = new Set(["authorization", "nuncio_agent_gateway_token"]);
 
 function redactSecretString(value: string): string {
   return value
     .replace(/(\bBearer\s+)[^\s"',}\]]+/gi, `$1${ACP_LOG_REDACTED_VALUE}`)
-    .replace(/(SYNARA_AGENT_GATEWAY_TOKEN\s*=\s*)[^\s"',}\]]+/g, `$1${ACP_LOG_REDACTED_VALUE}`)
-    .replace(/("SYNARA_AGENT_GATEWAY_TOKEN"\s*:\s*")[^"]*/g, `$1${ACP_LOG_REDACTED_VALUE}`)
+    .replace(/(NUNCIO_AGENT_GATEWAY_TOKEN\s*=\s*)[^\s"',}\]]+/g, `$1${ACP_LOG_REDACTED_VALUE}`)
+    .replace(/("NUNCIO_AGENT_GATEWAY_TOKEN"\s*:\s*")[^"]*/g, `$1${ACP_LOG_REDACTED_VALUE}`)
     .replace(
-      /("name"\s*:\s*"SYNARA_AGENT_GATEWAY_TOKEN"\s*,\s*"value"\s*:\s*")[^"]*/g,
+      /("name"\s*:\s*"NUNCIO_AGENT_GATEWAY_TOKEN"\s*,\s*"value"\s*:\s*")[^"]*/g,
       `$1${ACP_LOG_REDACTED_VALUE}`,
     );
 }

@@ -161,6 +161,31 @@
   isolated parallel worktrees, Claude Code harness inheritance, visual-proof
   async runs. Recorded as DELEGATION.md §0.
 
+- **2026-07-28 — Maximum rebrand Synara→NuncioADE; supersedes the no-rename naming
+  law.** The "inherited code keeps its Synara identity — do NOT rename" rule
+  (2026-07-26) is reversed: the whole tree now carries the NuncioADE identity
+  (`@nuncio/*`, `NUNCIO_*`, `nuncioade` CLI + `ade` alias, `NuncioADE` product,
+  `com.nuncio.ade` bundle id kept as our pre-existing divergence). Why now:
+  product is the daily driver (M3), and keeping two identities made every doc,
+  CLI, and support conversation ambiguous. Why it stays maintainable: the rename
+  is owned by ONE deterministic idempotent codemod (`scripts/rebrand-identity.ts`)
+  applied to BOTH our tree and a new long-lived shadow branch
+  `sync/rebranded-upstream` (= latest upstream tag + codemod). Upstream syncs now
+  merge an already-rebranded tree, so identity renames never conflict — rehearsed
+  on v0.6.2: the shadow merge into the rebrand branch produced a tree
+  byte-identical to the pre-merge state. Sub-decisions: (1) retired `synara`
+  tokens survive only in attribution/upstream references (`SYNARA-*.md`,
+  `trysynara.com`, `Emanuele-web04/synara`), immutable history (DECISIONS.md,
+  CHANGELOG.md, `persistence/Migrations/**`), and `// rebrand-exempt` compat
+  shims; (2) compat shims keep pre-rebrand user data alive: browser storage
+  keys migrated `synara.*`→`nuncioade.*` at bootstrap, managed codex-config
+  markers normalized on read, external-MCP accepts legacy credential/pairing
+  prefixes with the hash salt frozen at the legacy audience, DB migration 088
+  rebuilds the audience CHECK constraint; (3) `bun run brand:check` extended to
+  the full retired identity and wired into CI to prevent regressions;
+  (4) `trysynara.com` feedback/changelog endpoints intentionally still point at
+  upstream infra — revisit when we host our own.
+
 - **2026-07-28 — OMP SDK runs in a Bun sidecar; Synara's server stays Node.**
   Supersedes the "direct SDK, in-process" sub-decision of the 2026-07-28
   OMP-adoption entry — the SDK choice stands, its _hosting_ changes. Why: the

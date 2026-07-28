@@ -10,8 +10,8 @@ import {
   type OrchestrationSpaceShell,
   type ThreadId,
   type TurnId,
-} from "@synara/contracts";
-import { deriveThreadSummaryMetadata } from "@synara/shared/threadSummary";
+} from "@nuncio/contracts";
+import { deriveThreadSummaryMetadata } from "@nuncio/shared/threadSummary";
 
 import { getThreadFromState, getThreadsFromState } from "./threadDerivation";
 import {

@@ -1,14 +1,14 @@
 // FILE: extension-ui-context.ts
 // Purpose: Bridge OMP's ExtensionUIContext — select/confirm/input/notify/status,
 //          the engine's native rich ask dialog, and the harness-only
-//          askUserQuestions extra — onto Synara's user-input request flow.
+//          askUserQuestions extra — onto NuncioADE's user-input request flow.
 // Layer: Sidecar engine (OMP)
 // Exports: makeOmpExtensionUiContext, OmpExtensionUiBridge, OmpExtensionUiContext
 //
 // The native `ask` tool is the primary way OMP asks the user something: it is
 // only constructed when the session reports `hasUI`, and it calls
 // `uiContext.askDialog`. Implementing askDialog here is therefore what turns
-// "agent wants to ask a question" into a Synara dialog. `askUserQuestions` is a
+// "agent wants to ask a question" into a NuncioADE dialog. `askUserQuestions` is a
 // separate, non-standard entry point that pi-era extensions feature-detect; it
 // is kept for compatibility, not as the main path.
 
@@ -21,7 +21,7 @@ import type {
   ExtensionUIDialogOptions,
   ExtensionUISelectItem,
 } from "@oh-my-pi/pi-coding-agent";
-import type { ProviderUserInputAnswers, UserInputQuestion } from "@synara/contracts";
+import type { ProviderUserInputAnswers, UserInputQuestion } from "@nuncio/contracts";
 
 export interface OmpUserInputRequest {
   readonly method: string;
@@ -41,9 +41,9 @@ export interface OmpUserInputOutcome {
 }
 
 export interface OmpExtensionUiBridge {
-  /** Opens a Synara dialog and resolves once the user answers (or it is aborted). */
+  /** Opens a NuncioADE dialog and resolves once the user answers (or it is aborted). */
   readonly requestUserInput: (input: OmpUserInputRequest) => Promise<OmpUserInputOutcome>;
-  /** Reports a TUI-only API that Synara deliberately does not implement. */
+  /** Reports a TUI-only API that NuncioADE deliberately does not implement. */
   readonly warnUnsupported: (method: string) => void;
   /** Surfaces extension chatter (status/working message/title) as tool progress. */
   readonly emitProgress: (summary: string) => void;
@@ -87,7 +87,7 @@ function selectItemLabel(item: OmpUiOption): string {
 
 function selectItemDescription(item: OmpUiOption): string | undefined {
   if (typeof item === "string") return undefined;
-  // `preview` is the ask dialog's rich body. Synara has one description slot,
+  // `preview` is the ask dialog's rich body. NuncioADE has one description slot,
   // so both are kept rather than silently dropping the richer half.
   const preview = "preview" in item ? item.preview : undefined;
   const parts = [trimToUndefined(item.description), trimToUndefined(preview)].filter(
@@ -97,7 +97,7 @@ function selectItemDescription(item: OmpUiOption): string | undefined {
 }
 
 /**
- * Synara matches answers back by label, so duplicate labels have to be made
+ * NuncioADE matches answers back by label, so duplicate labels have to be made
  * unique before they reach the dialog while still mapping to the original
  * value. `recommendedIndex` carries the engine's default the only way the
  * generic contract allows — the same "(Recommended)" suffix OMP's own selector
@@ -166,7 +166,7 @@ function firstAnswer(answers: ProviderUserInputAnswers, questionId: string): str
 }
 
 /**
- * Synara renders markdown, not ANSI, so every styling helper is identity. The
+ * NuncioADE renders markdown, not ANSI, so every styling helper is identity. The
  * cast is deliberate: `Theme` is a TUI type whose full surface has no meaning
  * outside a terminal, and extensions only ever call these text helpers.
  */
@@ -239,7 +239,7 @@ export function makeOmpExtensionUiContext(bridge: OmpExtensionUiBridge): OmpExte
         question: entry.question,
         multiSelect: entry.multi,
         // The native ask dialog always allows a free-form answer and a note;
-        // mirroring that keeps the Synara dialog as expressive as the TUI one.
+        // mirroring that keeps the NuncioADE dialog as expressive as the TUI one.
         allowCustomAnswer: true,
         allowNotes: true,
         options: entry.mappings.map((mapping) => mapping.option),
@@ -441,7 +441,7 @@ export function makeOmpExtensionUiContext(bridge: OmpExtensionUiBridge): OmpExte
       return undefined;
     },
     async setTheme() {
-      return { success: false, error: "Synara does not expose OMP themes." };
+      return { success: false, error: "NuncioADE does not expose OMP themes." };
     },
     getToolsExpanded() {
       return false;

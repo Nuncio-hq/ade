@@ -2,13 +2,17 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 import {
   EXTERNAL_MCP_AUDIENCE,
+  EXTERNAL_MCP_PAIRING_PREFIX,
+  hasExternalMcpCredentialPrefix,
+  hasExternalMcpPairingPrefix,
+  LEGACY_EXTERNAL_MCP_AUDIENCE,
   ProjectId,
   type ExternalMcpCapability,
   type ExternalMcpCreateIntegrationResult,
   type ExternalMcpIntegration,
   type ExternalMcpPairResult,
   ThreadId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { Effect, Layer, Option } from "effect";
 
 import { ServerConfig } from "../../config.ts";
@@ -27,13 +31,15 @@ const DEFAULT_EXPIRY_DAYS = 30;
 const PAIRING_TTL_MS = 10 * 60 * 1_000;
 const DEFAULT_RATE_LIMIT_PER_MINUTE = 60;
 const DEFAULT_ACTIVE_TASK_LIMIT = 2;
-const CREDENTIAL_PREFIX = "syn_mcp_v1_";
-const PAIRING_PREFIX = "syn_pair_v1_";
+const PAIRING_PREFIX = EXTERNAL_MCP_PAIRING_PREFIX;
 const AUDIT_RETENTION_MS = 30 * 86_400_000;
 
 export function hashExternalMcpSecret(secret: string): string {
+  // The salt is the legacy audience on purpose: it is a crypto domain
+  // separator for hashes persisted before the identity rename, so it must
+  // never change or every stored credential stops verifying.
   return createHash("sha256")
-    .update(EXTERNAL_MCP_AUDIENCE)
+    .update(LEGACY_EXTERNAL_MCP_AUDIENCE)
     .update("\0")
     .update(secret)
     .digest("hex");
@@ -61,7 +67,7 @@ export const makeExternalMcpService = Effect.gen(function* () {
     repository.listActiveProjects().pipe(
       Effect.map((projects) => new Map(projects.map((project) => [project.id, project]))),
       Effect.mapError((cause) =>
-        toExternalMcpError("repository_error", "Could not load Synara projects.", 500, cause),
+        toExternalMcpError("repository_error", "Could not load NuncioADE projects.", 500, cause),
       ),
     );
 
@@ -315,7 +321,10 @@ export const makeExternalMcpService = Effect.gen(function* () {
 
   const pair: ExternalMcpServiceShape["pair"] = (pairingCode, credential) =>
     Effect.gen(function* () {
-      if (!pairingCode.startsWith(PAIRING_PREFIX) || !credential.startsWith(CREDENTIAL_PREFIX)) {
+      if (
+        !hasExternalMcpPairingPrefix(pairingCode) ||
+        !hasExternalMcpCredentialPrefix(credential)
+      ) {
         return yield* toExternalMcpError(
           "pairing_invalid",
           "The external MCP pairing code is invalid or expired.",
@@ -356,7 +365,7 @@ export const makeExternalMcpService = Effect.gen(function* () {
 
   const verifyCredential: ExternalMcpServiceShape["verifyCredential"] = (credential) =>
     Effect.gen(function* () {
-      if (!credential.startsWith(CREDENTIAL_PREFIX)) {
+      if (!hasExternalMcpCredentialPrefix(credential)) {
         return yield* toExternalMcpError(
           "external_credential_invalid",
           "Missing, expired, revoked, or invalid external MCP credential.",

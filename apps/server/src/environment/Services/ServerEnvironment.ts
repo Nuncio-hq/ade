@@ -1,4 +1,4 @@
-import type { EnvironmentId, ExecutionEnvironmentDescriptor } from "@synara/contracts";
+import type { EnvironmentId, ExecutionEnvironmentDescriptor } from "@nuncio/contracts";
 import { Effect, ServiceMap } from "effect";
 
 export interface ServerEnvironmentShape {
@@ -9,4 +9,4 @@ export interface ServerEnvironmentShape {
 export class ServerEnvironment extends ServiceMap.Service<
   ServerEnvironment,
   ServerEnvironmentShape
->()("synara/environment/Services/ServerEnvironment") {}
+>()("nuncioade/environment/Services/ServerEnvironment") {}

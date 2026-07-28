@@ -2,7 +2,7 @@
 // Purpose: Verifies hidden Studio container detection and creation dispatches.
 // Layer: Web orchestration tests
 
-import { type ProjectId, type ThreadId } from "@synara/contracts";
+import { type ProjectId, type ThreadId } from "@nuncio/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useStore } from "../store";
@@ -78,7 +78,7 @@ function makeProject(overrides: Partial<Project> = {}): Project {
     remoteName: "Studio",
     folderName: "Studio",
     localName: null,
-    cwd: "/Users/tester/Documents/Synara/Studio",
+    cwd: "/Users/tester/Documents/NuncioADE/Studio",
     defaultModelSelection: null,
     expanded: false,
     spaceId: null,
@@ -106,13 +106,13 @@ describe("studioProjects", () => {
   it("matches the configured Studio root and nested Studio paths", () => {
     const paths = {
       homeDir: "/Users/tester",
-      studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+      studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
     };
 
     expect(isStudioContainerProject(makeProject(), paths)).toBe(true);
     expect(
       isStudioContainerProject(
-        makeProject({ cwd: "/Users/tester/Documents/Synara/Studio/Outbox" }),
+        makeProject({ cwd: "/Users/tester/Documents/NuncioADE/Studio/Outbox" }),
         paths,
       ),
     ).toBe(true);
@@ -122,14 +122,14 @@ describe("studioProjects", () => {
     expect(
       isStudioContainerProject(makeProject({ kind: "project" }), {
         homeDir: "/Users/tester",
-        studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+        studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
       }),
     ).toBe(false);
     // A studio-kind container whose cwd drifted outside the configured root is orphaned.
     expect(
       isStudioContainerProject(makeProject({ cwd: "/Users/tester/Elsewhere" }), {
         homeDir: "/Users/tester",
-        studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+        studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
       }),
     ).toBe(false);
     // Before the welcome delivers the Studio root, the kind alone identifies the container so
@@ -149,7 +149,7 @@ describe("studioProjects", () => {
     expect(
       findStudioContainerProject([ordinaryProject, studioProject], {
         homeDir: "/Users/tester",
-        studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+        studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
       }),
     ).toBe(studioProject);
   });
@@ -157,7 +157,7 @@ describe("studioProjects", () => {
   it("prefers the canonical Studio root container over nested studio-kind rows", () => {
     const nestedStudioProject = makeProject({
       id: "project-studio-nested" as ProjectId,
-      cwd: "/Users/tester/Documents/Synara/Studio/Outbox",
+      cwd: "/Users/tester/Documents/NuncioADE/Studio/Outbox",
     });
     const canonicalStudioProject = makeProject({ id: "project-studio-root" as ProjectId });
 
@@ -165,7 +165,7 @@ describe("studioProjects", () => {
     expect(
       findStudioContainerProject([nestedStudioProject, canonicalStudioProject], {
         homeDir: "/Users/tester",
-        studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+        studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
       }),
     ).toBe(canonicalStudioProject);
   });
@@ -237,8 +237,8 @@ describe("studioProjects", () => {
   it("creates the hidden Studio project with the real Studio root", async () => {
     const projectId = await ensureStudioProject({
       homeDir: "/Users/tester",
-      chatWorkspaceRoot: "/Users/tester/Documents/Synara",
-      studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+      chatWorkspaceRoot: "/Users/tester/Documents/NuncioADE",
+      studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
     });
 
     expect(projectId).toBeTruthy();
@@ -248,7 +248,7 @@ describe("studioProjects", () => {
       projectId,
       kind: "studio",
       title: "Studio",
-      workspaceRoot: "/Users/tester/Documents/Synara/Studio",
+      workspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
       createWorkspaceRootIfMissing: true,
     });
   });
@@ -260,7 +260,7 @@ describe("studioProjects", () => {
     await expect(
       ensureStudioProject({
         homeDir: "/Users/tester",
-        studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+        studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
       }),
     ).resolves.toBe(existingProject.id);
     expect(nativeApiMock.dispatchedCommands).toEqual([]);
@@ -271,7 +271,7 @@ describe("studioProjects", () => {
 
     const projectPromise = ensureStudioProject({
       homeDir: "/Users/tester",
-      studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+      studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
     });
     await Promise.resolve();
 
@@ -291,7 +291,7 @@ describe("studioProjects", () => {
 
       const projectPromise = ensureStudioProject({
         homeDir: "/Users/tester",
-        studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+        studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
       });
 
       await vi.advanceTimersByTimeAsync(PROJECT_SNAPSHOT_HYDRATION_TIMEOUT_MS);
@@ -308,11 +308,11 @@ describe("studioProjects", () => {
 
     const firstProjectPromise = ensureStudioProject({
       homeDir: "/Users/tester",
-      studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+      studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
     });
     const secondProjectPromise = ensureStudioProject({
       homeDir: "/Users/tester",
-      studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+      studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
     });
     await Promise.resolve();
 
@@ -338,7 +338,7 @@ describe("studioProjects", () => {
 
     const projectPromise = ensureStudioProject({
       homeDir: "/Users/tester",
-      studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+      studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
     });
     await vi.waitFor(() => {
       expect(nativeApiMock.dispatchedCommands).toHaveLength(1);
@@ -351,7 +351,7 @@ describe("studioProjects", () => {
         id: createCommand.projectId,
         kind: "studio",
         title: "Studio",
-        workspaceRoot: "/Users/tester/Documents/Synara/Studio",
+        workspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
         defaultModelSelection: null,
         scripts: [],
         isPinned: false,
@@ -369,14 +369,14 @@ describe("studioProjects", () => {
   it("recovers and hydrates the existing Studio project when the server rejects a duplicate create", async () => {
     const existingProjectId = "project-server-studio" as ProjectId;
     nativeApiMock.dispatchError = new Error(
-      "Orchestration command invariant failed (project.create): Project 'project-server-studio' already uses workspace root '/Users/tester/Documents/Synara/Studio'.",
+      "Orchestration command invariant failed (project.create): Project 'project-server-studio' already uses workspace root '/Users/tester/Documents/NuncioADE/Studio'.",
     );
     nativeApiMock.shellSnapshotProjects = [
       {
         id: existingProjectId,
         kind: "studio",
         title: "Studio",
-        workspaceRoot: "/Users/tester/Documents/Synara/Studio",
+        workspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
         defaultModelSelection: null,
         scripts: [],
         isPinned: false,
@@ -388,14 +388,14 @@ describe("studioProjects", () => {
     await expect(
       ensureStudioProject({
         homeDir: "/Users/tester",
-        studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+        studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
       }),
     ).resolves.toBe(existingProjectId);
     expect(useStore.getState().projects).toMatchObject([
       {
         id: existingProjectId,
         kind: "studio",
-        cwd: "/Users/tester/Documents/Synara/Studio",
+        cwd: "/Users/tester/Documents/NuncioADE/Studio",
       },
     ]);
   });
@@ -403,7 +403,7 @@ describe("studioProjects", () => {
   it("retries duplicate Studio recovery while the shell snapshot catches up", async () => {
     const existingProjectId = "project-retried-studio" as ProjectId;
     nativeApiMock.dispatchError = new Error(
-      "Orchestration command invariant failed (project.create): Project 'project-retried-studio' already uses workspace root '/Users/tester/Documents/Synara/Studio'.",
+      "Orchestration command invariant failed (project.create): Project 'project-retried-studio' already uses workspace root '/Users/tester/Documents/NuncioADE/Studio'.",
     );
     nativeApiMock.shellSnapshotProjectBatches = [
       [],
@@ -412,7 +412,7 @@ describe("studioProjects", () => {
           id: existingProjectId,
           kind: "studio",
           title: "Studio",
-          workspaceRoot: "/Users/tester/Documents/Synara/Studio",
+          workspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
           defaultModelSelection: null,
           scripts: [],
           isPinned: false,
@@ -425,7 +425,7 @@ describe("studioProjects", () => {
     await expect(
       ensureStudioProject({
         homeDir: "/Users/tester",
-        studioWorkspaceRoot: "/Users/tester/Documents/Synara/Studio",
+        studioWorkspaceRoot: "/Users/tester/Documents/NuncioADE/Studio",
       }),
     ).resolves.toBe(existingProjectId);
   });

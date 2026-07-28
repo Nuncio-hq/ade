@@ -15,8 +15,8 @@ import {
   type ProviderKind,
   type RuntimeMode,
   type ThreadId,
-} from "@synara/contracts";
-import { automationRequiresTargetThread } from "@synara/shared/automationMode";
+} from "@nuncio/contracts";
+import { automationRequiresTargetThread } from "@nuncio/shared/automationMode";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -801,7 +801,7 @@ export function AutomationApprovalBanner({
       <AlertTitle>Approval needed</AlertTitle>
       <AlertDescription>
         <span>
-          This automation needs your approval once before Synara can save changes. When a warning
+          This automation needs your approval once before NuncioADE can save changes. When a warning
           blocks manual runs, Run now stays disabled until you approve it.
         </span>
         <ul className="flex flex-col gap-1.5">

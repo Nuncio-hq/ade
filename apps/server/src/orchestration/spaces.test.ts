@@ -1,7 +1,7 @@
 // FILE: spaces.test.ts
 // Purpose: Covers the durable Space lifecycle and project reassignment invariants.
 
-import { CommandId, ProjectId, SpaceId, type OrchestrationCommand } from "@synara/contracts";
+import { CommandId, ProjectId, SpaceId, type OrchestrationCommand } from "@nuncio/contracts";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
@@ -82,8 +82,8 @@ describe("Spaces", () => {
       type: "project.create",
       commandId: CommandId.makeUnsafe("cmd-project-create"),
       projectId,
-      title: "Synara",
-      workspaceRoot: "/tmp/synara",
+      title: "NuncioADE",
+      workspaceRoot: "/tmp/nuncioade",
       createdAt,
     }));
     expect(readModel.projects[0]?.spaceId).toBeNull();
@@ -320,7 +320,7 @@ describe("Spaces", () => {
     const ordinaryProjectId = ProjectId.makeUnsafe("project-ordinary");
     const workspacePaths = {
       homeDir: "/Users/dev",
-      chatWorkspaceRoot: "/Users/dev/Documents/Synara/Chats",
+      chatWorkspaceRoot: "/Users/dev/Documents/NuncioADE/Chats",
     };
     let readModel = createEmptyReadModel(createdAt);
 
@@ -346,8 +346,8 @@ describe("Spaces", () => {
       type: "project.create",
       commandId: CommandId.makeUnsafe("cmd-create-ordinary"),
       projectId: ordinaryProjectId,
-      title: "Synara",
-      workspaceRoot: "/Users/dev/code/synara",
+      title: "NuncioADE",
+      workspaceRoot: "/Users/dev/code/nuncioade",
       createdAt,
     }));
 
@@ -422,7 +422,7 @@ describe("Spaces", () => {
     const projectId = ProjectId.makeUnsafe("project-transition-to-home");
     const workspacePaths = {
       homeDir: "/Users/dev",
-      chatWorkspaceRoot: "/Users/dev/Documents/Synara/Chats",
+      chatWorkspaceRoot: "/Users/dev/Documents/NuncioADE/Chats",
     };
     let readModel = createEmptyReadModel(createdAt);
 
@@ -438,8 +438,8 @@ describe("Spaces", () => {
       type: "project.create",
       commandId: CommandId.makeUnsafe("cmd-create-transition-to-home"),
       projectId,
-      title: "Synara",
-      workspaceRoot: "/tmp/synara",
+      title: "NuncioADE",
+      workspaceRoot: "/tmp/nuncioade",
       createdAt,
     }));
     ({ readModel } = await dispatch(readModel, {
@@ -472,7 +472,7 @@ describe("Spaces", () => {
     const projectId = ProjectId.makeUnsafe("project-renamed-legacy-home");
     const workspacePaths = {
       homeDir: "/Users/dev",
-      chatWorkspaceRoot: "/Users/dev/Documents/Synara/Chats",
+      chatWorkspaceRoot: "/Users/dev/Documents/NuncioADE/Chats",
     };
     let readModel = createEmptyReadModel(createdAt);
 

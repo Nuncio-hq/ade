@@ -3,7 +3,25 @@ import { Schema } from "effect";
 import { IsoDateTime, ProjectId, ThreadId, TrimmedNonEmptyString } from "./baseSchemas";
 import { ProviderKind, RuntimeMode } from "./orchestration";
 
-export const EXTERNAL_MCP_AUDIENCE = "synara.external-mcp" as const;
+export const EXTERNAL_MCP_AUDIENCE = "nuncioade.external-mcp" as const;
+// Audience recorded by pre-rebrand installs on persisted integrations.
+// rebrand-exempt pins the literal; reads normalize it to the current one.
+export const LEGACY_EXTERNAL_MCP_AUDIENCE = "synara.external-mcp" as const; // rebrand-exempt
+
+export const EXTERNAL_MCP_CREDENTIAL_PREFIX = "nuncio_mcp_v1_";
+export const EXTERNAL_MCP_PAIRING_PREFIX = "nuncio_pair_v1_";
+// Token prefixes issued before the identity rename; accepted forever so
+// long-lived credentials keep working until they rotate. rebrand-exempt
+// pins the literals.
+export const LEGACY_EXTERNAL_MCP_CREDENTIAL_PREFIX = "syn_mcp_v1_"; // rebrand-exempt
+export const LEGACY_EXTERNAL_MCP_PAIRING_PREFIX = "syn_pair_v1_"; // rebrand-exempt
+
+export const hasExternalMcpCredentialPrefix = (value: string) =>
+  value.startsWith(EXTERNAL_MCP_CREDENTIAL_PREFIX) ||
+  value.startsWith(LEGACY_EXTERNAL_MCP_CREDENTIAL_PREFIX);
+export const hasExternalMcpPairingPrefix = (value: string) =>
+  value.startsWith(EXTERNAL_MCP_PAIRING_PREFIX) ||
+  value.startsWith(LEGACY_EXTERNAL_MCP_PAIRING_PREFIX);
 export const EXTERNAL_MCP_MAX_PROMPT_CHARS = 100_000;
 export const EXTERNAL_MCP_MAX_REQUEST_ID_LENGTH = 256;
 export const EXTERNAL_MCP_DEFAULT_WAIT_MS = 30_000;

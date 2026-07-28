@@ -1,9 +1,9 @@
 // FILE: runtime-task-list.ts
-// Purpose: Normalize OMP todo events into Synara task-list items.
+// Purpose: Normalize OMP todo events into NuncioADE task-list items.
 // Layer: Sidecar engine (OMP)
 // Exports: normalizeRuntimeTaskStatus, makeRuntimeTaskListItem
 
-import type { RuntimeTaskListItem, RuntimeTaskStatus } from "@synara/contracts";
+import type { RuntimeTaskListItem, RuntimeTaskStatus } from "@nuncio/contracts";
 
 export function normalizeRuntimeTaskStatus(value: unknown): RuntimeTaskStatus {
   if (value === "completed") {

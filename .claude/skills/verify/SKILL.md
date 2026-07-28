@@ -1,13 +1,13 @@
-# Verify: run Synara locally for runtime verification
+# Verify: run NuncioADE locally for runtime verification
 
-How to launch an isolated Synara instance (server + web) to observe UI changes, without touching `~/.synara` or the default dev ports.
+How to launch an isolated NuncioADE instance (server + web) to observe UI changes, without touching `~/.nuncioade` or the default dev ports.
 
 ## Launch
 
 ```bash
 # 1. Server (from the directory you want as the workspace/project cwd):
-SYNARA_HOME=<scratch>/synara-home \
-SYNARA_PORT=3899 SYNARA_MODE=web SYNARA_NO_BROWSER=1 \
+NUNCIO_HOME=<scratch>/nuncioade-home \
+NUNCIO_PORT=3899 NUNCIO_MODE=web NUNCIO_NO_BROWSER=1 \
 VITE_DEV_SERVER_URL=http://localhost:5899 \
 bun <repo>/apps/server/src/index.ts &
 

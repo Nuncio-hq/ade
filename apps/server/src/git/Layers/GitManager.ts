@@ -8,15 +8,15 @@ import type {
   GitStackedAction,
   ModelSelection,
   ProviderStartOptions,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import {
   resolveAutoFeatureBranchName,
   sanitizeBranchFragment,
   sanitizeFeatureBranchName,
-} from "@synara/shared/git";
-import { parseGitHubRepositoryNameWithOwnerFromRemoteUrl } from "@synara/shared/githubRepository";
-import { summarizeUnifiedPatchTotals } from "@synara/shared/unifiedPatchStats";
-import { resolveWorktreeHandoffIntent } from "@synara/shared/worktreeHandoff";
+} from "@nuncio/shared/git";
+import { parseGitHubRepositoryNameWithOwnerFromRemoteUrl } from "@nuncio/shared/githubRepository";
+import { summarizeUnifiedPatchTotals } from "@nuncio/shared/unifiedPatchStats";
+import { resolveWorktreeHandoffIntent } from "@nuncio/shared/worktreeHandoff";
 
 import { GitManagerError } from "../Errors.ts";
 import {
@@ -158,7 +158,7 @@ function resolvePullRequestWorktreeLocalBranchName(
 
   const sanitizedHeadBranch = sanitizeBranchFragment(pullRequest.headBranch).trim();
   const suffix = sanitizedHeadBranch.length > 0 ? sanitizedHeadBranch : "head";
-  return `synara/pr-${pullRequest.number}/${suffix}`;
+  return `nuncioade/pr-${pullRequest.number}/${suffix}`;
 }
 
 function parseRepositoryOwnerLogin(nameWithOwner: string | null): string | null {
@@ -1273,7 +1273,7 @@ export const makeGitManager = Effect.gen(function* () {
         ...buildGitTextGenerationCallInput(textGenerationParams ?? {}),
       });
 
-      const bodyFile = path.join(tempDir, `synara-pr-body-${process.pid}-${randomUUID()}.md`);
+      const bodyFile = path.join(tempDir, `nuncioade-pr-body-${process.pid}-${randomUUID()}.md`);
       yield* fileSystem
         .writeFileString(bodyFile, generated.body)
         .pipe(
@@ -2056,11 +2056,11 @@ The local stash entry was kept for recovery.`,
 
       const preservedLocalStash = yield* stashWorkingTree(
         input.cwd,
-        `synara preserve local handoff ${randomUUID()}`,
+        `nuncioade preserve local handoff ${randomUUID()}`,
       );
       const sourceStash = yield* stashWorkingTree(
         input.worktreePath,
-        `synara handoff to local ${randomUUID()}`,
+        `nuncioade handoff to local ${randomUUID()}`,
       );
 
       yield* gitCore
@@ -2223,7 +2223,7 @@ The local stash entry was kept for recovery.`,
 
     const sourceStash = yield* stashWorkingTree(
       input.cwd,
-      `synara handoff to worktree ${randomUUID()}`,
+      `nuncioade handoff to worktree ${randomUUID()}`,
     );
     const sourceBranch = currentLocalStatus.branch ?? input.currentBranch ?? null;
     const sourceHeadRef = yield* readHeadRef(input.cwd);

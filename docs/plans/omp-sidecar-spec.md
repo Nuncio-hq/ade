@@ -64,13 +64,13 @@ and teardown all work with zero `node_modules` on disk.
 
 ```
 Electron main (Node)
-└── Synara server (Node, inside app.asar)          ← unchanged
+└── NuncioADE server (Node, inside app.asar)          ← unchanged
     └── OmpAdapter  ──stdio NDJSON──►  omp-sidecar (compiled Bun binary)
                                        └── @oh-my-pi/pi-coding-agent SDK
                                            ├── N AgentSessions (one per thread)
                                            ├── event mapping → ProviderRuntimeEvent
                                            ├── extension UI context (ask dialog)
-                                           └── synara_* gateway tools
+                                           └── nuncioade_* gateway tools
 ```
 
 **One sidecar process hosts every OMP thread.** That is the whole memory
@@ -96,7 +96,7 @@ Moves **into** the sidecar, unchanged in substance:
 | `provider/Layers/OmpAdapter.ts` — session creation, event switch, watchdog, turn lifecycle | `packages/omp-sidecar/src/session-host.ts` + `event-mapping.ts` |
 | `provider/ompExtensionUiContext.ts`                                                        | `packages/omp-sidecar/src/extension-ui-context.ts`              |
 | `provider/ompGatewayTools.ts`                                                              | `packages/omp-sidecar/src/gateway-tools.ts`                     |
-| `provider/ompTurnFailure.ts`, `provider/agentToolProjection.ts`                            | shared by both sides via `@synara/contracts`-adjacent imports   |
+| `provider/ompTurnFailure.ts`, `provider/agentToolProjection.ts`                            | shared by both sides via `@nuncio/contracts`-adjacent imports   |
 
 Stays in `apps/server` (Node):
 
@@ -107,7 +107,7 @@ Stays in `apps/server` (Node):
   replaced by a `spawnSidecar` seam.
 
 **The wire carries canonical `ProviderRuntimeEvent`s.** The sidecar imports
-`@synara/contracts` (plain TypeScript, Bun compiles it) and does the mapping,
+`@nuncio/contracts` (plain TypeScript, Bun compiles it) and does the mapping,
 so the Node side is a thin decoder and the phase-3/4 mapping work survives the
 move intact.
 
@@ -161,7 +161,7 @@ Mirror `OmpAdapterShape` one for one, so the adapter stays a pass-through:
 ### Gateway credentials
 
 `session/start` params carry `{ url, bearerToken }` for the thread-scoped
-Synara MCP endpoint. The sidecar fetches the catalog over loopback HTTP exactly
+NuncioADE MCP endpoint. The sidecar fetches the catalog over loopback HTTP exactly
 as `ompGatewayTools.ts` does today, keeping `strict: false` and
 `loadMode: "essential"`.
 
@@ -193,12 +193,12 @@ as `ompGatewayTools.ts` does today, keeping `strict: false` and
 
 ## 7. Phases
 
-| Phase | Work                                                                                                          | Acceptance                                                                                                           |
-| ----- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 6.1   | `packages/omp-sidecar` skeleton, protocol types, `hello` handshake, compile script                            | `bun run` and compiled binary both emit `hello`; CI builds the binary for darwin-arm64                               |
-| 6.2   | Move session host, event mapping, UI context, gateway tools; adapter becomes client                           | Dev instance: OMP thread streams chat, ask dialog answers, `synara_context` runs — parity with today's dev behaviour |
-| 6.3   | Packaging: extraResources, native placement, path resolver                                                    | Packaged app: OMP model list populated, a turn with a `bash` tool call succeeds                                      |
-| 6.4   | Supervisor: restart with backoff, resume after restart, failure surfaced as `runtime.warning`, orphan reaping | Kill the sidecar mid-turn → thread reports failure, next turn resumes with history intact                            |
+| Phase | Work                                                                                                          | Acceptance                                                                                                              |
+| ----- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 6.1   | `packages/omp-sidecar` skeleton, protocol types, `hello` handshake, compile script                            | `bun run` and compiled binary both emit `hello`; CI builds the binary for darwin-arm64                                  |
+| 6.2   | Move session host, event mapping, UI context, gateway tools; adapter becomes client                           | Dev instance: OMP thread streams chat, ask dialog answers, `nuncioade_context` runs — parity with today's dev behaviour |
+| 6.3   | Packaging: extraResources, native placement, path resolver                                                    | Packaged app: OMP model list populated, a turn with a `bash` tool call succeeds                                         |
+| 6.4   | Supervisor: restart with backoff, resume after restart, failure surfaced as `runtime.warning`, orphan reaping | Kill the sidecar mid-turn → thread reports failure, next turn resumes with history intact                               |
 
 Phase 5's remaining item (dogfooding in the packaged app) reopens after 6.3.
 

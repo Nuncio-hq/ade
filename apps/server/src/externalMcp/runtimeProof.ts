@@ -4,7 +4,7 @@ export const externalMcpRuntimeSecret = randomBytes(32).toString("base64url");
 
 export function computeExternalMcpRuntimeProof(secret: string, nonce: string): string {
   return createHmac("sha256", secret)
-    .update("synara.external-mcp.runtime\0")
+    .update("nuncioade.external-mcp.runtime\0")
     .update(nonce)
     .digest("base64url");
 }

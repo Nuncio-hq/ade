@@ -29,7 +29,7 @@ import {
   type ProviderUserInputAnswers,
   ThreadId,
   TurnId,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 import { Effect, Layer, Option, Queue, Stream } from "effect";
 import {
   encodeSidecarFrame,
@@ -50,7 +50,7 @@ import {
   type OmpSidecarThreadSnapshot,
 } from "@nuncio/omp-sidecar/protocol";
 
-import { takeSynaraHarnessPolicyForProviderSession } from "../../agentGateway/harnessPolicy.ts";
+import { takeNuncioADEHarnessPolicyForProviderSession } from "../../agentGateway/harnessPolicy.ts";
 import { AgentGatewayCredentials } from "../../agentGateway/Services/AgentGatewayCredentials.ts";
 import {
   acquireAgentGatewaySessionLease,
@@ -929,7 +929,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
 
         const text = buildPromptText(input);
         const attachmentPaths = buildAttachmentPaths(input.attachments);
-        const harnessPolicy = takeSynaraHarnessPolicyForProviderSession(context, {
+        const harnessPolicy = takeNuncioADEHarnessPolicyForProviderSession(context, {
           provider: PROVIDER,
           scopedGatewayConnectionAvailable: context.gatewayControlAvailable,
         });
@@ -989,7 +989,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
 
         const text = buildPromptText(input);
         const attachmentPaths = buildAttachmentPaths(input.attachments);
-        const harnessPolicy = takeSynaraHarnessPolicyForProviderSession(context, {
+        const harnessPolicy = takeNuncioADEHarnessPolicyForProviderSession(context, {
           provider: PROVIDER,
           scopedGatewayConnectionAvailable: context.gatewayControlAvailable,
         });
@@ -1063,7 +1063,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
         new ProviderAdapterRequestError({
           provider: PROVIDER,
           method,
-          detail: `OMP does not expose Synara approval/user-input requests for thread ${threadId}.`,
+          detail: `OMP does not expose NuncioADE approval/user-input requests for thread ${threadId}.`,
         }),
       );
 

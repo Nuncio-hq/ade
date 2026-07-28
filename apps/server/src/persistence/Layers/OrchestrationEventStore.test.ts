@@ -1,4 +1,4 @@
-import { CommandId, EventId, ProjectId, ThreadId } from "@synara/contracts";
+import { CommandId, EventId, ProjectId, ThreadId } from "@nuncio/contracts";
 import { assert, it } from "@effect/vitest";
 import { Effect, Layer, Schema, Stream } from "effect";
 import * as SqlClient from "effect/unstable/sql/SqlClient";
@@ -121,7 +121,7 @@ layer("OrchestrationEventStore", (it) => {
     }),
   );
 
-  it.effect("normalizes imported Synara model-selection shapes during replay", () =>
+  it.effect("normalizes imported NuncioADE model-selection shapes during replay", () =>
     Effect.gen(function* () {
       const eventStore = yield* OrchestrationEventStore;
       const sql = yield* SqlClient.SqlClient;

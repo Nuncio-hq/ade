@@ -1,6 +1,6 @@
 // FILE: gateway-tools.ts
-// Purpose: Project the Synara agent-gateway MCP catalog into OMP's native
-//          custom-tool API so `synara_*` calls are first-class engine tools.
+// Purpose: Project the NuncioADE agent-gateway MCP catalog into OMP's native
+//          custom-tool API so `nuncioade_*` calls are first-class engine tools.
 // Layer: Sidecar engine (OMP)
 // Exports: buildOmpAgentGatewayCustomTools
 //
@@ -8,14 +8,14 @@
 // point: a caller-supplied manager only propagates to the tool session for
 // subagents to inherit — the engine registers MCP tools in its own registry
 // exclusively on its discovery path (sdk.ts). Handing the gateway over as
-// `customTools` keeps the engine owning user MCP discovery while Synara's own
+// `customTools` keeps the engine owning user MCP discovery while NuncioADE's own
 // tools reach the model, which mirrors what PiAdapter does through pi's
 // native tool API.
 
 import type { ToolDefinition } from "@oh-my-pi/pi-coding-agent";
 import type { ImageContent, TextContent } from "@oh-my-pi/pi-ai";
 
-export const SYNARA_MCP_SERVER_NAME = "synara";
+export const NUNCIO_MCP_SERVER_NAME = "nuncioade";
 
 export interface AgentGatewayMcpConnection {
   /** Loopback streamable-HTTP MCP endpoint, e.g. `http://127.0.0.1:3773/mcp`. */
@@ -113,19 +113,19 @@ async function postAgentGatewayJsonRpc(input: {
     ...(input.signal === undefined ? {} : { signal: input.signal }),
   });
   if (!response.ok) {
-    throw new Error(`Synara MCP request failed with HTTP ${String(response.status)}.`);
+    throw new Error(`NuncioADE MCP request failed with HTTP ${String(response.status)}.`);
   }
   const payload: unknown = await response.json();
   if (!isRecord(payload) || payload.jsonrpc !== "2.0") {
-    throw new Error("Synara MCP returned an invalid JSON-RPC response.");
+    throw new Error("NuncioADE MCP returned an invalid JSON-RPC response.");
   }
   if ("error" in payload) {
     const failure = payload as unknown as JsonRpcFailure;
-    throw new Error(failure.error?.message || "Synara MCP request failed.");
+    throw new Error(failure.error?.message || "NuncioADE MCP request failed.");
   }
   const success = payload as unknown as JsonRpcSuccess;
   if (success.id !== id || !("result" in success)) {
-    throw new Error("Synara MCP returned a mismatched JSON-RPC response.");
+    throw new Error("NuncioADE MCP returned a mismatched JSON-RPC response.");
   }
   return success.result;
 }
@@ -141,7 +141,7 @@ export async function listAgentGatewayMcpTools(input: {
     method: "tools/list",
   });
   if (!isRecord(result) || !Array.isArray(result.tools)) {
-    throw new Error("Synara MCP tools/list returned an invalid tool catalog.");
+    throw new Error("NuncioADE MCP tools/list returned an invalid tool catalog.");
   }
   return result.tools.map((value) => {
     if (
@@ -150,7 +150,7 @@ export async function listAgentGatewayMcpTools(input: {
       typeof value.description !== "string" ||
       !isRecord(value.inputSchema)
     ) {
-      throw new Error("Synara MCP tools/list returned an invalid tool descriptor.");
+      throw new Error("NuncioADE MCP tools/list returned an invalid tool descriptor.");
     }
     return {
       name: value.name,
@@ -190,7 +190,7 @@ export async function buildOmpAgentGatewayCustomTools(input: {
     ...(input.fetch === undefined ? {} : { fetch: input.fetch }),
   });
   if (tools.length === 0) {
-    throw new Error("Synara MCP returned an empty tool catalog.");
+    throw new Error("NuncioADE MCP returned an empty tool catalog.");
   }
   return tools.map(
     (tool) =>
@@ -200,7 +200,7 @@ export async function buildOmpAgentGatewayCustomTools(input: {
         description: tool.description,
         parameters: tool.inputSchema as ToolDefinition["parameters"],
         // Discoverable tools are mounted behind `xd://` devices; the harness
-        // policy tells the model to call `synara_*` by name, so they must stay
+        // policy tells the model to call `nuncioade_*` by name, so they must stay
         // top-level.
         loadMode: "essential",
         // The gateway's schemas have genuinely optional properties. Strict
@@ -210,7 +210,7 @@ export async function buildOmpAgentGatewayCustomTools(input: {
         // string"). An omitted flag is NOT the same as an explicit `false` on
         // the wire — pi-ai only sends `strict: false` when the tool asks for it.
         strict: false,
-        mcpServerName: SYNARA_MCP_SERVER_NAME,
+        mcpServerName: NUNCIO_MCP_SERVER_NAME,
         mcpToolName: tool.name,
         execute: async (_toolCallId, params, signal) =>
           toolResult(

@@ -11,7 +11,7 @@
 import {
   DEFAULT_AUTOMATION_STOP_CONFIDENCE_THRESHOLD,
   type AutomationCompletionPolicy,
-} from "@synara/contracts";
+} from "@nuncio/contracts";
 
 export function completionPolicyFromStopWhen(stopWhen: string): AutomationCompletionPolicy {
   const normalized = stopWhen.trim();

@@ -8,8 +8,8 @@ import {
   type ServerConfig,
   type ServerProviderStatus,
   type WsCompatibilityError,
-} from "@synara/contracts";
-import { defaultTerminalTitleForCliKind } from "@synara/shared/terminalThreads";
+} from "@nuncio/contracts";
+import { defaultTerminalTitleForCliKind } from "@nuncio/shared/terminalThreads";
 import {
   Outlet,
   createRootRouteWithContext,
@@ -81,6 +81,7 @@ import { useWorkspacePathsStore } from "../workspacePathsStore";
 import {
   isThreadDetailRetained,
   resolveThreadDetailSubscriptionLeaseIds,
+  setVisibleThreadDetailIds,
   subscribeThreadDetailEvictions,
   useRetainedThreadDetailIds,
 } from "../threadDetailSubscriptionRetention";
@@ -264,16 +265,16 @@ function RootRouteView() {
 function TransportCompatibilityView({ issue }: { issue: WsCompatibilityError }) {
   const title =
     issue.action === "update-client"
-      ? "This Synara client needs an update."
+      ? "This NuncioADE client needs an update."
       : issue.action === "update-server"
-        ? "The Synara server needs an update."
-        : "Synara needs to reconnect with a matching build.";
+        ? "The NuncioADE server needs an update."
+        : "NuncioADE needs to reconnect with a matching build.";
   const guidance =
     issue.action === "update-client"
       ? "Update or reload this client, then reconnect."
       : issue.action === "update-server"
         ? "Update or restart the server, then reload this client."
-        : "Reload the app. If this repeats, restart Synara so the client and server use matching builds.";
+        : "Reload the app. If this repeats, restart NuncioADE so the client and server use matching builds.";
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-10 text-foreground sm:px-6">
@@ -992,7 +993,10 @@ function EventRouter() {
   useEffect(() => {
     pathnameRef.current = pathname;
     visibleThreadIdsRef.current = subscribedThreadIds;
-  }, [pathname, subscribedThreadIds]);
+    // Retention must know what is on screen: an evicted visible thread keeps its
+    // shell row and renders as an empty conversation until a snapshot lands.
+    setVisibleThreadDetailIds(visibleThreadIds);
+  }, [pathname, subscribedThreadIds, visibleThreadIds]);
 
   useEffect(() => {
     const api = readNativeApi();
@@ -1012,6 +1016,7 @@ function EventRouter() {
     const threadSnapshotSequenceById = new Map<ThreadId, number>();
     const pendingThreadEventsById = new Map<ThreadId, OrchestrationEvent[]>();
     const threadSnapshotRequestInFlight = new Set<ThreadId>();
+    const threadSnapshotRefreshPending = new Set<ThreadId>();
     const threadReplayRequestInFlight = new Set<ThreadId>();
     const threadProjectionReconcileInFlight = new Map<ThreadId, number>();
     const threadProjectionTerminalFencePending = new Set<ThreadId>();
@@ -1035,6 +1040,7 @@ function EventRouter() {
       threadSnapshotSequenceById.delete(threadId);
       pendingThreadEventsById.set(threadId, []);
       threadSnapshotRequestInFlight.delete(threadId);
+      threadSnapshotRefreshPending.delete(threadId);
       threadProjectionReconcileInFlight.delete(threadId);
       threadProjectionTerminalFencePending.delete(threadId);
       clearThreadStreamRecovery(threadId);
@@ -1082,6 +1088,7 @@ function EventRouter() {
         threadSnapshotSequenceById.delete(threadId);
         pendingThreadEventsById.delete(threadId);
         threadSnapshotRequestInFlight.delete(threadId);
+        threadSnapshotRefreshPending.delete(threadId);
         threadReplayRequestInFlight.delete(threadId);
         threadProjectionReconcileInFlight.delete(threadId);
         threadProjectionTerminalFencePending.delete(threadId);
@@ -1126,6 +1133,10 @@ function EventRouter() {
 
     const refreshThreadSnapshot = (threadId: ThreadId): Promise<void> => {
       if (threadSnapshotRequestInFlight.has(threadId)) {
+        // The in-flight snapshot predates whatever triggered this call (a
+        // retention eviction wiped detail the running request cannot know about),
+        // so re-arm instead of dropping it and leaving the thread blank.
+        threadSnapshotRefreshPending.add(threadId);
         return Promise.resolve();
       }
       threadSnapshotRequestInFlight.add(threadId);
@@ -1140,6 +1151,13 @@ function EventRouter() {
         await api.orchestration.subscribeThread({ threadId }).catch(() => undefined);
       }).finally(() => {
         threadSnapshotRequestInFlight.delete(threadId);
+        if (!threadSnapshotRefreshPending.delete(threadId)) {
+          return;
+        }
+        if (disposed || !subscribedThreadIds.has(threadId)) {
+          return;
+        }
+        void refreshThreadSnapshot(threadId);
       });
     };
 
@@ -1233,6 +1251,7 @@ function EventRouter() {
         threadSnapshotSequenceById.clear();
         pendingThreadEventsById.clear();
         threadSnapshotRequestInFlight.clear();
+        threadSnapshotRefreshPending.clear();
         threadReplayRequestInFlight.clear();
         threadProjectionReconcileInFlight.clear();
         threadProjectionTerminalFencePending.clear();
@@ -1620,6 +1639,7 @@ function EventRouter() {
       // the failure so the thread view stops posing as an empty conversation.
       threadSnapshotSequenceById.delete(threadId);
       threadSnapshotRequestInFlight.delete(threadId);
+      threadSnapshotRefreshPending.delete(threadId);
       useStore.getState().markThreadDetailSyncFailed(threadId);
       // A draft that has not been promoted yet is expected to 404 until its
       // `thread.create` lands, and the shell stream already restarts that one

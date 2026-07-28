@@ -3,7 +3,7 @@
  *
  * @module GrokAcpSupport
  */
-import { type GrokModelOptions } from "@synara/contracts";
+import { type GrokModelOptions } from "@nuncio/contracts";
 import { Effect, Layer, Scope, ServiceMap } from "effect";
 import * as AcpErrors from "./AcpErrors.ts";
 import type * as Acp from "@agentclientprotocol/sdk";
@@ -90,7 +90,7 @@ export function buildGrokAcpSpawnInput(
   grokSettings: GrokAcpRuntimeSettings | null | undefined,
   cwd: string,
 ): AcpSpawnInput {
-  // Keep the provider itself in request-based permission mode. Synara then
+  // Keep the provider itself in request-based permission mode. NuncioADE then
   // auto-answers per turn, so Full Access cannot leak into a later Plan turn
   // through a sticky Grok config or a process-wide always-approve setting.
   const args = ["--permission-mode", "default", "agent", "--no-leader"];

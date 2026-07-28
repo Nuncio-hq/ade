@@ -1,9 +1,9 @@
-import type { ProjectId } from "@synara/contracts";
+import type { ProjectId } from "@nuncio/contracts";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createLocalStorageStateStorage } from "./persistedLocalStorage";
 
-const LATEST_PROJECT_STORAGE_KEY = "synara:latest-project:v1";
+const LATEST_PROJECT_STORAGE_KEY = "nuncioade:latest-project:v1";
 
 interface LatestProjectStore {
   latestProjectId: ProjectId | null;

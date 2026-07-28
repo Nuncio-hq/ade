@@ -1,4 +1,4 @@
-import { ThreadId } from "@synara/contracts";
+import { ThreadId } from "@nuncio/contracts";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import type {
   Agent,
@@ -12,7 +12,7 @@ import { Deferred, Effect, Exit, Fiber, Layer, Scope, Stream } from "effect";
 import { describe, it, expect, vi } from "vitest";
 
 import { ServerConfig } from "../../config.ts";
-import { SYNARA_HARNESS_POLICY_MARKER } from "../../agentGateway/harnessPolicy.ts";
+import { NUNCIO_HARNESS_POLICY_MARKER } from "../../agentGateway/harnessPolicy.ts";
 import {
   AgentGatewayCredentials,
   type AgentGatewayCredentialsShape,
@@ -172,7 +172,7 @@ function createMockOpenCodeRuntime(options?: {
         mcpAddCalls.push(input);
         return options?.mcpAdd
           ? options.mcpAdd(input)
-          : { data: { synara: { status: "connected" } } };
+          : { data: { nuncioade: { status: "connected" } } };
       },
     },
   };
@@ -829,7 +829,7 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
     ]);
     expect(runtime.promptCalls).toHaveLength(2);
     for (const prompt of runtime.promptCalls) {
-      expect(JSON.stringify(prompt)).toContain("Use the synara_* tools");
+      expect(JSON.stringify(prompt)).toContain("Use the nuncioade_* tools");
     }
     expect(gateway.revoked).toEqual(["gateway-token-1", "gateway-token-2"]);
   });
@@ -903,12 +903,14 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
     expect(runtime.connectCalls[0]?.poolIsolationKey).toBeUndefined();
     expect(runtime.mcpAddCalls).toEqual([]);
     expect(gateway.ownerByToken.size).toBe(0);
-    expect(JSON.stringify(runtime.promptCalls[0])).toContain("Synara MCP control is unavailable");
+    expect(JSON.stringify(runtime.promptCalls[0])).toContain(
+      "NuncioADE MCP control is unavailable",
+    );
   });
 
   it("keeps managed sessions identity-only and revokes credentials when MCP setup is not connected", async () => {
     const runtime = createMockOpenCodeRuntime({
-      mcpAdd: async () => ({ data: { synara: { status: "failed", error: "offline" } } }),
+      mcpAdd: async () => ({ data: { nuncioade: { status: "failed", error: "offline" } } }),
     });
     const gateway = makeGatewayCredentials();
 
@@ -942,7 +944,9 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
 
     expect(gateway.revoked).toEqual(["gateway-token-1"]);
     expect(gateway.ownerByToken.size).toBe(0);
-    expect(JSON.stringify(runtime.promptCalls[0])).toContain("Synara MCP control is unavailable");
+    expect(JSON.stringify(runtime.promptCalls[0])).toContain(
+      "NuncioADE MCP control is unavailable",
+    );
   });
 
   it("applies the same isolated gateway lifecycle to managed Kilo sessions", async () => {
@@ -1453,7 +1457,7 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
         variant: "fast",
       },
       agent: "build",
-      title: "Synara thread-model-pin",
+      title: "NuncioADE thread-model-pin",
     });
   });
 
@@ -1511,8 +1515,8 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
     const firstPromptText = (
       runtime.promptCalls[0]?.parts as ReadonlyArray<{ readonly text?: string }> | undefined
     )?.[0]?.text;
-    expect(firstPromptText).toContain(SYNARA_HARNESS_POLICY_MARKER);
-    expect(firstPromptText).toContain("Synara MCP control is unavailable");
+    expect(firstPromptText).toContain(NUNCIO_HARNESS_POLICY_MARKER);
+    expect(firstPromptText).toContain("NuncioADE MCP control is unavailable");
     expect(runtime.promptCalls[0]).toMatchObject({
       model: {
         providerID: "openai",
@@ -1903,7 +1907,7 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
     expect(runtime.promptCalls[0]?.parts).toEqual([
       {
         type: "text",
-        text: expect.stringContaining("Synara plan mode is active."),
+        text: expect.stringContaining("NuncioADE plan mode is active."),
       },
     ]);
     expect(result.map((event) => event.type)).toEqual([
@@ -2057,7 +2061,7 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
     });
   });
 
-  it("ignores a stale plan agent option when Synara interaction mode is default", async () => {
+  it("ignores a stale plan agent option when NuncioADE interaction mode is default", async () => {
     const runtime = createMockOpenCodeRuntime();
 
     await Effect.runPromise(
@@ -2198,7 +2202,7 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
               id: "part-default-plan",
               messageID: "assistant-message-default-plan",
               type: "text",
-              text: "<proposed_plan>\n# Not a Synara plan\n</proposed_plan>",
+              text: "<proposed_plan>\n# Not a NuncioADE plan\n</proposed_plan>",
               time: {
                 start: 1,
                 end: 2,
@@ -2233,7 +2237,7 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
       type: "item.completed",
       payload: {
         itemType: "assistant_message",
-        detail: "<proposed_plan>\n# Not a Synara plan\n</proposed_plan>",
+        detail: "<proposed_plan>\n# Not a NuncioADE plan\n</proposed_plan>",
       },
     });
   });
@@ -3991,7 +3995,7 @@ describe("OpenCodeAdapter runtime lifecycle", () => {
             },
           },
         });
-        // The stream part arrives after the grace period. Synara must first
+        // The stream part arrives after the grace period. NuncioADE must first
         // recover the provider snapshot, then ignore this duplicate late event.
         yield* Effect.sleep(30);
         eventQueue.push({
