@@ -718,34 +718,34 @@
         {
           id: 4,
           name: "Phase 4 — Bridge, extensions & gateway",
-          st: "todo",
+          st: "done",
           goal: "Harness extensions + synara_* tools + các nút điều khiển.",
           tasks: [
             {
               t: "makeOmpExtensionUIContext (port makePiExtensionUIContext + askUserQuestions extra) → setToolUIContext(uiContext, true) từ CreateAgentSessionResult",
-              st: "todo",
+              st: "done",
             },
             {
               t: "respondToUserInput round-trip (pending map — port PiPendingUserInput)",
-              st: "todo",
+              st: "done",
             },
             {
               t: "Compat proof legacy shim: 1 extension pi từ harness/extensions/ load + tool call dưới OMP (@earendil-works shim) — CHỈ để chứng minh harness pi-API sống; hỏi-user cho UI đi bằng NATIVE ask tool của OMP (không ship qua extension)",
-              st: "todo",
+              st: "done",
             },
             {
-              t: "Gateway MCP: dựng MCPManager + connectServers({synara: …}) → createAgentSession({mcpManager}); bật enableMCP:true",
-              st: "todo",
+              t: "Gateway MCP: buildOmpAgentGatewayCustomTools → createAgentSession({customTools}); enableMCP:true để engine tự lo MCP của user. KHÔNG dùng mcpManager: manager truyền vào chỉ propagate cho subagent, engine chỉ đăng ký MCP tool trên đường discovery của nó (sdk.ts) → tool không tới model.",
+              st: "done",
             },
-            { t: "stopTask → session.asyncJobManager.cancel(jobId)", st: "todo" },
-            { t: "compactThread → session.compact() (one-liner đã verify)", st: "todo" },
+            { t: "stopTask → session.asyncJobManager.cancel(jobId)", st: "done" },
+            { t: "compactThread → session.compact() (one-liner đã verify)", st: "done" },
             {
               t: "listSkills / listCommands từ discoverSkills / discoverSlashCommands + getComposerCapabilities",
-              st: "todo",
+              st: "done",
             },
           ],
           accept:
-            "<b>Kiểm tra:</b> trong thread OMP, nhờ agent hỏi lại bạn → dialog hiện trong ADE qua native ask tool của OMP, trả lời được. Extension pi trong harness/extensions/ load dưới shim + gọi được 1 tool (compat proof). Nhờ agent gọi một synara_* tool → chạy. Bấm compact thủ công → thấy compaction status.",
+            '<b>ĐÃ CHẠY 2026-07-28 (.ade-dev, model openai-codex/gpt-5.4-mini):</b> (1) native <code>ask</code> → dialog trong ADE → trả lời <code>Red</code> → <code>Completed tool · Ask User selected: Red</code>. (2) Compat proof: <code>runtime.warning extension/ui-limited-warning</code> liệt kê 5 extension load được, gồm <code>~/.omp/agent/extensions/AskUserQuestion/index.ts</code> với <code>tools:["AskUserQuestion"]</code> — extension pi (@earendil-works/pi-coding-agent + pi-tui) sống dưới legacy shim. (3) <code>synara_context</code> chạy, trả về threadId/turnId/provider:omp/projectId + capabilities. (4) <code>/compact</code> ×2 → session JSONL của OMP có 2 record <code>"type":"compaction"</code>. Skills/commands OMP hiện trong composer (slash menu).',
           unlock: [
             "Extensions harness của mình chạy trên OMP trong ADE",
             "synara_* gateway tools",

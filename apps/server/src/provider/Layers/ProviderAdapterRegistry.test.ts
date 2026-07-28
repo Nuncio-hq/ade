@@ -226,6 +226,7 @@ layer("ProviderAdapterRegistryLive", (it) => {
       const kilo = yield* registry.getByProvider("kilo");
       const opencode = yield* registry.getByProvider("opencode");
       const pi = yield* registry.getByProvider("pi");
+      const omp = yield* registry.getByProvider("omp");
       assert.equal(codex, fakeCodexAdapter);
       assert.equal(claude, fakeClaudeAdapter);
       assert.equal(cursor, fakeCursorAdapter);
@@ -235,6 +236,7 @@ layer("ProviderAdapterRegistryLive", (it) => {
       assert.equal(kilo, fakeKiloAdapter);
       assert.equal(opencode, fakeOpenCodeAdapter);
       assert.equal(pi, fakePiAdapter);
+      assert.equal(omp, fakeOmpAdapter);
 
       const providers = yield* registry.listProviders();
       assert.deepEqual(providers, [
@@ -247,6 +249,7 @@ layer("ProviderAdapterRegistryLive", (it) => {
         "kilo",
         "opencode",
         "pi",
+        "omp",
       ]);
     }),
   );

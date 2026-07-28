@@ -277,6 +277,28 @@ export const PiIcon: Icon = (props) => (
   </svg>
 );
 
+// OMP's own mark (omp.sh/favicon.svg): a rounded tile with the gradient glyph.
+// Deliberately not the Pi mark — the two engines are distinct providers in the
+// picker, and a shared glyph made them indistinguishable.
+export const OmpIcon: Icon = (props) => {
+  const id = useId();
+  const gradientId = `${id}-omp-a`;
+
+  return (
+    <svg {...props} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#ed4abf" />
+          <stop offset=".5" stopColor="#9b4dff" />
+          <stop offset="1" stopColor="#5ad8e6" />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="12" fill="#0f0a14" />
+      <path fill={`url(#${gradientId})`} d="M14 16h36v8H40v32h-8V24h-6v22h-8V24h-4z" />
+    </svg>
+  );
+};
+
 export const OpenCodeIcon: Icon = (props) => (
   <svg {...props} viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clipPath="url(#opencode__clip0_1311_94969)">

@@ -10,12 +10,13 @@ import * as NodeServices from "@effect/platform-node/NodeServices";
 import { it } from "@effect/vitest";
 import { vi } from "vitest";
 import assert from "node:assert/strict";
-import { ThreadId, type ProviderRuntimeEvent } from "@synara/contracts";
+import { ApprovalRequestId, ThreadId, type ProviderRuntimeEvent } from "@synara/contracts";
 import { Effect, Fiber, Layer, Stream } from "effect";
 
 import { ServerConfig } from "../../config.ts";
 import { OmpAdapter } from "../Services/OmpAdapter.ts";
 import { makeOmpAdapterLive } from "./OmpAdapter.ts";
+import type { OmpExtensionUiContext } from "../ompExtensionUiContext.ts";
 
 type OmpEventListener = (event: unknown) => void;
 
@@ -72,6 +73,9 @@ const fakeSession = {
   setThinkingLevel: () => undefined,
 };
 
+/** Set by the adapter through `setToolUIContext`; the engine's ask surface. */
+const capturedUiContext: { context: unknown } = { context: undefined };
+
 const fakeSdk = {
   discoverAuthStorage: async () => ({}),
   ModelRegistry: class {
@@ -92,7 +96,14 @@ const fakeSdk = {
     create: () => fakeSessionManager,
     open: async () => fakeSessionManager,
   },
-  createAgentSession: async () => ({ session: fakeSession }),
+  createAgentSession: async () => ({
+    session: fakeSession,
+    // Phase 4 wiring: the adapter binds its UI bridge and reports what loaded.
+    setToolUIContext: (context: unknown) => {
+      capturedUiContext.context = context;
+    },
+    extensionsResult: { extensions: [] as unknown[] },
+  }),
 };
 
 const loadSdk = async () => fakeSdk as never;
@@ -418,6 +429,89 @@ it.layer(testLayers({ turnInactivityTimeoutMs: 40 }))("OMP turn watchdog", (it) 
       assert.equal(completion.payload.state, "completed");
 
       yield* adapter.stopSession(threadId);
+    }),
+  );
+});
+
+/** Collects until the engine's question surfaces, so the id can be answered. */
+const collectUserInputRequest = (
+  adapter: { readonly streamEvents: Stream.Stream<ProviderRuntimeEvent> },
+  threadId: ThreadId,
+) =>
+  Stream.runCollect(
+    adapter.streamEvents.pipe(
+      Stream.takeUntil(
+        (event) => event.threadId === threadId && event.type === "user-input.requested",
+      ),
+    ),
+  ).pipe(Effect.forkChild);
+
+it.layer(testLayers())("OMP extension UI bridge", (it) => {
+  it.effect("parks an engine question until Synara answers it", () =>
+    Effect.gen(function* () {
+      resetFake();
+      const threadId = ThreadId.makeUnsafe("thread-omp-ask");
+      const adapter = yield* OmpAdapter;
+      const collector = yield* collectUserInputRequest(adapter, threadId);
+      yield* adapter.startSession({ threadId, runtimeMode: "local", cwd: process.cwd() } as never);
+
+      // This is the object the engine's native `ask` tool renders through.
+      const uiContext = capturedUiContext.context as OmpExtensionUiContext | undefined;
+      assert.ok(uiContext, "the adapter must hand the engine a UI context");
+      const answered = uiContext.select("Pick an action", ["Deploy", "Rollback"]);
+
+      const request = eventsFor(yield* Fiber.join(collector), threadId).find(
+        (event) => event.type === "user-input.requested",
+      );
+      assert.ok(request && request.type === "user-input.requested");
+      assert.ok(request.requestId, "the dialog must carry an id Synara can answer");
+      assert.deepEqual(
+        request.payload.questions[0]?.options?.map((option) => option.label),
+        ["Deploy", "Rollback"],
+      );
+
+      yield* adapter.respondToUserInput(threadId, ApprovalRequestId.makeUnsafe(request.requestId), {
+        selection: "Deploy",
+      });
+      assert.equal(yield* Effect.promise(() => answered), "Deploy");
+
+      yield* adapter.stopSession(threadId);
+    }),
+  );
+
+  it.effect("rejects an answer to a request the session never made", () =>
+    Effect.gen(function* () {
+      resetFake();
+      const threadId = ThreadId.makeUnsafe("thread-omp-ask-unknown");
+      const adapter = yield* OmpAdapter;
+      yield* adapter.startSession({ threadId, runtimeMode: "local", cwd: process.cwd() } as never);
+
+      const failure = yield* adapter
+        .respondToUserInput(threadId, ApprovalRequestId.makeUnsafe("nope"), {})
+        .pipe(Effect.flip);
+      assert.match(String(failure), /No pending OMP user-input request/);
+
+      yield* adapter.stopSession(threadId);
+    }),
+  );
+
+  it.effect("releases a pending question when the session is torn down", () =>
+    Effect.gen(function* () {
+      resetFake();
+      const threadId = ThreadId.makeUnsafe("thread-omp-ask-teardown");
+      const adapter = yield* OmpAdapter;
+      const collector = yield* collectUserInputRequest(adapter, threadId);
+      yield* adapter.startSession({ threadId, runtimeMode: "local", cwd: process.cwd() } as never);
+
+      const uiContext = capturedUiContext.context as OmpExtensionUiContext | undefined;
+      assert.ok(uiContext);
+      const answered = uiContext.confirm("Delete", "Really delete?");
+      yield* Fiber.join(collector);
+
+      // The engine blocks a tool call on this promise; teardown must settle it
+      // rather than leave the turn hanging on a dialog nobody can answer.
+      yield* adapter.stopSession(threadId);
+      assert.equal(yield* Effect.promise(() => answered), false);
     }),
   );
 });

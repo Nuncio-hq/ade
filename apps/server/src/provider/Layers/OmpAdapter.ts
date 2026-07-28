@@ -22,25 +22,38 @@ import type {
   ModelRegistry,
   SessionManager,
   SessionStats,
+  ToolDefinition,
 } from "@oh-my-pi/pi-coding-agent";
 import type { ThinkingLevel } from "@oh-my-pi/pi-agent-core";
 import type { Api, Model } from "@oh-my-pi/pi-ai";
 import {
+  ApprovalRequestId,
   type ChatAttachment,
   EventId,
   ProviderItemId,
+  type ProviderComposerCapabilities,
+  type ProviderListCommandsResult,
   type ProviderListModelsResult,
+  type ProviderListSkillsResult,
   type ProviderRuntimeEvent,
   type ProviderSendTurnInput,
   type ProviderSession,
+  type ProviderUserInputAnswers,
   RuntimeItemId,
+  RuntimeRequestId,
   ThreadId,
   type ThreadTokenUsageSnapshot,
   TurnId,
 } from "@synara/contracts";
-import { Effect, Layer, Queue, Stream } from "effect";
+import { Effect, Layer, Option, Queue, Stream } from "effect";
 
 import { takeSynaraHarnessPolicyForProviderSession } from "../../agentGateway/harnessPolicy.ts";
+import { AgentGatewayCredentials } from "../../agentGateway/Services/AgentGatewayCredentials.ts";
+import {
+  acquireAgentGatewaySessionLease,
+  releaseAgentGatewaySessionLeaseOnInterrupt,
+  type AgentGatewaySessionLease,
+} from "../../agentGateway/sessionLease.ts";
 import { ServerConfig } from "../../config.ts";
 import { lazyModule } from "../../lazyModule.ts";
 import {
@@ -63,7 +76,13 @@ import {
 } from "../agentToolProjection.ts";
 import { appendFileAttachmentsPromptBlock } from "../attachmentProjection.ts";
 import { makeBoundedCallbackIngress } from "../boundedCallbackIngress.ts";
+import { buildOmpAgentGatewayCustomTools } from "../ompGatewayTools.ts";
 import { classifyOmpTurnFailure } from "../ompTurnFailure.ts";
+import {
+  makeOmpExtensionUiContext,
+  type OmpExtensionUiContext,
+  type OmpUserInputRequest,
+} from "../ompExtensionUiContext.ts";
 import {
   compactProviderRuntimeEventForIngress,
   isTerminalProviderRuntimeEvent,
@@ -163,9 +182,16 @@ interface OmpStreamDeltaItem {
   delta: string;
 }
 
+interface OmpPendingUserInput {
+  readonly resolve: (answers: ProviderUserInputAnswers) => void;
+}
+
 interface OmpSessionContext {
   harnessPolicyDelivered?: boolean;
   readonly lifecycleGeneration?: string;
+  /** True once the thread-scoped Synara gateway MCP server is connected. */
+  readonly gatewayControlAvailable: boolean;
+  gatewaySessionLease?: AgentGatewaySessionLease;
   readonly agentSession: OmpAgentSession;
   readonly sessionManager: SessionManager;
   readonly modelRegistry: ModelRegistry;
@@ -188,6 +214,7 @@ interface OmpSessionContext {
   stopped: boolean;
   lastKnownTokenUsage: ThreadTokenUsageSnapshot | undefined;
   unsubscribe: (() => void) | undefined;
+  pendingUserInputs: Map<ApprovalRequestId, OmpPendingUserInput>;
 }
 
 export interface OmpAdapterLiveOptions {
@@ -379,6 +406,9 @@ function normalizeTokenUsage(
 const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
   Effect.gen(function* () {
     const serverConfig = yield* ServerConfig;
+    const agentGatewayCredentials = Option.getOrUndefined(
+      yield* Effect.serviceOption(AgentGatewayCredentials),
+    );
     const loadSdkModule = options?.loadSdk ?? loadOmpCodingAgentModule;
     const turnInactivityTimeoutMs =
       options?.turnInactivityTimeoutMs ?? OMP_TURN_INACTIVITY_TIMEOUT_MS;
@@ -455,6 +485,138 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
       } satisfies ProviderRuntimeEvent);
     };
 
+    const resolveOmpExtensionUserInput = (
+      context: OmpSessionContext,
+      requestId: ApprovalRequestId,
+      answers: ProviderUserInputAnswers,
+    ) => {
+      const pending = context.pendingUserInputs.get(requestId);
+      if (!pending) return false;
+      pending.resolve(answers);
+      return true;
+    };
+
+    /**
+     * Opens a Synara dialog for an engine-side question and parks the engine's
+     * promise until `respondToUserInput` (or an abort/timeout) settles it. The
+     * engine is blocking a tool call on this, so every exit path must resolve —
+     * an unresolved request would hang the turn until the watchdog fires.
+     */
+    const requestOmpExtensionUserInput = (
+      context: OmpSessionContext,
+      input: OmpUserInputRequest,
+    ): Promise<ProviderUserInputAnswers> => {
+      if (context.stopped || input.opts?.signal?.aborted) {
+        return Promise.resolve({});
+      }
+      const requestId = ApprovalRequestId.makeUnsafe(crypto.randomUUID());
+      const runtimeRequestId = RuntimeRequestId.makeUnsafe(requestId);
+      const { promise, resolve } = Promise.withResolvers<ProviderUserInputAnswers>();
+      let settled = false;
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      let abort: () => void = () => undefined;
+      const cleanup = () => {
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
+        input.opts?.signal?.removeEventListener("abort", abort);
+      };
+      const finish = (answers: ProviderUserInputAnswers) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        context.pendingUserInputs.delete(requestId);
+        offerRuntimeEvent({
+          ...makeEventBase(context),
+          type: "user-input.resolved",
+          requestId: runtimeRequestId,
+          payload: { answers },
+          raw: {
+            source: "omp.sdk.event",
+            method: `${input.method}/answered`,
+            payload: { requestId, answers },
+          },
+        } satisfies ProviderRuntimeEvent);
+        resolve(answers);
+      };
+      abort = () => finish({});
+
+      context.pendingUserInputs.set(requestId, { resolve: finish });
+      if (typeof input.opts?.timeout === "number" && input.opts.timeout > 0) {
+        timeoutId = setTimeout(abort, input.opts.timeout);
+        input.opts.onTimeoutStart?.();
+      }
+      input.opts?.signal?.addEventListener("abort", abort, { once: true });
+
+      offerRuntimeEvent({
+        ...makeEventBase(context),
+        type: "user-input.requested",
+        requestId: runtimeRequestId,
+        payload: { questions: input.questions },
+        raw: {
+          source: "omp.sdk.event",
+          method: input.method,
+          payload: input.rawPayload ?? { requestId, questions: input.questions },
+        },
+      } satisfies ProviderRuntimeEvent);
+      return promise;
+    };
+
+    const makeUiContextFor = (context: OmpSessionContext): OmpExtensionUiContext => {
+      const unsupportedWarnings = new Set<string>();
+      return makeOmpExtensionUiContext({
+        requestUserInput: (request) => requestOmpExtensionUserInput(context, request),
+        warnUnsupported: (method) => {
+          // One warning per method per session: extensions call these in loops.
+          if (unsupportedWarnings.has(method)) return;
+          unsupportedWarnings.add(method);
+          offerRuntimeEvent({
+            ...makeEventBase(context, { includeTurnId: false }),
+            type: "runtime.warning",
+            payload: {
+              message: `OMP extension UI API '${method}' is not supported in Synara yet.`,
+              detail: { method },
+            },
+            raw: {
+              source: "omp.sdk.event",
+              method: "extension/ui-unsupported",
+              payload: { method },
+            },
+          } satisfies ProviderRuntimeEvent);
+        },
+        emitProgress: (summary) => {
+          const normalized = trimToUndefined(summary);
+          if (!normalized) return;
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            type: "tool.progress",
+            payload: { toolName: "OMP extension", summary: normalized },
+            raw: {
+              source: "omp.sdk.event",
+              method: "extension/ui-progress",
+              payload: { summary: normalized },
+            },
+          } satisfies ProviderRuntimeEvent);
+        },
+        notify: (message, level) => {
+          if (level === "error") {
+            offerRuntimeError(context, { message, method: "extension/ui/notify" });
+            return;
+          }
+          offerRuntimeEvent({
+            ...makeEventBase(context),
+            type: "runtime.warning",
+            payload: { message, detail: { level } },
+            raw: {
+              source: "omp.sdk.event",
+              method: "extension/ui/notify",
+              payload: { message, level },
+            },
+          } satisfies ProviderRuntimeEvent);
+        },
+      });
+    };
     const requireSession = Effect.fn("OmpAdapter.requireSession")(function* (threadId: ThreadId) {
       const context = sessions.get(threadId);
       if (!context) {
@@ -479,7 +641,18 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
       } catch {
         // Aborting an idle session is a no-op failure; disposal below is what counts.
       }
-      await context.agentSession.dispose({});
+      // The engine blocks tool calls on these promises; resolving them empty is
+      // the documented cancel answer, and skipping it would hang disposal.
+      for (const pending of Array.from(context.pendingUserInputs.values())) {
+        pending.resolve({});
+      }
+      context.pendingUserInputs.clear();
+      try {
+        await context.agentSession.dispose({});
+      } finally {
+        context.gatewaySessionLease?.release();
+        delete context.gatewaySessionLease;
+      }
     };
 
     const activeTurnFor = (context: OmpSessionContext): OmpStoredTurn | undefined => {
@@ -1132,6 +1305,15 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
           input.modelSelection?.provider === PROVIDER
             ? toOmpThinkingLevel(input.modelSelection.options?.thinkingLevel)
             : undefined;
+        // Thread-scoped gateway credentials, same lease discipline as PiAdapter;
+        // OMP consumes them as an MCP server instead of injected custom tools so
+        // the user's own MCP servers keep loading through the engine's manager.
+        const agentGatewaySessionLease = acquireAgentGatewaySessionLease(
+          agentGatewayCredentials,
+          input.threadId,
+          PROVIDER,
+        );
+        const agentGatewayConnection = agentGatewaySessionLease?.connection;
         const created = yield* Effect.tryPromise({
           try: async () => {
             const authStorage = await sdk.discoverAuthStorage(agentDir);
@@ -1148,6 +1330,23 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
             const sessionManager = sessionFile
               ? await sdk.SessionManager.open(sessionFile)
               : sdk.SessionManager.create(cwd);
+            // The gateway rides in as native custom tools, not as a supplied
+            // MCPManager: a caller-supplied manager only propagates to the
+            // tool session for subagents to inherit — the engine registers MCP
+            // tools in its own registry solely on its discovery path. Leaving
+            // discovery to the engine also keeps the user's own MCP servers.
+            let gatewayTools: ReadonlyArray<ToolDefinition> = [];
+            let gatewayConnectError: string | undefined;
+            if (agentGatewayConnection) {
+              try {
+                gatewayTools = await buildOmpAgentGatewayCustomTools({
+                  connection: agentGatewayConnection,
+                });
+              } catch (cause) {
+                gatewayConnectError = toMessage(cause, "Synara MCP catalog load failed.");
+              }
+            }
+            const gatewayControlAvailable = gatewayTools.length > 0;
             const result = await sdk.createAgentSession({
               cwd,
               ...(agentDir ? { agentDir } : {}),
@@ -1158,22 +1357,32 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
               // Only override when the user picked a level; otherwise the
               // engine resolves it from its own settings/model roles.
               ...(requestedThinkingLevel ? { thinkingLevel: requestedThinkingLevel } : {}),
-              // Synara is the UI; the engine must not assume a terminal exists.
-              hasUI: false,
+              // Synara IS the UI. The engine gates its interactive surface on
+              // this flag — the native `ask` tool is only constructed when it is
+              // true (tools/ask.ts) — and setToolUIContext below supplies the
+              // context those surfaces render through.
+              hasUI: true,
               // LSP warmup spawns language servers per session — resource cost
               // with no consumer until Synara surfaces diagnostics. Off for now.
               enableLsp: false,
               // IRC would register every embedded session on the shared hub and
               // pollute the user's agent registry. Off inside the server.
               enableIrc: false,
-              // MCP stays off until phase 4 wires the Synara gateway through
-              // MCPManager.connectServers (user servers come with it).
-              enableMCP: false,
+              // The engine discovers and owns the user's MCP servers; Synara's
+              // gateway comes in beside them as custom tools.
+              enableMCP: true,
+              ...(gatewayTools.length > 0 ? { customTools: [...gatewayTools] } : {}),
               // The python preflight probes interpreters at startup; the eval
               // kernel is unused in the embedded skeleton, so skip the cost.
               skipPythonPreflight: true,
             });
-            return { result, sessionManager, modelRegistry };
+            return {
+              result,
+              sessionManager,
+              modelRegistry,
+              gatewayControlAvailable,
+              gatewayConnectError,
+            };
           },
           catch: (cause) =>
             new ProviderAdapterRequestError({
@@ -1218,9 +1427,65 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
           stopped: false,
           lastKnownTokenUsage: undefined,
           unsubscribe: undefined,
+          pendingUserInputs: new Map(),
+          gatewayControlAvailable: created.gatewayControlAvailable,
+          ...(agentGatewaySessionLease && created.gatewayControlAvailable
+            ? { gatewaySessionLease: agentGatewaySessionLease }
+            : {}),
         };
+        if (!created.gatewayControlAvailable) {
+          agentGatewaySessionLease?.release();
+          // Losing the gateway silently would leave the thread unable to drive
+          // Synara while the model is told, without explanation, that Synara
+          // control is unavailable.
+          const reason = agentGatewayConnection
+            ? (created.gatewayConnectError ?? "unknown")
+            : "no gateway credentials in this server runtime";
+          offerRuntimeEvent({
+            ...makeEventBase(context, { includeTurnId: false }),
+            type: "runtime.warning",
+            payload: {
+              message: "Synara MCP control is unavailable in this OMP session.",
+              detail: {
+                reason,
+                ...(agentGatewayConnection ? { url: agentGatewayConnection.url } : {}),
+              },
+            },
+            raw: {
+              source: "omp.sdk.event",
+              method: "mcp/gateway-unavailable",
+              payload: { reason },
+            },
+          } satisfies ProviderRuntimeEvent);
+        }
         context.unsubscribe = agentSession.subscribe((event) => handleSessionEvent(context, event));
         sessions.set(input.threadId, context);
+        // `hasUI: true` only declares that a UI exists; this is the object the
+        // engine actually renders through — the native `ask` tool, extension
+        // select/confirm/input, and the harness `askUserQuestions` extra.
+        created.result.setToolUIContext(makeUiContextFor(context), true);
+        const loadedExtensions = created.result.extensionsResult.extensions;
+        if (loadedExtensions.length > 0) {
+          const extensions = loadedExtensions.map((extension) => ({
+            name: extension.label ?? extension.path,
+            tools: Array.from(extension.tools.keys()),
+            commands: Array.from(extension.commands.keys()),
+          }));
+          offerRuntimeEvent({
+            ...makeEventBase(context, { includeTurnId: false }),
+            type: "runtime.warning",
+            payload: {
+              message:
+                "OMP extensions are loaded with Synara's limited UI bridge. select/confirm/input/notify/status and the ask dialog are supported; TUI-only widgets and editor hooks are ignored.",
+              detail: { extensionCount: loadedExtensions.length, extensions },
+            },
+            raw: {
+              source: "omp.sdk.event",
+              method: "extension/ui-limited-warning",
+              payload: { extensionCount: loadedExtensions.length, extensions },
+            },
+          } satisfies ProviderRuntimeEvent);
+        }
         if (created.result.modelFallbackMessage) {
           offerRuntimeEvent({
             ...makeEventBase(context, { includeTurnId: false }),
@@ -1320,7 +1585,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
         armTurnWatchdog(context);
         const harnessPolicy = takeSynaraHarnessPolicyForProviderSession(context, {
           provider: PROVIDER,
-          scopedGatewayConnectionAvailable: false,
+          scopedGatewayConnectionAvailable: context.gatewayControlAvailable,
         });
         const providerText = [harnessPolicy, text].filter(Boolean).join("\n\n");
         void context.agentSession.prompt(providerText).catch((cause) => {
@@ -1340,7 +1605,7 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
         const text = buildPromptText(input);
         const harnessPolicy = takeSynaraHarnessPolicyForProviderSession(context, {
           provider: PROVIDER,
-          scopedGatewayConnectionAvailable: false,
+          scopedGatewayConnectionAvailable: context.gatewayControlAvailable,
         });
         const providerText = [harnessPolicy, text].filter(Boolean).join("\n\n");
         const turnId = context.activeTurnId ?? TurnId.makeUnsafe(crypto.randomUUID());
@@ -1458,6 +1723,144 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
         return snapshotThread(context);
       });
 
+    const respondToUserInput: OmpAdapterShape["respondToUserInput"] = (
+      threadId,
+      requestId,
+      answers,
+    ) =>
+      Effect.gen(function* () {
+        const context = yield* requireSession(threadId);
+        if (!resolveOmpExtensionUserInput(context, requestId, answers)) {
+          return yield* new ProviderAdapterRequestError({
+            provider: PROVIDER,
+            method: "user-input/respond",
+            detail: `No pending OMP user-input request ${requestId} for thread ${threadId}.`,
+          });
+        }
+      });
+
+    const compactThread: NonNullable<OmpAdapterShape["compactThread"]> = (threadId) =>
+      requireSession(threadId).pipe(
+        Effect.flatMap((context) =>
+          Effect.tryPromise({
+            try: () => context.agentSession.compact(),
+            catch: (cause) =>
+              new ProviderAdapterRequestError({
+                provider: PROVIDER,
+                method: "thread/compact",
+                detail: toMessage(cause, "Failed to compact OMP thread."),
+                cause,
+              }),
+          }),
+        ),
+        Effect.asVoid,
+      );
+
+    const stopTask: NonNullable<OmpAdapterShape["stopTask"]> = (threadId, taskId) =>
+      Effect.gen(function* () {
+        const context = yield* requireSession(threadId);
+        // Background work is the engine's async job registry, so "stop task"
+        // is a job cancel; a false return means the id is unknown or finished.
+        if (context.agentSession.asyncJobManager?.cancel(taskId) !== true) {
+          return yield* new ProviderAdapterRequestError({
+            provider: PROVIDER,
+            method: "task/stop",
+            detail: `OMP has no cancellable background job '${taskId}' for thread ${threadId}.`,
+          });
+        }
+      });
+
+    const listSkills: NonNullable<OmpAdapterShape["listSkills"]> = (input) =>
+      Effect.tryPromise({
+        try: async () => {
+          const sdk = await loadSdkModule();
+          const discovered = await sdk.discoverSkills(input.cwd, trimToUndefined(input.agentDir));
+          return {
+            skills: discovered.skills.map((skill) => {
+              const description = trimToUndefined(skill.description);
+              const scope = trimToUndefined(skill._source?.level ?? skill.source);
+              return {
+                name: skill.name,
+                ...(description ? { description } : {}),
+                path: skill.filePath,
+                // OMP has no per-skill model-invocation switch; `hide` only
+                // removes it from the system prompt listing.
+                enabled: skill.hide !== true,
+                ...(scope ? { scope } : {}),
+              };
+            }),
+            source: "omp.sdk",
+            cached: false,
+          } satisfies ProviderListSkillsResult;
+        },
+        catch: (cause) =>
+          new ProviderAdapterRequestError({
+            provider: PROVIDER,
+            method: "skill/list",
+            detail: toMessage(cause, "Failed to list OMP skills."),
+            cause,
+          }),
+      });
+
+    const listCommands: NonNullable<OmpAdapterShape["listCommands"]> = (input) =>
+      Effect.tryPromise({
+        try: async () => {
+          const sdk = await loadSdkModule();
+          const active = input.threadId
+            ? sessions.get(ThreadId.makeUnsafe(input.threadId))
+            : undefined;
+          const [fileCommands, skills] = await Promise.all([
+            sdk.discoverSlashCommands({ cwd: input.cwd }),
+            sdk.discoverSkills(input.cwd, trimToUndefined(input.agentDir)),
+          ]);
+          // Extension commands only exist on a live session; discovery-only
+          // callers still get the file/skill commands.
+          const extensionCommands = active
+            ? (active.agentSession.extensionRunner?.getRegisteredCommands() ?? []).map(
+                (command) => ({
+                  name: command.name,
+                  description: trimToUndefined(command.description) ?? "Extension command",
+                }),
+              )
+            : [];
+          return {
+            commands: [
+              ...extensionCommands,
+              ...fileCommands.map((command) => ({
+                name: command.name,
+                description: trimToUndefined(command.description) ?? "Slash command",
+              })),
+              ...skills.skills.map((skill) => ({
+                name: `skill:${skill.name}`,
+                description: trimToUndefined(skill.description) ?? "Skill",
+              })),
+            ],
+            source: "omp.sdk",
+            cached: false,
+          } satisfies ProviderListCommandsResult;
+        },
+        catch: (cause) =>
+          new ProviderAdapterRequestError({
+            provider: PROVIDER,
+            method: "command/list",
+            detail: toMessage(cause, "Failed to list OMP commands."),
+            cause,
+          }),
+      });
+
+    const getComposerCapabilities: NonNullable<OmpAdapterShape["getComposerCapabilities"]> = () =>
+      Effect.succeed({
+        provider: PROVIDER,
+        supportsSkillMentions: true,
+        supportsSkillDiscovery: true,
+        supportsNativeSlashCommandDiscovery: true,
+        supportsPluginMentions: false,
+        supportsPluginDiscovery: false,
+        supportsRuntimeModelList: true,
+        supportsThreadCompaction: true,
+        supportsThreadImport: false,
+      } satisfies ProviderComposerCapabilities);
+
     const stopAll: OmpAdapterShape["stopAll"] = () =>
       Effect.forEach(Array.from(sessions.keys()), (threadId) => stopSession(threadId), {
         concurrency: "unbounded",
@@ -1520,9 +1923,9 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
       provider: PROVIDER,
       capabilities: {
         sessionModelSwitch: "in-session",
-        supportsSkillMentions: false,
-        supportsSkillDiscovery: false,
-        supportsNativeSlashCommandDiscovery: false,
+        supportsSkillMentions: true,
+        supportsSkillDiscovery: true,
+        supportsNativeSlashCommandDiscovery: true,
         supportsPluginMentions: false,
         supportsPluginDiscovery: false,
         supportsRuntimeModelList: true,
@@ -1532,15 +1935,22 @@ const makeOmpAdapter = (options?: OmpAdapterLiveOptions) =>
       sendTurn,
       steerTurn,
       interruptTurn,
+      // OMP routes every question through the UI context (native ask tool /
+      // extension dialogs), never through Synara's approval-request channel.
       respondToRequest: (threadId) => respondUnsupported(threadId, "request/respond"),
-      respondToUserInput: (threadId) => respondUnsupported(threadId, "user-input/respond"),
+      respondToUserInput,
       stopSession,
+      stopTask,
       listSessions,
       hasSession,
       readThread,
       rollbackThread,
+      compactThread,
       stopAll,
       listModels,
+      listSkills,
+      listCommands,
+      getComposerCapabilities,
       get streamEvents() {
         return Stream.fromQueue(runtimeEventQueue);
       },

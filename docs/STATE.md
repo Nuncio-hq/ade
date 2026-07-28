@@ -37,16 +37,21 @@ All Synara providers are kept working.
       `abort()` reaps bash children natively — no process supervisor needed;
       `agent_settled` gone → `agent_end.isTerminal`; async jobs inject
       self-initiated follow-up turns). Plan + tracker + coverage gộp một doc:
-      `docs/plans/omp-integration.html`. Phases 1–3 DONE 2026-07-28 on
+      `docs/plans/omp-integration.html`. Phases 1–4 DONE 2026-07-28 on
       `app/omp-adapter`: "omp" ProviderKind + contracts/settings mirrors, the
       walking skeleton (`Services/OmpAdapter.ts` + `Layers/OmpAdapter.ts`, SDK
-      pinned 17.1.6), then event mapping v1 — tool items, reasoning, token
-      usage, compaction/retry/notice status, todo → task list, `ompTurnFailure.ts`.
-      Both lifecycle risks closed: an async-result follow-up keeps the same turn
-      id (engine probe + 6 tests in `OmpAdapter.turnLifecycle.test.ts`), and a
-      turn the engine abandons is freed by a watchdog that re-arms while
-      `asyncJobManager` still reports work. Next: phase 4 (extension UI bridge,
-      gateway MCP, stopTask/compact).
+      pinned 17.1.6), event mapping v1 — tool items, reasoning, token
+      usage, compaction/retry/notice status, todo → task list, `ompTurnFailure.ts` —
+      then the bridge: `hasUI:true` + `setToolUIContext` route OMP's native `ask`
+      and extension select/confirm/input onto Synara's user-input flow
+      (`ompExtensionUiContext.ts`), `synara_*` gateway tools ride in as
+      `customTools` (`ompGatewayTools.ts`; a supplied `mcpManager` would NOT
+      register them — the engine only registers MCP tools on its own discovery
+      path), plus stopTask/compactThread/listSkills/listCommands. Both lifecycle
+      risks closed: an async-result follow-up keeps the same turn id (engine
+      probe + tests in `OmpAdapter.turnLifecycle.test.ts`), and a turn the engine
+      abandons is freed by a watchdog that re-arms while `asyncJobManager` still
+      reports work. Next: phase 5 (Electron build, resume after restart).
 
 ## In force
 

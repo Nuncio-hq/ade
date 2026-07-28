@@ -19,6 +19,7 @@ import {
   KiloIcon,
   OpenAI,
   OpenCodeIcon,
+  OmpIcon,
   PiIcon,
 } from "./Icons";
 
@@ -73,8 +74,7 @@ export const PROVIDER_ICON_COMPONENT_BY_PROVIDER: Record<ProviderKind, Icon> = {
   kilo: KiloIcon,
   opencode: OpenCodeProviderIcon,
   pi: PiIcon,
-  // OMP is a pi-lineage engine; reuse the Pi mark until it ships its own.
-  omp: PiIcon,
+  omp: OmpIcon,
 };
 
 export function providerIconToneClassName(
