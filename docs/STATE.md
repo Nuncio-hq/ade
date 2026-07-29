@@ -132,13 +132,10 @@ brand:check` in CI. See AGENTS.md §Naming & Identity.
 
 ## Known issues
 
-- 35 web tests fail on main (upstream-inherited; zustand persist vs missing
-  localStorage in test env: splitViewStore, pinned\*Store, workflowRunUiStore).
-  Not ours; recheck after next release sync. (Was 36 pre-rebrand — count drift
-  from renamed test files, same root cause.)
-- `@nuncio/cli` typecheck has 2 pre-existing upstream errors in `PiAdapter.ts`
-  (`piCompactionTitle` undefined; `PiSessionContext` missing properties) —
-  inherited from main, NOT rebrand-caused; recheck after next release sync.
+- (RESOLVED 2026-07-29, via `fe53e80f` "CI repairs") the 35 web test failures
+  and the 2 `@nuncio/cli` PiAdapter typecheck errors are gone: full `bun run
+  test` (10/10 tasks) and `bun run typecheck` (8/8) verified green locally on
+  `app/mermaid-fence-renderer` (contains main).
 - Installed NuncioADE.app lags main until rebuilt: harness extensions hot-load
   via /reload, but `apps/`/`packages/` changes need an app rebuild + reinstall.
 - NEVER swap state.sqlite while the app runs (learned: disk I/O errors, app
