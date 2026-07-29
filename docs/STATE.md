@@ -91,9 +91,13 @@ All Synara-inherited providers are kept working.
       `turn.completed` with a `command_execution` item). M4 remaining: run OMP
       as the daily driver.
 - [~] **M5 ade-proof** — proof-of-work capture plugin (approved 2026-07-29):
-  P0 TDD contract tests + edge-case catalog DONE in `packages/ade-proof/src/core`
-  and `test/core` (47 tests green, `tsconfig.core.json` clean). P1 core+CLI/backends
-  in progress. Artifact contract `.ade/proof/`, web+macOS backends first. Plan:
+  P0–P5 code SHIPPED same day on `harness/proof-capture` (`70bb5044`+`179b5257`):
+  `@nuncio/ade-proof` core+CLI (80 vitest tests, web+macos backends, webm
+  record with timecode watermark), stdio MCP (`proof_*`, handshake-verified),
+  OMP extension `ade_proof_shot` (E2E-verified under `omp` 17.1.6: agent call
+  → auto session → PNG), skill, Proof right-dock panel + `/api/proof/*` routes.
+  Remaining before merge: dogfood web panel in a dev instance, register the
+  MCP in NuncioADE external-MCP config, symlink extension install. Plan:
   `docs/plans/ade-proof.md`.
 
 ## In force
