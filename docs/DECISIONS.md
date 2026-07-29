@@ -239,3 +239,25 @@
   just churn subscribes for every idle draft. Measured: a new thread burns 8–11
   of the transport's 12 bootstrap retries before its `thread.create` projection
   lands, so this margin is thinner than it looks.
+
+- **2026-07-29 — Diagram rendering via fence-renderer contract, not provider
+  events (Synara ground, engine-generic).** OMP's system prompt actively tells
+  models to emit ` ```mermaid ` fences (`renderMermaid` defaults true; the
+  sidecar doesn't override), so ADE transcripts show raw mermaid source. The
+  wire contract for rich renderable content is the markdown fence itself —
+  every engine already speaks it, so there is no new provider event, no
+  `packages/contracts` change, and no adapter work; an engine that ever emits
+  diagrams through another channel normalizes to a fence in its own adapter.
+  Web side: a fence-renderer registry (`apps/web/src/lib/fenceRenderers.ts`)
+  maps fence language → renderer, hooked at the single `pre` override in
+  `ChatMarkdown` (covers timeline, plans, PR views, file preview for free).
+  Mermaid is the first renderer: lazy-loaded (~2MB, never static), rendered
+  with `securityLevel: "strict"` (model output stays inert; never "loose"),
+  SVG memoized per (source, theme) with failures cached too, diagram-by-default
+  with a source toggle and an expand dialog, silent fallback to the plain code
+  block on invalid source, and streaming messages stay on the plain code path
+  until settled. Rejected: server/sidecar-side rendering (wrong layer, needs
+  headless rendering, theme is client state) and extension-UI widgets (OMP-only,
+  diagrams are static content, not interactive UI). `mermaid` is pinned exact
+  (11.16.0) like `@oh-my-pi/*` — OMP's own ASCII renderer is a hand-written
+  parser in `@oh-my-pi/pi-utils`, so there is no engine version to align with.

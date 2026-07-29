@@ -123,6 +123,9 @@ export default defineConfig({
       "@pierre/diffs",
       "@pierre/diffs/react",
       "@pierre/diffs/worker/worker.js",
+      // Lazy-imported on the first ```mermaid fence; prebundle so that first
+      // diagram doesn't trigger a mid-session optimizer reload.
+      "mermaid",
       "react-icons/gr",
     ],
   },

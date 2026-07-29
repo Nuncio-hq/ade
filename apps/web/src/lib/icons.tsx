@@ -25,6 +25,7 @@ import {
   IconChevronRight,
   IconChevronUp,
   IconCircleCheck,
+  IconCode,
   IconColumns2,
   IconDots,
   IconDownload,
@@ -125,6 +126,7 @@ export const ChevronDownIcon = adaptIcon(IconChevronDown);
 export const ChevronLeftIcon = adaptIcon(IconChevronLeft);
 export const ChevronRightIcon = adaptIcon(IconChevronRight);
 export const ChevronUpIcon = adaptIcon(IconChevronUp);
+export const CodeIcon = adaptIcon(IconCode);
 export const ChevronsUpDownIcon = adaptIcon(IconSelector);
 export const CircleAlertIcon = adaptIcon(IconAlertCircle);
 export const CircleCheckIcon = adaptIcon(IconCircleCheck);

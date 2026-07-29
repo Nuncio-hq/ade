@@ -119,6 +119,10 @@ brand:check` in CI. See AGENTS.md §Naming & Identity.
 - Engine watch: OMP releases fast (17.1.6 pinned, 17.1.7 already out on
   2026-07-28); pin exact `@oh-my-pi/*` versions and bump deliberately. Old pi
   skew (CLI 0.82.x vs ^0.81.1) is moot — pi frozen.
+- Rich fence content (mermaid today): the markdown fence IS the cross-engine
+  contract; render via the web fence-renderer registry
+  (`apps/web/src/lib/fenceRenderers.ts`), never via provider events. New
+  renderable languages = new registry entry. See DECISIONS 2026-07-29.
 
 ## Deprecated / do not revive
 

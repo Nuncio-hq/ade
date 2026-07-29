@@ -1166,6 +1166,30 @@ label:has(> select#reasoning-effort) select {
   word-break: break-word;
 }
 
+/* Mermaid fence diagrams. Base rules are unscoped: the expand-dialog copy renders
+   in a portal outside .chat-markdown. SVGs ship width:100% + max-width from
+   mermaid's useMaxWidth, so they scale down to the column and never overflow
+   horizontally; height is capped inline (scrolls) and uncapped in the dialog. */
+.chat-markdown-mermaid {
+  display: flex;
+  justify-content: center;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+.chat-markdown-mermaid svg {
+  height: auto;
+  max-width: 100%;
+}
+
+.chat-markdown .chat-markdown-mermaid {
+  max-height: min(60vh, 26rem);
+}
+
+.chat-markdown-mermaid--expanded {
+  padding: 0.5rem 1rem 1rem;
+}
+
 .chat-markdown .chat-markdown-shiki .shiki {
   background: transparent !important;
   font-family: var(--font-chat-code-family) !important;
