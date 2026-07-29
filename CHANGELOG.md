@@ -52,6 +52,10 @@ release supersedes it and covers everything since the fork's rebrand.
   the thread lease.
 - Fixed the two inherited `PiAdapter` typecheck errors and the inherited web
   store test failures that blocked the v0.0.1 release preflight.
+- Fixed the signed macOS build failing on the packaged OMP sidecar: Bun 1.3.12
+  emits compiled binaries with a corrupt `LC_CODE_SIGNATURE` that `codesign`
+  refuses to replace (oven-sh/bun #29361); the pinned Bun toolchain moved to
+  1.3.14, whose compiled binaries sign and notarize cleanly.
 
 ### Verification
 
