@@ -8,6 +8,7 @@ export const RELEASE_WORKSPACE_MANIFEST_PATHS = [
   "apps/desktop/package.json",
   "apps/web/package.json",
   "apps/marketing/package.json",
+  "packages/ade-proof/package.json",
   "packages/contracts/package.json",
   "packages/omp-sidecar/package.json",
   "packages/shared/package.json",
