@@ -41,4 +41,24 @@ describe("scanErrors", () => {
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0]?.line).toBe("Error: connection refused");
   });
+
+  it("detects browser console failed-resource lines (any HTTP status wording)", () => {
+    const errors = scanErrors(
+      [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      ],
+      "console",
+    );
+    expect(errors.length).toBe(1);
+    expect(errors[0]?.pattern).toBe("console-failed-resource");
+    expect(errors[0]?.source).toBe("console");
+  });
+
+  it("detects uncaught browser errors and rejections", () => {
+    const errors = scanErrors(
+      ["Uncaught TypeError: x is not a function", "Uncaught (in promise) boom"],
+      "console",
+    );
+    expect(errors.map((e) => e.pattern)).toEqual(["console-uncaught", "console-uncaught"]);
+  });
 });

@@ -44,8 +44,14 @@ export async function resolveAndProofDir(
   return ok({ workspaceRoot: root.value, proofDir: proofDir(root.value) });
 }
 
+/**
+ * `pid` is OPTIONAL ownership: present only when a long-lived owner process
+ * exists (the --run dev server). An ownerless lock means "active until an
+ * explicit stop" — short-lived CLI invocations must never become the owner,
+ * or every session would be born abandoned the moment `start` exits.
+ */
 export interface SessionLock {
-  readonly pid: number;
+  readonly pid?: number;
   readonly startedAt: string;
 }
 
@@ -55,8 +61,9 @@ export async function readSessionLock(dir: string): Promise<SessionLock | undefi
   try {
     const raw = await readFile(p, "utf-8");
     const parsed = JSON.parse(raw) as SessionLock;
-    if (typeof parsed.pid === "number" && typeof parsed.startedAt === "string") return parsed;
-    return undefined;
+    if (typeof parsed.startedAt !== "string") return undefined;
+    if (parsed.pid !== undefined && typeof parsed.pid !== "number") return undefined;
+    return parsed;
   } catch {
     return undefined;
   }
@@ -102,7 +109,7 @@ export async function loadSessionRef(root: string, id: string): Promise<SessionR
   if (manifest?.finishedAt) {
     state = "stopped";
   } else if (lock) {
-    state = isProcessAlive(lock.pid) ? "active" : "abandoned";
+    state = lock.pid === undefined || isProcessAlive(lock.pid) ? "active" : "abandoned";
   } else {
     state = "abandoned";
   }

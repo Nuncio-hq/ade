@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { ExecResult, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
+import { resolveAdeProofCliPath } from "./resolve-cli.js";
 
 export interface ShotResult {
   /** Workspace-relative path to the captured PNG. */
@@ -58,21 +59,36 @@ export async function runAdeProofShot(opts: RunShotOptions): Promise<ShotResult>
   if (opts.fullPage) args.push("--full-page");
   if (opts.windowTitle) args.push("--window", opts.windowTitle);
 
-  const result = await opts.exec("bun", args, { cwd: opts.cwd, timeout: 120_000 });
-  if (result.code !== 0) {
-    throw new Error(
-      `ade-proof shot failed (exit ${result.code}): ${result.stderr || result.stdout}`,
+  let result = await opts.exec("bun", args, { cwd: opts.cwd, timeout: 120_000 });
+  let parsed = parseShotOutput(result);
+
+  // The CLI never implicitly starts a session (frozen contract). The
+  // one-call agent UX lives here instead: start an explicit session named
+  // after the label, then retry the shot exactly once.
+  if (!parsed.ok && parsed.error.code === "no-active-session") {
+    const started = await opts.exec(
+      "bun",
+      [cli, "start", "--slug", "agent", "--desc", `auto-started for: ${opts.label}`, "--json"],
+      { cwd: opts.cwd, timeout: 30_000 },
     );
+    const startParsed = parseCliJson<unknown>(started.stdout);
+    if (!startParsed.ok) throw new Error(startParsed.error.message);
+    result = await opts.exec("bun", args, { cwd: opts.cwd, timeout: 120_000 });
+    parsed = parseShotOutput(result);
   }
 
-  const parsed = parseCliJson<{ file: string; [k: string]: unknown }>(result.stdout);
-  if (!parsed.ok) {
-    throw new Error(parsed.error.message);
-  }
+  if (!parsed.ok) throw new Error(parsed.error.message);
 
   const relPath = parsed.value.file;
   const absPath = resolve(opts.cwd, relPath);
   return { relPath, absPath, label: opts.label };
+}
+
+function parseShotOutput(result: ExecResult): ProofJson<{ file: string }> {
+  if (result.code !== 0 && !result.stdout.trim()) {
+    throw new Error(`ade-proof shot failed (exit ${result.code}): ${result.stderr}`);
+  }
+  return parseCliJson<{ file: string }>(result.stdout);
 }
 
 export async function readImageBase64(absPath: string): Promise<string> {

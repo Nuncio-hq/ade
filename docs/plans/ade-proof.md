@@ -133,7 +133,10 @@ daily-driver baseline.
 - `shot`/`stop` with no active session → typed error with hint, never implicit
   start.
 - `start` over a live session → error; `--force` reclaims only when the lock's
-  pid is dead (crash recovery). Lock = `.ade/proof/.lock` with pid + session id.
+  recorded owner pid is dead (crash recovery). Lock = per-session
+  `<dir>/session.lock`; the owner pid is OPTIONAL — recorded only for `--run`
+  dev servers. Ownerless sessions (extension/MCP one-call flow) stay active
+  until an explicit `stop`; short-lived CLI pids are never owners.
 - Double `stop` → idempotent no-op with warning, manifest not rewritten.
 - **Concurrent sessions in one workspace** (NuncioADE runs parallel agent
   threads): sessions are keyed by id, `proof_shot {session?}` defaults to the

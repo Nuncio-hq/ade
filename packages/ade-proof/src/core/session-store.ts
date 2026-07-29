@@ -54,7 +54,9 @@ export async function startSession(opts: {
   if (!write.ok) {
     return { ok: false, error: write.error };
   }
-  const lock: SessionLock = { pid: process.pid, startedAt };
+  // Ownerless: the CLI process is short-lived. `updateLockPid` installs the
+  // dev-server pid as owner when --run is used.
+  const lock: SessionLock = { startedAt };
   const lockWrite = await writeSessionLock(dir, lock);
   if (!lockWrite.ok) {
     return { ok: false, error: lockWrite.error };

@@ -172,6 +172,19 @@ describe("session store lifecycle", () => {
     expect(err.details?.abandoned).toContain(second.id);
   });
 
+  it("keeps an ownerless session active after the starting process exits (extension one-call flow)", async () => {
+    const session = unwrap(await startSession({ workspaceRoot: root, slug: "ownerless" }));
+    // startSession must NOT record the transient CLI pid as owner…
+    const lock = JSON.parse(readFileSync(join(session.dir, "session.lock"), "utf-8"));
+    expect(lock.pid).toBeUndefined();
+    // …so the session stays findable/active from a fresh process, indefinitely.
+    const found = unwrap(await findSession(root));
+    expect(found.id).toBe(session.id);
+    expect(found.state).toBe("active");
+    // Only a DEAD recorded owner (dev-server pid) means abandoned.
+    unwrap(await stopSession(session));
+  });
+
   it("adds a monotonic suffix when two sessions share a slug in the same second", async () => {
     const first = unwrap(await startSession({ workspaceRoot: root, slug: "same" }));
     const second = unwrap(await startSession({ workspaceRoot: root, slug: "same" }));

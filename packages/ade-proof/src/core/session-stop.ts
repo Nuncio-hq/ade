@@ -32,7 +32,7 @@ export async function stopSession(
       state: manifest.finishedAt ? "stopped" : "abandoned",
     });
   }
-  if (!isProcessAlive(lock.pid)) {
+  if (lock.pid !== undefined && !isProcessAlive(lock.pid)) {
     return err(
       "no-active-session",
       `Session ${session.id} was abandoned (lock pid ${lock.pid} is not alive).`,

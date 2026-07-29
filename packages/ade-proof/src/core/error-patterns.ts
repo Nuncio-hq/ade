@@ -6,6 +6,8 @@ import type { ProofLogError } from "./types.js";
 export interface ErrorPattern {
   readonly id: string;
   readonly re: RegExp;
+  /** Stack-frame/continuation lines: collapsed into the preceding error. */
+  readonly continuation?: true;
 }
 
 // Pattern identifiers double as the `pattern` field on ProofLogError.
@@ -14,38 +16,41 @@ export const ERROR_PATTERNS: readonly ErrorPattern[] = [
   { id: "js-error", re: /\bError:/ },
   { id: "js-errcode", re: /\bERR[_!]/ },
   { id: "js-syscall", re: /\bEACCES\b|\bENOENT\b|\bEADDRINUSE\b/ },
-  { id: "js-stack", re: /\bat\s+.+\(.+:\d+:\d+\)/ },
+  { id: "js-stack", re: /\bat\s+.+\(.+:\d+:\d+\)/, continuation: true },
   { id: "js-unhandled", re: /Unhandled.+rejection/i },
+  // Browser console (fed from web-capture consoleLines)
+  { id: "console-failed-resource", re: /Failed to load resource/ },
+  { id: "console-uncaught", re: /Uncaught (?:\(in promise\)|\w*Error\b)/ },
   // Python
   { id: "py-traceback", re: /Traceback \(most recent call last\)/ },
-  { id: "py-stack", re: /^\s*File ".+", line \d+/ },
+  { id: "py-stack", re: /^\s*File ".+", line \d+/, continuation: true },
   { id: "py-error", re: /\w+Error:/ },
   { id: "py-exception", re: /\w+Exception:/ },
   // Ruby / Rails
   { id: "rb-error", re: /\w+Error \(.+\)/ },
-  { id: "rb-stack", re: /from .+:\d+:in `.+'/ },
+  { id: "rb-stack", re: /from .+:\d+:in `.+'/, continuation: true },
   { id: "rb-fatal", re: /FATAL --/ },
   { id: "rb-errno", re: /Errno::\w+/ },
   // Go
   { id: "go-panic", re: /^panic:/ },
-  { id: "go-goroutine", re: /^goroutine \d+/ },
+  { id: "go-goroutine", re: /^goroutine \d+/, continuation: true },
   { id: "go-runtime", re: /runtime error:/ },
   // Java / Kotlin
   { id: "java-exception", re: /Exception in thread/ },
   { id: "java-error", re: /\w+Exception:/ },
-  { id: "java-stack", re: /\bat\s+[\w.$]+\(.+:\d+\)/ },
-  { id: "java-caused", re: /Caused by:/ },
+  { id: "java-stack", re: /\bat\s+[\w.$]+\(.+:\d+\)/, continuation: true },
+  { id: "java-caused", re: /Caused by:/, continuation: true },
   // Rust
   { id: "rust-panic", re: /thread '.+' panicked at/ },
   { id: "rust-compile", re: /error\[E\d+\]/ },
   // PHP
   { id: "php-error", re: /PHP\s+(Fatal|Parse|Warning)\s+error:/i },
-  { id: "php-stack", re: /Stack trace:/ },
-  { id: "php-thrown", re: /thrown in .+ on line \d+/ },
+  { id: "php-stack", re: /Stack trace:/, continuation: true },
+  { id: "php-thrown", re: /thrown in .+ on line \d+/, continuation: true },
   // C# / .NET
   { id: "cs-unhandled", re: /Unhandled exception/ },
   { id: "cs-error", re: /\w+Exception:/ },
-  { id: "cs-stack", re: /at .+ in .+:line \d+/ },
+  { id: "cs-stack", re: /at .+ in .+:line \d+/, continuation: true },
   // Elixir / Phoenix
   { id: "ex-exit", re: /\*\* \(\w+\)/ },
   { id: "ex-raised", re: /\(exit\) an exception was raised/ },
@@ -88,16 +93,19 @@ export function scanErrors(
       prevMatched = false;
       continue;
     }
-    if (prevMatched) continue; // collapse contiguous stack/multi-line into one error
-    out.push({ source, pattern: matched, line });
+    // Continuation lines (stack frames, `Caused by:` …) belong to the error
+    // above them; a fresh head-line match right after another error is a NEW
+    // error, never a continuation.
+    if (prevMatched && matched.continuation) continue;
+    out.push({ source, pattern: matched.id, line });
     prevMatched = true;
   }
   return out;
 }
 
-function matchPattern(line: string): string | undefined {
+function matchPattern(line: string): ErrorPattern | undefined {
   for (const p of ERROR_PATTERNS) {
-    if (p.re.test(line)) return p.id;
+    if (p.re.test(line)) return p;
   }
   return undefined;
 }
