@@ -174,6 +174,58 @@ describe("resolveAllowedLocalPreviewFile", () => {
     assert.equal(result?.path, realpathSync(imagePath));
   });
 
+  it("allows ade-proof artifacts of a foreign git repo (outside cwd workspace and temp roots)", async () => {
+    // Home-based dir: NOT under the temp roots, so only the .ade/proof branch can allow it.
+    const repo = mkdtempSync(path.join(os.homedir(), ".nuncioade-test-proof-"));
+    tempDirs.push(repo);
+    writeFileSync(path.join(repo, ".git"), "gitdir: elsewhere");
+    const proofDir = path.join(repo, ".ade", "proof", "20260729-000000-x");
+    mkdirSync(proofDir, { recursive: true });
+    const imagePath = path.join(proofDir, "step-01.png");
+    writeFileSync(imagePath, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+    const foreignWorkspace = makeTempDir("nuncioade-foreign-ws-");
+
+    const result = await resolveAllowedLocalPreviewFile({
+      requestedPath: imagePath,
+      cwd: foreignWorkspace,
+    });
+
+    assert.equal(result?.path, realpathSync(imagePath));
+  });
+
+  it("does not let the ade-proof branch serve repo files outside .ade/proof", async () => {
+    const repo = mkdtempSync(path.join(os.homedir(), ".nuncioade-test-proof-"));
+    tempDirs.push(repo);
+    writeFileSync(path.join(repo, ".git"), "gitdir: elsewhere");
+    const imagePath = path.join(repo, "docs.png");
+    writeFileSync(imagePath, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+
+    const result = await resolveAllowedLocalPreviewFile({
+      requestedPath: imagePath,
+      cwd: makeTempDir("nuncioade-foreign-ws-"),
+    });
+
+    assert.equal(result, null);
+  });
+
+  it("requires the .git marker exactly at the .ade/proof parent", async () => {
+    const outer = mkdtempSync(path.join(os.homedir(), ".nuncioade-test-proof-"));
+    tempDirs.push(outer);
+    writeFileSync(path.join(outer, ".git"), "gitdir: elsewhere");
+    // .ade/proof nested one level BELOW the git root's child dir with no .git of its own
+    const proofDir = path.join(outer, "sub", ".ade", "proof");
+    mkdirSync(proofDir, { recursive: true });
+    const imagePath = path.join(proofDir, "step-01.png");
+    writeFileSync(imagePath, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+
+    const result = await resolveAllowedLocalPreviewFile({
+      requestedPath: imagePath,
+      cwd: makeTempDir("nuncioade-foreign-ws-"),
+    });
+
+    assert.equal(result, null);
+  });
+
   it("rejects unsupported paths", async () => {
     const result = await resolveAllowedLocalPreviewFile({
       requestedPath: "/etc/hosts",

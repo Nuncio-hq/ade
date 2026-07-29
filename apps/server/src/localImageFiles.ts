@@ -192,10 +192,28 @@ export async function resolveAllowedLocalPreviewFile(input: {
   const generatedImagesRoots = await Promise.all(
     resolveCodexGeneratedImagesRoots(input.codexHomePath).map(realpathOrNull),
   ).then((roots) => roots.filter((root): root is string => root !== null));
-  const allowed =
+  if (
     generatedImagesRoots.some((root) => isPathInside(realFilePath, root)) ||
-    tempRoots.some((root) => isPathInside(realFilePath, root));
-  return allowed ? resolved : null;
+    tempRoots.some((root) => isPathInside(realFilePath, root))
+  ) {
+    return resolved;
+  }
+
+  // ade-proof artifacts (`<git-root>/.ade/proof/**`) are renderable from ANY
+  // thread: proof images are meant to be reviewed across workspaces (e.g. a
+  // thread inspecting another repo's capture). Image-only (checked above),
+  // and the path must really sit inside `.ade/proof` of a git repository —
+  // never a lookalike segment elsewhere.
+  const proofMarker = `${path.sep}.ade${path.sep}proof${path.sep}`;
+  const markerIndex = realFilePath.indexOf(proofMarker);
+  if (markerIndex > 0) {
+    const candidateRoot = realFilePath.slice(0, markerIndex);
+    const gitRoot = await findGitRoot(candidateRoot);
+    if (gitRoot !== null && (await realpathOrNull(gitRoot)) === candidateRoot) {
+      return resolved;
+    }
+  }
+  return null;
 }
 
 export async function createLocalPreviewGrant(input: {
