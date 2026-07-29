@@ -3,7 +3,6 @@
 // Layer: Web chat presentation component
 // Exports: ChatMarkdown
 
-import { CheckIcon, CopyIcon, TextWrapIcon } from "~/lib/icons";
 import type { ProviderMentionReference, ThreadMarker } from "@nuncio/contracts";
 import "katex/dist/katex.min.css";
 import React, {
@@ -27,11 +26,11 @@ import rehypeKatex from "rehype-katex";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
-import { copyTextToClipboard } from "../hooks/useCopyToClipboard";
 import { resolveDiffThemeName, type DiffThemeName } from "../lib/diffRendering";
-import { dedentCode, parseCodeFenceInfo, type CodeFenceInfo } from "../lib/codeFence";
-import { getFileIconName, pathLooksLikeKnownFile } from "../file-icons";
-import { CentralIcon } from "~/lib/central-icons";
+import { dedentCode, parseCodeFenceInfo } from "../lib/codeFence";
+import { getFenceRenderer } from "../lib/fenceRenderers";
+import { pathLooksLikeKnownFile } from "../file-icons";
+import { MarkdownCodeBlock } from "./MarkdownCodeBlock";
 import { isLocalImageMarkdownSrc } from "../lib/localImageUrls";
 import { useTheme } from "../hooks/useTheme";
 import { useSmoothStreamedText } from "../hooks/useSmoothStreamedText";
@@ -59,7 +58,6 @@ import {
   createComposerChipsRemarkPlugin,
   parseComposerChipSegment,
 } from "../lib/remarkComposerChips";
-import { IconButton } from "./ui/icon-button";
 
 const EXTERNAL_HTTP_HREF_PATTERN = /^https?:\/\//i;
 // Trailing `:line` / `:line:col` position suffix on a resolved file link. Kept on
@@ -818,100 +816,6 @@ function ComposerChipElement(props: {
   return <InlineLinkChip url={segment.url} interactive />;
 }
 
-function CodeBlockHeaderTitle({ fence }: { fence: CodeFenceInfo }) {
-  if (fence.isFileReference && fence.fileName) {
-    return (
-      <span className="chat-markdown-codeblock__file" title={fence.filePath ?? fence.fileName}>
-        <CentralIcon
-          name={getFileIconName(fence.filePath ?? fence.fileName)}
-          className="chat-markdown-codeblock__file-icon"
-        />
-        <span className="chat-markdown-codeblock__file-name">{fence.fileName}</span>
-        {fence.directory ? (
-          <span className="chat-markdown-codeblock__file-dir">{fence.directory}</span>
-        ) : null}
-        {fence.lineRange ? (
-          <span className="chat-markdown-codeblock__file-lines">{fence.lineRange}</span>
-        ) : null}
-      </span>
-    );
-  }
-
-  return <span className="chat-markdown-codeblock__lang">{fence.language}</span>;
-}
-
-function MarkdownCodeBlock({
-  code,
-  fence,
-  children,
-}: {
-  code: string;
-  fence: CodeFenceInfo;
-  children: ReactNode;
-}) {
-  const [copied, setCopied] = useState(false);
-  const [wrap, setWrap] = useState(false);
-  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleCopy = () => {
-    void copyTextToClipboard(code)
-      .then(() => {
-        if (copiedTimerRef.current != null) {
-          clearTimeout(copiedTimerRef.current);
-        }
-        setCopied(true);
-        copiedTimerRef.current = setTimeout(() => {
-          setCopied(false);
-          copiedTimerRef.current = null;
-        }, 1200);
-      })
-      .catch(() => undefined);
-  };
-  const toggleWrap = () => setWrap((previous) => !previous);
-
-  useEffect(
-    () => () => {
-      if (copiedTimerRef.current != null) {
-        clearTimeout(copiedTimerRef.current);
-        copiedTimerRef.current = null;
-      }
-    },
-    [],
-  );
-
-  return (
-    <div className="chat-markdown-codeblock" data-wrap={wrap ? "true" : "false"}>
-      <div className="chat-markdown-codeblock__header">
-        <CodeBlockHeaderTitle fence={fence} />
-        <div className="chat-markdown-codeblock__actions">
-          <IconButton
-            className="chat-markdown-codeblock__action"
-            onClick={toggleWrap}
-            title={wrap ? "Disable soft wrap" : "Enable soft wrap"}
-            label={wrap ? "Disable soft wrap" : "Enable soft wrap"}
-            aria-pressed={wrap}
-            data-active={wrap ? "true" : "false"}
-            size="icon-xs"
-            variant="ghost"
-          >
-            <TextWrapIcon className="size-3" />
-          </IconButton>
-          <IconButton
-            className="chat-markdown-codeblock__action"
-            onClick={handleCopy}
-            title={copied ? "Copied" : "Copy code"}
-            label={copied ? "Copied" : "Copy code"}
-            size="icon-xs"
-            variant="ghost"
-          >
-            {copied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
-          </IconButton>
-        </div>
-      </div>
-      <div className="chat-markdown-codeblock__body">{children}</div>
-    </div>
-  );
-}
-
 interface SuspenseShikiCodeBlockProps {
   language: string;
   code: string;
@@ -1136,19 +1040,32 @@ function ChatMarkdown({
 
         const fence = parseCodeFenceInfo(extractRawFenceInfo(codeBlock.className));
         const code = dedentCode(codeBlock.code);
+        const highlightedSource = (
+          <CodeHighlightErrorBoundary fallback={<pre {...props}>{children}</pre>}>
+            <Suspense fallback={<pre {...props}>{children}</pre>}>
+              <SuspenseShikiCodeBlock
+                language={fence.language}
+                code={code}
+                themeName={diffThemeName}
+                isStreaming={isStreaming}
+              />
+            </Suspense>
+          </CodeHighlightErrorBoundary>
+        );
+
+        // Rich fence renderers (mermaid, …) engage only once the message has
+        // settled: parsing half-streamed diagram source fails on every delta.
+        const fenceRenderer = isStreaming ? null : getFenceRenderer(fence.language);
+        if (fenceRenderer) {
+          const RichFence = fenceRenderer.Component;
+          return (
+            <RichFence code={code} fence={fence} theme={resolvedTheme} source={highlightedSource} />
+          );
+        }
 
         return (
           <MarkdownCodeBlock code={code} fence={fence}>
-            <CodeHighlightErrorBoundary fallback={<pre {...props}>{children}</pre>}>
-              <Suspense fallback={<pre {...props}>{children}</pre>}>
-                <SuspenseShikiCodeBlock
-                  language={fence.language}
-                  code={code}
-                  themeName={diffThemeName}
-                  isStreaming={isStreaming}
-                />
-              </Suspense>
-            </CodeHighlightErrorBoundary>
+            {highlightedSource}
           </MarkdownCodeBlock>
         );
       },

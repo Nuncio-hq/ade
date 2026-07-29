@@ -325,3 +325,27 @@ describe("ChatMarkdown user variant", () => {
     expect(markup).toContain("const value = 1;");
   });
 });
+describe("ChatMarkdown mermaid fences", () => {
+  const mermaidText = ["```mermaid", "flowchart LR", "  a --> b", "```"].join("\n");
+
+  it("routes settled mermaid fences to the diagram renderer", async () => {
+    const markup = await renderMarkdown(mermaidText);
+
+    // SSR renders the pre-diagram state: code block chrome plus the
+    // diagram/source toggle contributed by MermaidFenceBlock.
+    expect(markup).toContain("chat-markdown-codeblock");
+    expect(markup).toContain('aria-label="Show source"');
+    expect(markup).toContain("flowchart LR");
+  });
+
+  it("keeps streaming mermaid fences on the plain code path", async () => {
+    const { default: ChatMarkdown } = await import("./ChatMarkdown");
+
+    const markup = renderToStaticMarkup(
+      <ChatMarkdown text={mermaidText} cwd={undefined} isStreaming={true} />,
+    );
+
+    expect(markup).toContain("chat-markdown-codeblock");
+    expect(markup).not.toContain('aria-label="Show source"');
+  });
+});
