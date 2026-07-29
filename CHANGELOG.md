@@ -1,5 +1,66 @@
 # Changelog
 
+## 0.0.2 - 2026-07-29
+
+First published NuncioADE release. NuncioADE is a fork of Synara (upstream base
+v0.6.3, tracked in `UPSTREAM-BASE`); the ADE version line is independent of
+Synara's. v0.0.1 was tagged but its release pipeline never went green, so this
+release supersedes it and covers everything since the fork's rebrand.
+
+### Added
+
+- Added the OMP engine (`@oh-my-pi/pi-coding-agent`, pinned 17.1.6) as a
+  first-class provider: a new `OmpAdapter` drives the SDK inside a compiled Bun
+  sidecar we own (`@nuncio/omp-sidecar`, NDJSON over stdio), because the SDK is
+  Bun-only while the packaged backend is Node. Models come from OMP's registry;
+  native `ask` and extension select/confirm/input dialogs ride the existing
+  user-input flow; `synara_*` gateway tools are registered as engine custom
+  tools; stop, compaction, skills, and command listing are wired; a watchdog
+  frees turns the engine abandons.
+- Added mermaid diagram rendering: ` ```mermaid ` fenced blocks in chat,
+  plans, and PR views render as SVG (strict security level, lazy-loaded
+  renderer, results cached per source and theme) with diagram-by-default,
+  a source toggle, an expand dialog, and silent fallback to the plain code
+  block for invalid diagram source. Backed by a fence-renderer registry so
+  future renderable fence languages are a single registry entry.
+- Added the `nuncioade` CLI (with `ade` alias) and an OMP entry in Settings →
+  Installed CLIs.
+- Added a CI-enforced brand identity guard (`bun run brand:check`) that keeps
+  retired upstream identity tokens out of the tree outside attribution,
+  immutable history, and explicitly marked compat shims.
+
+### Changed
+
+- Rebranded the whole tree Synara → NuncioADE via a deterministic codemod:
+  `@nuncio/*` packages, `NUNCIO_*` environment variables, `com.nuncio.ade`
+  bundle id, `ade_`/`/ade-*` harness prefixes. Pre-rebrand user data keeps
+  working through compat shims: browser storage-key migration, managed
+  codex-config marker normalization, and legacy external-MCP credential
+  prefixes with a frozen hash salt.
+- Advanced the upstream base to Synara v0.6.3 through the
+  `sync/rebranded-upstream` shadow flow (see the 0.6.2/0.6.3 sections below
+  for what those upstream releases contain).
+- Reworked the release pipeline mac-only (arm64 + x64) with signed and
+  notarized artifacts and the `nuncioade` updater channel feeding
+  electron-updater from GitHub releases.
+
+### Fixed
+
+- Fixed a thread whose per-thread event stream died with all transport retries
+  spent freezing on stale state (an in-flight turn spinning "Thinking" forever):
+  the client now resubscribes with a widening backoff for as long as it holds
+  the thread lease.
+- Fixed the two inherited `PiAdapter` typecheck errors and the inherited web
+  store test failures that blocked the v0.0.1 release preflight.
+
+### Verification
+
+- Full release-preflight equivalent green locally on the release source:
+  `bun run brand:check`, `bun run fmt:check`, `bun run lint` (0 errors),
+  `bun run typecheck` (8/8 packages), `bun run test` (10/10 tasks),
+  `test:browser:stable` (39/39 files, includes real-Chromium mermaid render
+  tests), `bun run build:desktop` plus preload bundle verification.
+
 ## 0.6.3 - 2026-07-27
 
 ### Added

@@ -14,7 +14,7 @@
     },
     "apps/desktop": {
       "name": "@nuncio/desktop",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "effect": "catalog:",
         "electron": "40.10.6",
@@ -43,7 +43,7 @@
     },
     "apps/server": {
       "name": "@nuncio/cli",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "bin": {
         "ade": "dist/index.mjs",
         "nuncioade": "dist/index.mjs",
@@ -85,7 +85,7 @@
     },
     "apps/web": {
       "name": "@nuncio/web",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@base-ui/react": "^1.5.0",
         "@dnd-kit/core": "^6.3.1",
@@ -155,7 +155,7 @@
     },
     "packages/contracts": {
       "name": "@nuncio/contracts",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "effect": "catalog:",
       },
