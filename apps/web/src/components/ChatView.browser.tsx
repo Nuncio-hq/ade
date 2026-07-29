@@ -245,6 +245,9 @@ function createSnapshotForTargetUser(options: {
   targetText: string;
   targetAttachmentCount?: number;
   sessionStatus?: OrchestrationSessionStatus;
+  // A queueable running session needs a live turn: since 35ccf57b the composer
+  // only queues follow-ups when `session.activeTurnId` names a turn to finish.
+  activeTurnId?: TurnId;
 }): OrchestrationReadModel {
   const messages: Array<OrchestrationReadModel["threads"][number]["messages"][number]> = [];
 
@@ -313,7 +316,16 @@ function createSnapshotForTargetUser(options: {
         envMode: "local",
         branch: "main",
         worktreePath: null,
-        latestTurn: null,
+        latestTurn: options.activeTurnId
+          ? {
+              turnId: options.activeTurnId,
+              state: "running",
+              requestedAt: isoAt(1_000),
+              startedAt: isoAt(1_001),
+              completedAt: null,
+              assistantMessageId: null,
+            }
+          : null,
         createdAt: NOW_ISO,
         updatedAt: NOW_ISO,
         deletedAt: null,
@@ -327,7 +339,7 @@ function createSnapshotForTargetUser(options: {
           status: options.sessionStatus ?? "ready",
           providerName: "codex",
           runtimeMode: "full-access",
-          activeTurnId: null,
+          activeTurnId: options.activeTurnId ?? null,
           lastError: null,
           updatedAt: NOW_ISO,
         },
@@ -3384,6 +3396,7 @@ describe("ChatView timeline estimator parity (full app)", () => {
         targetMessageId: "msg-user-running-queue-button" as MessageId,
         targetText: "running queue button target",
         sessionStatus: "running",
+        activeTurnId: TurnId.makeUnsafe("turn-running-queue-button"),
       }),
     });
 
@@ -3476,6 +3489,7 @@ describe("ChatView timeline estimator parity (full app)", () => {
           targetMessageId: "msg-user-running-queue-switch" as MessageId,
           targetText: "running queue switch target",
           sessionStatus: "running",
+          activeTurnId: TurnId.makeUnsafe("turn-running-queue-switch"),
         }),
         OTHER_THREAD_ID,
       ),
@@ -3543,6 +3557,7 @@ describe("ChatView timeline estimator parity (full app)", () => {
         targetMessageId: "msg-user-running-edit-queue" as MessageId,
         targetText: "running edit queue target",
         sessionStatus: "running",
+        activeTurnId: TurnId.makeUnsafe("turn-running-edit-queue"),
       }),
     });
 
@@ -5979,9 +5994,16 @@ describe("ChatView timeline estimator parity (full app)", () => {
         { timeout: 8_000, interval: 16 },
       );
 
-      useStore
-        .getState()
-        .syncServerReadModel(createSnapshotWithInlineToolOverflow({ active: false }));
+      // Advance the sequence AND retarget the ws fixture: a late shell/thread
+      // resubscription (stream-retry leftovers from earlier tests) re-serves
+      // `fixture.snapshot`, and an equal-sequence active snapshot would stomp
+      // this settled sync because staleness is strict less-than.
+      const settledSnapshot = {
+        ...createSnapshotWithInlineToolOverflow({ active: false }),
+        snapshotSequence: fixture.snapshot.snapshotSequence + 1,
+      };
+      fixture = { ...fixture, snapshot: settledSnapshot };
+      useStore.getState().syncServerReadModel(settledSnapshot);
 
       // The first settled paint keeps the live layout: no "Worked for" fold yet.
       expect(document.querySelector("[data-settled-turn-collapse-transition='true']")).toBeNull();
