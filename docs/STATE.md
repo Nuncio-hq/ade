@@ -27,11 +27,14 @@ All Synara-inherited providers are kept working.
 - [~] **M2 Bridge gaps** — first bridge extension landed: `extension/ui/askUserQuestion`
   in PiAdapter + `allowNotes`/`allowCustomAnswer` on UserInputQuestion + notes UI.
 - [~] **M3 Daily driver** — NuncioADE.app branded, built, installed; DB migrated
-  from the old Synara install; user works in NuncioADE. **v0.0.2 released
-  2026-07-29**: first published GitHub release — signed + notarized mac
-  arm64/x64 dmg+zip, updater feed manifests (`latest-mac.yml`,
-  `nuncioade-mac.yml`) live on the release. Remaining: verify in-app
-  auto-update end to end when the next version ships.
+  from the old Synara install; user works in NuncioADE. **v0.0.3 released
+  2026-07-29** (current latest): fixes the boot crash-loop when a build upgrade
+  replays provider runtime events against receipts an older build recorded
+  (stored receipts now win; see DECISIONS 2026-07-29). v0.0.2 (same day) was
+  the first published GitHub release — signed + notarized mac arm64/x64
+  dmg+zip, updater feed manifests (`latest-mac.yml`, `nuncioade-mac.yml`).
+  Remaining: verify in-app auto-update end to end (v0.0.2 → v0.0.3 is the
+  first chance).
 - [x] **Rebrand** (2026-07-28, merged to `main`) — maximum rebrand
       Synara→NuncioADE across the whole tree via `scripts/rebrand-identity.ts`
       (deterministic, idempotent); supersedes the old no-rename law. Shipped:
@@ -103,7 +106,7 @@ All Synara-inherited providers are kept working.
   `ade_` tools. Retired `synara` tokens survive only in attribution, exempt
   history, and `// rebrand-exempt` compat shims — enforced by `bun run
 brand:check` in CI. See AGENTS.md §Naming & Identity.
-- Versioning: ADE line = 0.0.x (currently 0.0.2, released 2026-07-29;
+- Versioning: ADE line = 0.0.x (currently 0.0.3, released 2026-07-29;
   v0.0.1 was tagged but never published — its release runs all failed),
   user-decided only, agents never bump/tag. Upstream base = `UPSTREAM-BASE`
   file. See AGENTS.md §Versioning & Releases. Toolchain note: Bun pinned
