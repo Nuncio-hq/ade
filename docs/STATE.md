@@ -5,7 +5,8 @@
 
 ## Direction
 
-NuncioADE (repo `Nuncio-hq/ade`, private) = Synara fork, **OMP-first** (since
+NuncioADE (repo `Nuncio-hq/ade`, public — release preflight requires it) =
+Synara fork, **OMP-first** (since
 2026-07-28; was Pi-first). Current scope: (1) OMP as first-class engine — new
 `OmpAdapter` over the `@oh-my-pi/pi-coding-agent` SDK (M4, docs-only so far);
 (2) harness via OMP extension points (`harness/extensions/`, skills/plugins),
@@ -25,9 +26,12 @@ All Synara-inherited providers are kept working.
   Next: paused — revisit after M4 (OMP ships its own devin-agent).
 - [~] **M2 Bridge gaps** — first bridge extension landed: `extension/ui/askUserQuestion`
   in PiAdapter + `allowNotes`/`allowCustomAnswer` on UserInputQuestion + notes UI.
-- [~] **M3 Daily driver** — STARTED: NuncioADE.app branded, built, installed;
-  DB migrated from the old Synara install (sqlite .backup snapshot); user works
-  in NuncioADE. Remaining: signed builds + no-script auto-update via GitHub releases.
+- [~] **M3 Daily driver** — NuncioADE.app branded, built, installed; DB migrated
+  from the old Synara install; user works in NuncioADE. **v0.0.2 released
+  2026-07-29**: first published GitHub release — signed + notarized mac
+  arm64/x64 dmg+zip, updater feed manifests (`latest-mac.yml`,
+  `nuncioade-mac.yml`) live on the release. Remaining: verify in-app
+  auto-update end to end when the next version ships.
 - [x] **Rebrand** (2026-07-28, merged to `main`) — maximum rebrand
       Synara→NuncioADE across the whole tree via `scripts/rebrand-identity.ts`
       (deterministic, idempotent); supersedes the old no-rename law. Shipped:
@@ -99,11 +103,14 @@ All Synara-inherited providers are kept working.
   `ade_` tools. Retired `synara` tokens survive only in attribution, exempt
   history, and `// rebrand-exempt` compat shims — enforced by `bun run
 brand:check` in CI. See AGENTS.md §Naming & Identity.
-- Versioning: ADE line = 0.0.x (currently 0.0.1), user-decided only, agents never
-  bump/tag. Upstream base = `UPSTREAM-BASE` file (currently v0.6.2). See AGENTS.md
-  §Versioning & Releases.
+- Versioning: ADE line = 0.0.x (currently 0.0.2, released 2026-07-29;
+  v0.0.1 was tagged but never published — its release runs all failed),
+  user-decided only, agents never bump/tag. Upstream base = `UPSTREAM-BASE`
+  file. See AGENTS.md §Versioning & Releases. Toolchain note: Bun pinned
+  1.3.14 — 1.3.12 has a compiled-binary codesign regression (oven-sh/bun
+  #29361) that breaks signing the OMP sidecar.
 - Upstream = `Emanuele-web04/synara`, remote `upstream`; **sync on release tags only** (base: v0.6.3, synced 2026-07-28 via the shadow flow), cherry-pick once diverged.
-- Origin = `https://github.com/Nuncio-hq/ade` (private), `main` pushed and tracking.
+- Origin = `https://github.com/Nuncio-hq/ade` (public), `main` pushed and tracking.
 - Extensions dev is project-local first, promote to global only when stable
   (pi: `.pi/extensions` → `~/.pi/agent/extensions/`; OMP: `.omp/extensions` →
   `~/.omp/agent/extensions/`). Symlinks point at `harness/extensions`.

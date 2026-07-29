@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-**NuncioADE** (repo `Nuncio-hq/ade`, private) is a personal agentic development environment, forked from [Synara](https://github.com/Emanuele-web04/synara) (itself a fork of T3Code). It inherits Synara's full architecture and keeps every provider working, but its product direction is **OMP-first**: OMP (oh-my-pi, `@oh-my-pi/*` npm SDK) is the first-class engine and gets new investment first — consumed as npm releases, customized through its extension points, integrated via direct SDK (see §Engine Focus). The original Pi provider (`@earendil-works/pi-*`) stays working but is frozen. Nothing from Synara is removed. UI/UX and general features are inherited from upstream; our own investment goes to the OMP harness, extension UI where needed, and mobile.
+**NuncioADE** (repo `Nuncio-hq/ade`, public — the release pipeline requires public visibility for the updater feed) is a personal agentic development environment, forked from [Synara](https://github.com/Emanuele-web04/synara) (itself a fork of T3Code). It inherits Synara's full architecture and keeps every provider working, but its product direction is **OMP-first**: OMP (oh-my-pi, `@oh-my-pi/*` npm SDK) is the first-class engine and gets new investment first — consumed as npm releases, customized through its extension points, integrated via direct SDK (see §Engine Focus). The original Pi provider (`@earendil-works/pi-*`) stays working but is frozen. Nothing from Synara is removed. UI/UX and general features are inherited from upstream; our own investment goes to the OMP harness, extension UI where needed, and mobile.
 
 ## Naming & Identity (post-rebrand)
 
