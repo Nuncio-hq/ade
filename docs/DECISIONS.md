@@ -264,7 +264,7 @@
 
 - **2026-07-29 — Stored command receipts win over replay-derived content in
   provider runtime ingestion (Synara ground).** Provider-derived command IDs are
-  deterministic per persisted runtime event, but the command *content* is derived
+  deterministic per persisted runtime event, but the command _content_ is derived
   by the running build — so after an app upgrade, journal/open-turn replays can
   recompute content whose fingerprint no longer matches the receipt an older
   build recorded. `ProviderRuntimeIngestion` now routes every dispatch through a
