@@ -39,5 +39,28 @@ for (const file of ["index.ts", "logic.ts", "run-ade-proof.ts", "resolve-cli.ts"
   await cp(join(extSrcDir, file), join(targetDir, file));
 }
 
+// Register the MCP server in OMP's native user-level config. The per-package
+// `.mcp.json` sub-discovery only applies to plugin package roots, not to
+// `~/.omp/agent/extensions/*`, so the user-level file is the supported path.
+// Merge, never clobber: other servers and keys in the file are preserved.
+const userMcpPath = join(targetDir, "../../mcp.json");
+interface McpConfigFile {
+  mcpServers?: Record<string, unknown>;
+  [k: string]: unknown;
+}
+const existingMcp: McpConfigFile = await Bun.file(userMcpPath)
+  .json()
+  .catch(() => ({}));
+existingMcp.mcpServers = {
+  ...existingMcp.mcpServers,
+  "ade-proof": {
+    type: "stdio",
+    command: join(targetDir, "ade-proof-cli"),
+    args: ["mcp"],
+  },
+};
+await Bun.write(userMcpPath, JSON.stringify(existingMcp, null, 2) + "\n");
+console.log(`Registered MCP server in ${resolve(userMcpPath)}`);
+
 console.log(`Installed ade-proof (self-contained) → ${targetDir}`);
 console.log("Running omp sessions need /reload (or a new session) to pick this up.");
