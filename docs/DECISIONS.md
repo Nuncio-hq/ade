@@ -277,3 +277,23 @@
   forever. The engine itself stays strict — client-originated command IDs still
   hard-fail on fingerprint mismatch; only the ingestion layer, replaying its own
   deterministic IDs, is tolerant.
+
+- **2026-07-29 — Build `ade-proof` (proof-of-work capture) ourselves; consume
+  browser primitives unmodified; no proofshot dependency.** Devin/Cursor-style
+  "screenshot/record after implementing a feature" ships as one core +
+  thin adapters: `packages/ade-proof` (`@nuncio/ade-proof`, Bun/TS — artifact
+  contract in `.ade/proof/` with manifest/SUMMARY/error-scan, capture backends
+  web/macos first, then electron/ios-sim/android), a stdio MCP (`proof_start/
+shot/record/stop`) registered as external MCP so every provider thread gets
+  it, an OMP extension (`ade_proof_shot` + `tool_result` nudge + `session_stop`
+  gate — enforcement is OMP-only, prompt-level elsewhere), and skills. Why
+  build: every OSS workflow layer is dead or pivoted (proofshot dormant
+  2026-04, solo, ~180 KB wrapper; web-eval-agent dormant 2026-02; magnitude
+  pivoted) while primitives are corporate-healthy (chrome-devtools-mcp Google
+  48k★, agent-browser Vercel 39k★, playwright-mcp Microsoft 36k★). So: use
+  chrome-devtools-mcp as-is for browser _driving_, never fork it; vendor only
+  MIT snippets (error-patterns, SUMMARY format) from proofshot. Hard rules from
+  bridge research: file paths never base64 (512 KiB sidecar ingress compaction),
+  artifacts under workspace so the existing `ChatMarkdown` → `/api/local-image`
+  path renders them with zero app changes; sidecar drops image content blocks,
+  markdown is the render channel. Plan: `docs/plans/ade-proof.md`.
