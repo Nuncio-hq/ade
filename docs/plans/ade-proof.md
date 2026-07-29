@@ -1,6 +1,6 @@
 # ade-proof — proof-of-work capture plugin (plan)
 
-> Status: approved 2026-07-29, not started. Branch: `harness/proof-capture`
+> Status: approved 2026-07-29, P0 core+tests complete; P1 core/CLI/backends in progress by sibling agents.
 > (phases 1–4; phase 5 touches `apps/` and ships extension+bridge in one PR per
 > AGENTS.md). Research session artifacts: OMP extension API scout + NuncioADE
 > bridge scout (2026-07-29 chat thread).

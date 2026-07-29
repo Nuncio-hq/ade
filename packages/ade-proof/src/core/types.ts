@@ -120,6 +120,7 @@ export interface CaptureMeta {
   readonly finalUrl?: string;
   readonly httpStatus?: number;
   readonly truncated?: boolean;
+  readonly windowTitle?: string; // macOS backend may return the captured window title
   readonly consoleLines?: readonly string[]; // for error-pattern scan
 }
 

@@ -22,6 +22,7 @@ describe("RIGHT_DOCK_PANE_KINDS (single source of truth)", () => {
       "sidechat",
       "git",
       "pullRequest",
+      "proof",
     ]);
   });
 

@@ -17,6 +17,7 @@ import { cn } from "~/lib/utils";
 
 const DiffPanel = lazy(() => import("../DiffPanel"));
 export const LazyBrowserPanel = lazy(() => import("../BrowserPanel"));
+export const LazyProofPanel = lazy(() => import("../proof/ProofPanel"));
 
 export const noopChatSurfaceAction = () => {};
 

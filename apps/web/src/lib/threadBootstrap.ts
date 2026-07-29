@@ -322,15 +322,24 @@ export function resolveTerminalThreadCreationState(
       // Plan mode is an explicit composer/thread choice. Do not copy it from
       // the previously active thread into a fresh session bootstrap.
       input.draftThread?.interactionMode ?? DEFAULT_INTERACTION_MODE,
-    lastKnownPr:
-      input.draftThread?.lastKnownPr ??
-      (input.activeThread?.projectId === input.projectId
-        ? (input.activeThread.lastKnownPr ?? null)
-        : null) ??
-      (input.activeDraftThread?.projectId === input.projectId
-        ? (input.activeDraftThread.lastKnownPr ?? null)
-        : null) ??
-      null,
+    lastKnownPr: (() => {
+      if (input.draftThread?.lastKnownPr != null) {
+        return input.draftThread.lastKnownPr;
+      }
+      if (
+        input.activeThread?.projectId === input.projectId &&
+        input.activeThread.lastKnownPr != null
+      ) {
+        return input.activeThread.lastKnownPr;
+      }
+      if (
+        input.activeDraftThread?.projectId === input.projectId &&
+        input.activeDraftThread.lastKnownPr != null
+      ) {
+        return input.activeDraftThread.lastKnownPr;
+      }
+      return null;
+    })(),
     envMode: hasExplicitEnvModeOverride
       ? (explicitEnvMode ?? "local")
       : (inheritedEnvMode ?? "local"),

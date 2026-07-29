@@ -72,6 +72,7 @@ import {
   DeferredChatView,
   LazyBrowserPanel,
   LazyDiffPanel,
+  LazyProofPanel,
   noopChatSurfaceAction,
 } from "./ChatThreadSurfacePrimitives";
 import { PanelStateMessage } from "./PanelStateMessage";
@@ -770,6 +771,15 @@ export function SingleChatSurface(props: {
             onOpenTurnDiff={noopChatSurfaceAction}
             onCloseThreadPane={() => closePane(props.threadId, pane.id)}
           />
+        );
+      case "proof":
+        return (
+          <Suspense fallback={<PanelStateMessage>Loading proof...</PanelStateMessage>}>
+            <LazyProofPanel
+              workspaceRoot={workspaceRoot}
+              onClose={() => closePane(props.threadId, pane.id)}
+            />
+          </Suspense>
         );
       default:
         return <RightDockPanePlaceholder kind={pane.kind} />;

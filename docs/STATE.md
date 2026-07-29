@@ -90,12 +90,11 @@ All Synara-inherited providers are kept working.
       (binary + `pi_natives` in `Contents/Resources/omp-sidecar/`, 334 models,
       `turn.completed` with a `command_execution` item). M4 remaining: run OMP
       as the daily driver.
-- [ ] **M5 ade-proof** — proof-of-work capture plugin (approved 2026-07-29,
-      not started): P0 TDD contract tests + edge-case catalog → `@nuncio/ade-proof` core+CLI (artifact contract
-      `.ade/proof/`, backends web/macos first) → stdio MCP for all providers →
-      OMP extension (`ade_proof_shot`, `session_stop` gate) → skills → web UI
-      panel + video last. chrome-devtools-mcp consumed unmodified for browser
-      driving; no proofshot dependency. Plan: `docs/plans/ade-proof.md`.
+- [~] **M5 ade-proof** — proof-of-work capture plugin (approved 2026-07-29):
+  P0 TDD contract tests + edge-case catalog DONE in `packages/ade-proof/src/core`
+  and `test/core` (47 tests green, `tsconfig.core.json` clean). P1 core+CLI/backends
+  in progress. Artifact contract `.ade/proof/`, web+macOS backends first. Plan:
+  `docs/plans/ade-proof.md`.
 
 ## In force
 

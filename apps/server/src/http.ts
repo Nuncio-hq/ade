@@ -34,6 +34,7 @@ import { deriveAuthClientMetadata } from "./auth/utils";
 import { ServerConfig, type ServerConfigShape } from "./config";
 import { resolveCachedEditorIcon } from "./editorAppIcons";
 import { LOCAL_IMAGE_ROUTE_PATH, resolveAllowedLocalPreviewFile } from "./localImageFiles.ts";
+import { proofArtifactsEffectRouteLayer } from "./proofArtifacts.ts";
 import { ProjectFaviconResolver } from "./project/Services/ProjectFaviconResolver";
 import { ProjectionSnapshotQuery } from "./orchestration/Services/ProjectionSnapshotQuery";
 import { ProviderAdapterRegistry } from "./provider/Services/ProviderAdapterRegistry";
@@ -189,6 +190,7 @@ export function makeEffectHttpRouteLayer(
     siteFaviconEffectRouteLayer,
     editorIconEffectRouteLayer,
     localImageEffectRouteLayer,
+    proofArtifactsEffectRouteLayer,
     binaryUploadEffectRouteLayer,
     attachmentsEffectRouteLayer,
     staticAndDevEffectRouteLayer,
