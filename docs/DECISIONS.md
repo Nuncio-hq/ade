@@ -261,3 +261,19 @@
   diagrams are static content, not interactive UI). `mermaid` is pinned exact
   (11.16.0) like `@oh-my-pi/*` — OMP's own ASCII renderer is a hand-written
   parser in `@oh-my-pi/pi-utils`, so there is no engine version to align with.
+
+- **2026-07-29 — Stored command receipts win over replay-derived content in
+  provider runtime ingestion (Synara ground).** Provider-derived command IDs are
+  deterministic per persisted runtime event, but the command *content* is derived
+  by the running build — so after an app upgrade, journal/open-turn replays can
+  recompute content whose fingerprint no longer matches the receipt an older
+  build recorded. `ProviderRuntimeIngestion` now routes every dispatch through a
+  wrapper that treats `OrchestrationCommandIdentityCollisionError` (and recorded
+  rejections) as "already decided: keep the recorded outcome" instead of failing,
+  and the startup open-turn rebuild skips per-event failures instead of dying.
+  Why: v0.0.2 install over a hand-built binary crash-looped on boot (collision in
+  `rebuildAcceptedOpenTurnState`, which ran raw under `Effect.orDie`), and the
+  same collision in the journal drain would silently wedge the consumer cursor
+  forever. The engine itself stays strict — client-originated command IDs still
+  hard-fail on fingerprint mismatch; only the ingestion layer, replaying its own
+  deterministic IDs, is tolerant.

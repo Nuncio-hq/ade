@@ -377,6 +377,72 @@ describe("ProviderRuntimeIngestion", () => {
     ).toBe(persisted.sequence);
   });
 
+  it("REL-01C gate: startup open-turn replay tolerates receipts recorded by a previous build", async () => {
+    const harness = await createHarness({ startIngestion: false });
+    const turnId = asTurnId("turn-fingerprint-drift");
+    const event: ProviderRuntimeEvent = {
+      type: "runtime.warning",
+      eventId: asEventId("evt-fingerprint-drift"),
+      provider: "codex",
+      createdAt: "2026-07-14T00:00:00.000Z",
+      threadId: asThreadId("thread-1"),
+      turnId,
+      payload: {
+        message: "current-build message",
+      },
+    };
+    // An older build derived different activity content for the same provider
+    // event and recorded it under the deterministic command ID this build
+    // re-derives during startup open-turn replay. The recorded receipt must
+    // stay authoritative instead of failing the boot with an identity
+    // collision no restart can resolve.
+    await Effect.runPromise(
+      harness.engine.dispatch({
+        type: "thread.activity.append",
+        commandId: CommandId.makeUnsafe(
+          `provider:${event.eventId}:thread-activity-append:thread-1:runtime.warning:${event.eventId}`,
+        ),
+        threadId: asThreadId("thread-1"),
+        activity: {
+          id: event.eventId,
+          createdAt: event.createdAt,
+          tone: "info",
+          kind: "runtime.warning",
+          summary: "Runtime warning",
+          payload: {
+            message: "previous-build message",
+            detail: "previous-build message",
+          },
+          turnId,
+        },
+        createdAt: event.createdAt,
+      }),
+    );
+    // Consume the event so it counts as accepted and leaves an open-turn row:
+    // the exact durable state a killed app leaves for the next boot to replay.
+    const persisted = await Effect.runPromise(harness.runtimeEventRepository.append(event));
+    expect(
+      await Effect.runPromise(
+        harness.runtimeEventRepository.advanceConsumerCursor({
+          consumerName: PROVIDER_RUNTIME_INGESTION_CONSUMER,
+          eventSequence: persisted.sequence,
+          updatedAt: event.createdAt,
+        }),
+      ),
+    ).toBe(true);
+
+    // Before the tolerant dispatch wrapper this rejected with
+    // OrchestrationCommandIdentityCollisionError and crash-looped the server.
+    await harness.startIngestion();
+
+    const readModel = await Effect.runPromise(harness.engine.getReadModel());
+    const activities = readModel.threads
+      .find((thread) => thread.id === asThreadId("thread-1"))
+      ?.activities.filter((activity) => activity.id === event.eventId);
+    expect(activities).toHaveLength(1);
+    expect(activities?.[0]?.payload).toMatchObject({ message: "previous-build message" });
+  });
+
   it("REL-01C gate: rebuilds accepted buffered output before a terminal event", async () => {
     const harness = await createHarness({ startIngestion: false });
     const turnId = asTurnId("turn-buffered-restart");

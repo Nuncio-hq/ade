@@ -4,6 +4,7 @@ import {
   EventId,
   MessageId,
   type OrchestrationCheckpointFile,
+  type OrchestrationCommand,
   type OrchestrationEvent,
   type OrchestrationProjectShell,
   type OrchestrationProposedPlanId,
@@ -542,6 +543,33 @@ const make = Effect.gen(function* () {
   const projectionTurnRepository = yield* ProjectionTurnRepository;
   const runtimeEvents = yield* ProviderRuntimeEventRepository;
   const commandReceipts = yield* OrchestrationCommandReceiptRepository;
+
+  // Provider-derived command IDs are deterministic per persisted runtime event,
+  // so journal replays after an app upgrade can recompute command content that
+  // no longer matches the receipt an older build recorded. The receipt stays
+  // authoritative: an identity collision (or a recorded rejection) means the
+  // store already decided this command — treat it as processed instead of
+  // failing a replay that no retry can unblock (the startup open-turn rebuild
+  // dies on escaping failures; the journal cursor would stall on the same row
+  // forever).
+  const dispatchProviderCommand = (command: OrchestrationCommand) => {
+    const keepRecordedOutcome = (error: { readonly detail: string }) =>
+      Effect.logWarning(
+        "provider runtime command already decided by a stored receipt; keeping the recorded outcome",
+        {
+          commandId: command.commandId,
+          commandType: command.type,
+          detail: error.detail,
+        },
+      );
+    return orchestrationEngine.dispatch(command).pipe(
+      Effect.catchTags({
+        OrchestrationCommandIdentityCollisionError: keepRecordedOutcome,
+        OrchestrationCommandPreviouslyRejectedError: keepRecordedOutcome,
+      }),
+      Effect.asVoid,
+    );
+  };
   const outstandingTurnIdsByThreadRef = yield* Ref.make<ReadonlyMap<ThreadId, ReadonlySet<TurnId>>>(
     new Map(),
   );
@@ -809,7 +837,7 @@ const make = Effect.gen(function* () {
       }
     }
 
-    yield* orchestrationEngine.dispatch({
+    yield* dispatchProviderCommand({
       type: "thread.activity.append",
       commandId: providerCommandId(
         event,
@@ -1178,7 +1206,7 @@ const make = Effect.gen(function* () {
         return false;
       }
 
-      yield* orchestrationEngine.dispatch({
+      yield* dispatchProviderCommand({
         type: "thread.message.assistant.delta",
         commandId: providerCommandId(input.event, input.commandTag, input.messageId),
         threadId: input.threadId,
@@ -1261,7 +1289,7 @@ const make = Effect.gen(function* () {
             : "";
 
       if (hasRenderableAssistantText(text)) {
-        yield* orchestrationEngine.dispatch({
+        yield* dispatchProviderCommand({
           type: "thread.message.assistant.delta",
           commandId: providerCommandId(input.event, input.finalDeltaCommandTag, input.messageId),
           threadId: input.threadId,
@@ -1272,7 +1300,7 @@ const make = Effect.gen(function* () {
         });
       }
 
-      yield* orchestrationEngine.dispatch({
+      yield* dispatchProviderCommand({
         type: "thread.message.assistant.complete",
         commandId: providerCommandId(input.event, input.commandTag, input.messageId),
         threadId: input.threadId,
@@ -1321,7 +1349,7 @@ const make = Effect.gen(function* () {
       let dispatchedDelta = false;
       if (missingMarkdown.length > 0) {
         const joined = missingMarkdown.join("\n\n");
-        yield* orchestrationEngine.dispatch({
+        yield* dispatchProviderCommand({
           type: "thread.message.assistant.delta",
           commandId: providerCommandId(input.event, "generated-image-delta", targetMessageId),
           threadId: input.threadId,
@@ -1339,7 +1367,7 @@ const make = Effect.gen(function* () {
       // and duplicate provider notifications from emitting redundant message-sent events.
       const shouldComplete = dispatchedDelta || !input.targetMessage || targetIsStreaming;
       if (shouldComplete) {
-        yield* orchestrationEngine.dispatch({
+        yield* dispatchProviderCommand({
           type: "thread.message.assistant.complete",
           commandId: providerCommandId(input.event, "generated-image-complete", targetMessageId),
           threadId: input.threadId,
@@ -1496,7 +1524,7 @@ const make = Effect.gen(function* () {
       }
 
       const existingPlan = input.threadProposedPlans.find((entry) => entry.id === input.planId);
-      yield* orchestrationEngine.dispatch({
+      yield* dispatchProviderCommand({
         type: "thread.proposed-plan.upsert",
         commandId: providerCommandId(input.event, "proposed-plan-upsert", input.planId),
         threadId: input.threadId,
@@ -1633,7 +1661,7 @@ const make = Effect.gen(function* () {
       return;
     }
 
-    yield* orchestrationEngine.dispatch({
+    yield* dispatchProviderCommand({
       type: "thread.proposed-plan.upsert",
       commandId: CommandId.makeUnsafe(
         `provider:source-proposed-plan-implemented:${implementationThreadId}:${sourcePlanId}`,
@@ -1698,7 +1726,7 @@ const make = Effect.gen(function* () {
               const overflowId = EventId.makeUnsafe(
                 `provider-native-child-overflow:${slot.budgetKey}`,
               );
-              yield* orchestrationEngine.dispatch({
+              yield* dispatchProviderCommand({
                 type: "thread.activity.append",
                 commandId: CommandId.makeUnsafe(`provider:native-child-overflow:${slot.budgetKey}`),
                 threadId: parentThread.id,
@@ -1718,7 +1746,7 @@ const make = Effect.gen(function* () {
               });
               return undefined;
             }
-            yield* orchestrationEngine.dispatch({
+            yield* dispatchProviderCommand({
               type: "thread.create",
               commandId: providerCommandId(event, "subagent-thread-create", childThreadId),
               threadId: childThreadId,
@@ -1754,7 +1782,7 @@ const make = Effect.gen(function* () {
               identity?.role !== undefined ||
               (identity?.model !== undefined && identity.modelIsRequestedHint !== true)
             ) {
-              yield* orchestrationEngine.dispatch({
+              yield* dispatchProviderCommand({
                 type: "thread.meta.update",
                 commandId: providerCommandId(event, "subagent-thread-meta-update", childThreadId),
                 threadId: childThreadId,
@@ -1982,7 +2010,7 @@ const make = Effect.gen(function* () {
             );
           }
 
-          yield* orchestrationEngine.dispatch({
+          yield* dispatchProviderCommand({
             type: "thread.session.set",
             commandId: providerCommandId(event, "thread-session-set", thread.id),
             threadId: thread.id,
@@ -2003,7 +2031,7 @@ const make = Effect.gen(function* () {
       if (event.type === "user-input.resolved") {
         const inferredRuntimeMode = inferRuntimeModeFromUserInputAnswers(event.payload.answers);
         if (inferredRuntimeMode && inferredRuntimeMode !== thread.runtimeMode) {
-          yield* orchestrationEngine.dispatch({
+          yield* dispatchProviderCommand({
             type: "thread.runtime-mode.set",
             commandId: providerCommandId(event, "thread-runtime-mode-set", thread.id),
             threadId: thread.id,
@@ -2064,7 +2092,7 @@ const make = Effect.gen(function* () {
         if (assistantDeliveryMode === "buffered") {
           const spillChunk = yield* appendBufferedAssistantText(assistantMessageId, assistantDelta);
           if (spillChunk.length > 0) {
-            yield* orchestrationEngine.dispatch({
+            yield* dispatchProviderCommand({
               type: "thread.message.assistant.delta",
               commandId: providerCommandId(
                 event,
@@ -2079,7 +2107,7 @@ const make = Effect.gen(function* () {
             });
           }
         } else {
-          yield* orchestrationEngine.dispatch({
+          yield* dispatchProviderCommand({
             type: "thread.message.assistant.delta",
             commandId: providerCommandId(event, "assistant-delta", assistantMessageId),
             threadId: thread.id,
@@ -2295,7 +2323,7 @@ const make = Effect.gen(function* () {
           : activeTurnId === null || eventTurnId === undefined || sameId(activeTurnId, eventTurnId);
 
         if (shouldApplyRuntimeError) {
-          yield* orchestrationEngine.dispatch({
+          yield* dispatchProviderCommand({
             type: "thread.session.set",
             commandId: providerCommandId(event, "runtime-error-session-set", thread.id),
             threadId: thread.id,
@@ -2314,7 +2342,7 @@ const make = Effect.gen(function* () {
       }
 
       if (event.type === "thread.metadata.updated" && event.payload.name) {
-        yield* orchestrationEngine.dispatch({
+        yield* dispatchProviderCommand({
           type: "thread.meta.update",
           commandId: providerCommandId(event, "thread-meta-update", thread.id),
           threadId: thread.id,
@@ -2365,7 +2393,7 @@ const make = Effect.gen(function* () {
             // assistant MessageId once the message is finalized. Emitting a
             // synthetic id here would leak an incorrect key that can collide
             // across turns and cause the diff card to render on the wrong row.
-            yield* orchestrationEngine.dispatch({
+            yield* dispatchProviderCommand({
               type: "thread.turn.diff.complete",
               commandId: providerCommandId(
                 event,
@@ -2650,8 +2678,23 @@ const make = Effect.gen(function* () {
       });
       if (page.length === 0) return;
       for (const entry of page) {
-        yield* prepareAcceptedRuntimeEventReplay(entry.event);
-        yield* processRuntimeEvent(entry.event);
+        // Replay only rebuilds bounded process-local caches; durable effects
+        // are deduplicated by command receipts. A row this build can no longer
+        // process (payload derivation drift across builds, poisoned payload)
+        // must not wedge startup: `start` dies on any escaping failure, which
+        // crash-loops the whole server on every boot.
+        yield* prepareAcceptedRuntimeEventReplay(entry.event).pipe(
+          Effect.andThen(() => processRuntimeEvent(entry.event)),
+          Effect.catchCause((cause) =>
+            Cause.hasInterruptsOnly(cause)
+              ? Effect.failCause(cause)
+              : Effect.logWarning("provider runtime open-turn replay skipped an event", {
+                  eventId: entry.event.eventId,
+                  eventType: entry.event.type,
+                  cause: Cause.pretty(cause),
+                }),
+          ),
+        );
         sequence = entry.sequence;
       }
       if (page.length < PROVIDER_RUNTIME_REPLAY_PAGE_SIZE) return;
