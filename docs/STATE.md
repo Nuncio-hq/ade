@@ -134,7 +134,7 @@ brand:check` in CI. See AGENTS.md §Naming & Identity.
 
 - (RESOLVED 2026-07-29, via `fe53e80f` "CI repairs") the 35 web test failures
   and the 2 `@nuncio/cli` PiAdapter typecheck errors are gone: full `bun run
-  test` (10/10 tasks) and `bun run typecheck` (8/8) verified green locally on
+test` (10/10 tasks) and `bun run typecheck` (8/8) verified green locally on
   `app/mermaid-fence-renderer` (contains main).
 - Installed NuncioADE.app lags main until rebuilt: harness extensions hot-load
   via /reload, but `apps/`/`packages/` changes need an app rebuild + reinstall.
