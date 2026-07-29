@@ -14,7 +14,7 @@ describe("stripAnsi", () => {
 
 describe("scanErrors", () => {
   it("detects a JavaScript error and one stack block", () => {
-    const lines = fixture("node-error.log");
+    const lines = fixture("node-error.log.txt");
     const errors = scanErrors(lines, "server");
     const js = errors.filter((e) => e.pattern === "js-error");
     expect(js.length).toBe(1);
@@ -22,21 +22,21 @@ describe("scanErrors", () => {
   });
 
   it("does not match '0 errors' or 'error-free' false positives", () => {
-    const lines = fixture("node-error.log");
+    const lines = fixture("node-error.log.txt");
     const errors = scanErrors(lines, "server");
     expect(errors.some((e) => e.line.includes("0 errors"))).toBe(false);
     expect(errors.some((e) => e.line.includes("error-free"))).toBe(false);
   });
 
   it("detects a Python error", () => {
-    const lines = fixture("python-error.log");
+    const lines = fixture("python-error.log.txt");
     const errors = scanErrors(lines, "server");
     expect(errors.length).toBeGreaterThan(0);
     expect(errors.some((e) => e.pattern === "py-error")).toBe(true);
   });
 
   it("strips ANSI before matching", () => {
-    const lines = fixture("ansi-error.log");
+    const lines = fixture("ansi-error.log.txt");
     const errors = scanErrors(lines, "server");
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0]?.line).toBe("Error: connection refused");

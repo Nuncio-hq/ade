@@ -81,6 +81,8 @@ const OMP_THINKING_OPTIONS: ReadonlyArray<{
 export interface OmpSidecarHostOptions {
   /** Test seam for the SDK module. */
   readonly loadSdk?: () => Promise<typeof OmpCodingAgent>;
+  /** Test seam for the per-session discovery cache reset. */
+  readonly resetDiscoveryCaches?: () => Promise<void>;
   /** Test seam for the turn inactivity watchdog. */
   readonly turnInactivityTimeoutMs?: number;
   /** Called for every canonical runtime event the sidecar emits. */
@@ -448,6 +450,19 @@ export function createOmpSidecarSessionHost(
   options?: OmpSidecarHostOptions,
 ): OmpSidecarSessionHost {
   const loadSdkModule = options?.loadSdk ?? (async () => import("@oh-my-pi/pi-coding-agent"));
+  // The engine's capability layer keeps a process-wide FS cache ("call after
+  // filesystem changes"). A CLI pays a fresh scan every launch, but this
+  // sidecar lives as long as the app — without a reset, an extension or MCP
+  // server installed while NuncioADE is running stays invisible to every new
+  // session until the app restarts. Session creation is rare; the rescan is
+  // the same cost the CLI pays per launch. Lazy import matches the sidecar's
+  // deliberate lazy SDK loading (binary boot stays discovery-free).
+  const resetDiscoveryCaches =
+    options?.resetDiscoveryCaches ??
+    (async () => {
+      const capability = await import("@oh-my-pi/pi-coding-agent/capability");
+      capability.reset();
+    });
   const turnInactivityTimeoutMs = options?.turnInactivityTimeoutMs ?? 10 * 60 * 1000;
   const emit = options?.onRuntimeEvent ?? (() => undefined);
   const sessions = new Map<string, OmpSessionContext>();
@@ -673,6 +688,7 @@ export function createOmpSidecarSessionHost(
 
   const startSession = async (input: OmpSidecarStartSessionInput): Promise<ProviderSession> => {
     const cwd = trimToUndefined(input.cwd) ?? process.cwd();
+    await resetDiscoveryCaches().catch(() => undefined);
     const sdk = await loadSdkModule();
     const agentDir = trimToUndefined(input.agentDir);
     const requestedModelSlug = input.model;

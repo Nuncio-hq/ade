@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/app/main.py", line 10, in <module>
+    load_config()
+  File "/app/config.py", line 5, in load_config
+    raise ValueError("missing key")
+ValueError: missing key

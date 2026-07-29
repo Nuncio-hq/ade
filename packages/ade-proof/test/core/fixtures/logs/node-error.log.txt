@@ -1,0 +1,16 @@
+Server listening on port 3000
+> app@1.0.0 start
+> node server.js
+
+node:internal/modules/cjs/loader:1024
+  throw err;
+  ^
+
+Error: Cannot find module '/app/missing'
+Require stack:
+- /app/server.js
+    at Function.Module._resolveFilename (node:internal/modules/cjs/loader:1021:15)
+    at Function.Module._load (node:internal/modules/cjs/loader:866:27)
+    at Module.require (node:internal/modules/cjs/loader:1090:19)
+0 errors found
+error-free run completed
