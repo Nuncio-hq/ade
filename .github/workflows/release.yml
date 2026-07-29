@@ -28,7 +28,10 @@ jobs:
   preflight:
     name: Preflight
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # The preflight runs the full uncached test suite (~8 minutes on a cold
+    # turbo cache) plus checkout/install; 10 minutes cancelled the v0.0.3 run
+    # mid-verification.
+    timeout-minutes: 20
     outputs:
       version: ${{ steps.release_meta.outputs.version }}
       tag: ${{ steps.release_meta.outputs.tag }}
