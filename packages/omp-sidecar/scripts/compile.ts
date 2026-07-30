@@ -25,15 +25,10 @@ const outFlag = process.argv.find((arg) => arg.startsWith("--outfile="));
 const hostTarget = `bun-${process.platform === "win32" ? "windows" : process.platform}-${
   process.arch === "x64" ? "x64" : "arm64"
 }`;
-const target = (targetFlag?.slice("--target=".length) ??
-  hostTarget) as Bun.Build.CompileTarget;
+const target = (targetFlag?.slice("--target=".length) ?? hostTarget) as Bun.Build.CompileTarget;
 const outfile =
   outFlag?.slice("--outfile=".length) ??
-  join(
-    packageRoot,
-    "dist",
-    process.platform === "win32" ? "omp-sidecar.exe" : "omp-sidecar",
-  );
+  join(packageRoot, "dist", process.platform === "win32" ? "omp-sidecar.exe" : "omp-sidecar");
 
 // ---------------------------------------------------------------------------
 // Legacy-Pi bundled module registry (installed-layout replacement for the
@@ -59,10 +54,7 @@ const BUNDLED_PI_PACKAGES: readonly BundledPiPackage[] = [
   { name: "@oh-my-pi/pi-utils" },
 ];
 
-function installedPackageRoot(
-  name: string,
-  importer: string = packageRoot,
-): string {
+function installedPackageRoot(name: string, importer: string = packageRoot): string {
   // pi-natives/pi-tui/pi-utils are transitive deps of the SDK, not of this
   // package — resolve them from the SDK's own root (second argument).
   const entry = Bun.resolveSync(name, importer);
@@ -118,12 +110,7 @@ async function collectInstalledBundledPiEntries(
     // intentionally not expanded — none of the harness extensions import
     // them, and the upstream expansion needs monorepo globs.
     for (const exportKey of Object.keys(manifest.exports ?? {})) {
-      if (
-        !exportKey.startsWith("./") ||
-        exportKey === "." ||
-        exportKey.includes("*")
-      )
-        continue;
+      if (!exportKey.startsWith("./") || exportKey === "." || exportKey.includes("*")) continue;
       const key = `${pkg.name}/${exportKey.slice(2)}`;
       const resolved = resolveFromSdk(key);
       if (resolved) addEntry(key, resolved);
@@ -131,32 +118,19 @@ async function collectInstalledBundledPiEntries(
   }
 
   // Zod-backed TypeBox shim, same key the compat layer requests.
-  addEntry(
-    "typebox",
-    join(codingAgentRoot, "src", "extensibility", "typebox.ts"),
-  );
+  addEntry("typebox", join(codingAgentRoot, "src", "extensibility", "typebox.ts"));
   return entries;
 }
 
-function renderLegacyPiVirtualModule(
-  entries: readonly BundledPiEntry[],
-): string {
+function renderLegacyPiVirtualModule(entries: readonly BundledPiEntry[]): string {
   // Same output shape as the upstream __renderLegacyPiVirtualModule.
   const loaders = entries.map(
-    (entry) =>
-      `const ${entry.binding} = () => import(${JSON.stringify(entry.importSpecifier)});`,
+    (entry) => `const ${entry.binding} = () => import(${JSON.stringify(entry.importSpecifier)});`,
   );
-  const modules = entries.map(
-    (entry) => `\t${JSON.stringify(entry.key)}: ${entry.binding},`,
+  const modules = entries.map((entry) => `\t${JSON.stringify(entry.key)}: ${entry.binding},`);
+  return [...loaders, "", "export const BUNDLED_PI_MODULE_LOADERS = {", ...modules, "};", ""].join(
+    "\n",
   );
-  return [
-    ...loaders,
-    "",
-    "export const BUNDLED_PI_MODULE_LOADERS = {",
-    ...modules,
-    "};",
-    "",
-  ].join("\n");
 }
 
 const codingAgentRoot = installedPackageRoot("@oh-my-pi/pi-coding-agent");
@@ -171,13 +145,10 @@ const legacyPiVirtualModulePlugin: Bun.BunPlugin = {
       path: "omp-legacy-pi-modules",
       namespace: "omp-legacy-pi-modules-build",
     }));
-    build.onLoad(
-      { filter: /.*/, namespace: "omp-legacy-pi-modules-build" },
-      () => ({
-        contents: virtualModuleSource,
-        loader: "ts",
-      }),
-    );
+    build.onLoad({ filter: /.*/, namespace: "omp-legacy-pi-modules-build" }, () => ({
+      contents: virtualModuleSource,
+      loader: "ts",
+    }));
   },
 };
 

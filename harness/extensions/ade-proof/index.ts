@@ -21,10 +21,21 @@ import {
   type SessionProofGateState,
   UI_FILE_RE,
 } from "./logic.js";
-import { readImageBase64, runAdeProofShot, type ShotResult } from "./run-ade-proof.js";
+import {
+  readImageBase64,
+  runAdeProofShot,
+  runAdeProofStop,
+  type ShotResult,
+} from "./run-ade-proof.js";
 
 // Module-level per-session at-most-once guard (catalog §5.D).
 const gateBySession = new Map<string, SessionProofGateState>();
+
+// Workspaces this extension auto-started a proof session in, per engine
+// session. `ade_proof_shot` starts a session on demand and nothing else would
+// ever finish it, so the bundle would never get a SUMMARY and the lock would
+// linger. Sealed at session_stop.
+const shotCwdsBySession = new Map<string, Set<string>>();
 
 function getSessionId(ctx: ExtensionContext): string | undefined {
   try {
@@ -51,12 +62,25 @@ async function gatherCommitUiFiles(
   return parseGitNameOnly(result.stdout);
 }
 
-function gatherWritePath(event: WriteToolResultEvent): string | undefined {
-  const input = event.input;
-  if ("path" in input && typeof input.path === "string" && input.path) return input.path;
+function gatherWritePath(event: ToolResultEvent): string | undefined {
+  const input: unknown = event.input;
+  if (
+    typeof input === "object" &&
+    input !== null &&
+    "path" in input &&
+    typeof input.path === "string" &&
+    input.path
+  ) {
+    return input.path;
+  }
 
-  const details = event.details;
-  if (details && "resolvedPath" in details && typeof details.resolvedPath === "string") {
+  const details: unknown = event.details;
+  if (
+    typeof details === "object" &&
+    details !== null &&
+    "resolvedPath" in details &&
+    typeof details.resolvedPath === "string"
+  ) {
     return details.resolvedPath;
   }
   return undefined;
@@ -119,7 +143,8 @@ function updateGateFromToolResult(
 
     if (event.toolName === "bash" && !event.isError) {
       const bash = event as BashToolResultEvent;
-      if (isSuccessfulGitCommitCommand(bash.input.command)) {
+      const command: unknown = bash.input.command;
+      if (typeof command === "string" && isSuccessfulGitCommitCommand(command)) {
         const cwd = getCwd(event, ctx);
         gatherCommitUiFiles(cwd, pi.exec).then((files) => {
           if (!files.length) return;
@@ -151,44 +176,84 @@ function updateGateFromToolResult(
   gateBySession.set(sessionId, state);
 }
 
+/** Mirrors the zod schema registered below; `execute` receives it untyped. */
+interface ProofShotParams {
+  readonly target: "web" | "macos";
+  readonly label: string;
+  readonly url?: string;
+  readonly selector?: string;
+  readonly fullPage?: boolean;
+  readonly windowTitle?: string;
+  readonly cwd?: string;
+}
+
+/** The engine types `parameters` as TypeBox `TSchema`. */
+type ToolParametersSchema = Parameters<ExtensionAPI["registerTool"]>[0]["parameters"];
+
 export default function adeProofExtension(pi: ExtensionAPI): void {
   const { z } = pi.zod;
+
+  // Zod schemas are accepted at runtime (the engine unwraps both), but letting
+  // TS unify this zod object with TypeBox's TSchema blows the instantiation
+  // depth (TS2589). Widen once here; `ProofShotParams` keeps `execute` typed.
+  const parameters = z.object({
+    target: z.enum(["web", "macos"]),
+    label: z.string(),
+    url: z.string().optional(),
+    selector: z.string().optional(),
+    fullPage: z.boolean().optional(),
+    windowTitle: z.string().optional(),
+    cwd: z
+      .string()
+      .optional()
+      .describe(
+        "Workspace to capture proof for. Defaults to this session's workspace; pass it only when proving work in a different repository.",
+      ),
+  }) as unknown as ToolParametersSchema;
 
   pi.registerTool({
     name: PROOF_CAPTURE_TOOL,
     label: "ADE Proof Shot",
     description:
       "Capture a screenshot or window shot as proof of the current UI state. Returns a workspace-relative image path.",
-    parameters: z.object({
-      target: z.enum(["web", "macos"]),
-      label: z.string(),
-      url: z.string().optional(),
-      selector: z.string().optional(),
-      fullPage: z.boolean().optional(),
-      windowTitle: z.string().optional(),
-    }),
+    parameters,
 
     approval: "exec",
 
-    async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+    async execute(_toolCallId, rawParams, _signal, _onUpdate, ctx) {
+      const params = rawParams as ProofShotParams;
+      const cwd = params.cwd ?? ctx.cwd;
       const shot = await runAdeProofShot({
         target: params.target,
         label: params.label,
-        url: params.url,
-        selector: params.selector,
-        fullPage: params.fullPage,
-        windowTitle: params.windowTitle,
-        cwd: ctx.cwd,
+        // exactOptionalPropertyTypes: an absent option must be ABSENT, not
+        // present-and-undefined.
+        ...(params.url === undefined ? {} : { url: params.url }),
+        ...(params.selector === undefined ? {} : { selector: params.selector }),
+        ...(params.fullPage === undefined ? {} : { fullPage: params.fullPage }),
+        ...(params.windowTitle === undefined ? {} : { windowTitle: params.windowTitle }),
+        cwd,
         exec: pi.exec,
       });
 
+      const sessionId = getSessionId(ctx);
+      if (sessionId) {
+        const cwds = shotCwdsBySession.get(sessionId) ?? new Set<string>();
+        cwds.add(cwd);
+        shotCwdsBySession.set(sessionId, cwds);
+      }
+
       const imageData = await readImageBase64(shot.absPath);
+      // A relative path only renders when it is relative to the READER's
+      // workspace. Proof captured for another repo must be absolute — the
+      // server serves any `<git-root>/.ade/proof/**` image.
+      const markdownPath = cwd === ctx.cwd ? shot.relPath : shot.absPath;
 
       const content: (TextContent | ImageContent)[] = [
-        { type: "text", text: `![${params.label}](${shot.relPath})` } as TextContent,
+        { type: "text", text: `![${params.label}](${markdownPath})` } as TextContent,
         {
           type: "text",
-          text: `Captured \`${params.label}\` at \`${shot.relPath}\`.`,
+          text: `Captured \`${params.label}\` at \`${shot.absPath}\`.`,
         } as TextContent,
         { type: "image", data: imageData, mimeType: "image/png" } as ImageContent,
       ];
@@ -210,6 +275,21 @@ export default function adeProofExtension(pi: ExtensionAPI): void {
     const state = gateBySession.get(sessionId) ?? initialSessionProofGateState();
     const { result, nextState } = decideSessionStopGate(state);
     gateBySession.set(sessionId, nextState);
+
+    // Asking for one more turn is not the end of the session: keep the proof
+    // session open so the capture the agent is about to take lands in it.
+    if (result.continue === true) return result;
+
+    // Seal every bundle this session opened: SUMMARY.md, log scan, lock
+    // released. Failures must not block the engine from stopping.
+    const cwds = shotCwdsBySession.get(sessionId);
+    if (cwds) {
+      shotCwdsBySession.delete(sessionId);
+      await Promise.all(
+        Array.from(cwds, (cwd) => runAdeProofStop({ cwd, exec: pi.exec }).catch(() => undefined)),
+      );
+    }
+    gateBySession.delete(sessionId);
 
     return result;
   });

@@ -111,3 +111,25 @@ export async function readImageBase64(absPath: string): Promise<string> {
   const buf = await readFile(absPath);
   return buf.toString("base64");
 }
+
+/**
+ * Seal the proof bundle for `cwd`: writes SUMMARY.md, scans logs, releases the
+ * lock. Called when the agent session ends, because `ade_proof_shot`
+ * auto-STARTS a session and nothing else would ever finish it. A workspace
+ * with no active session is not an error here — the agent may have stopped it
+ * explicitly through the MCP tools.
+ */
+export async function runAdeProofStop(opts: {
+  cwd: string;
+  exec: RunShotOptions["exec"];
+}): Promise<void> {
+  const cli = await resolveAdeProofCli();
+  const result = await opts.exec(cli.argv0, [...cli.prefixArgs, "stop", "--json"], {
+    cwd: opts.cwd,
+    timeout: 60_000,
+  });
+  const parsed = parseCliJson<unknown>(result.stdout);
+  if (!parsed.ok && parsed.error.code !== "no-active-session") {
+    throw new Error(parsed.error.message);
+  }
+}

@@ -1,4 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src", "test"]
+  "compilerOptions": {
+    // The harness extension lives outside this package, so its `@oh-my-pi/*`
+    // type imports would resolve from the repo root (where the engine is not
+    // hoisted). Map them onto this package's copies so `tsc` covers the
+    // extension: an unchecked extension already shipped a missing import.
+    "paths": {
+      "@oh-my-pi/*": ["./node_modules/@oh-my-pi/*"]
+    }
+  },
+  "include": ["src", "test", "scripts", "../../harness/extensions/ade-proof"]
 }

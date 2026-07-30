@@ -301,17 +301,17 @@ shot/record/stop`) registered as external MCP so every provider thread gets
 - **2026-07-29 — Sidecar compile bundles the legacy-Pi module registry; file
   extensions now load inside NuncioADE.** Dogfooding ade-proof exposed that
   EVERY file-based extension in `~/.omp/agent/extensions/` (including the
-  pre-existing orca-* ones) silently failed to load in the sidecar with
+  pre-existing orca-_ ones) silently failed to load in the sidecar with
   "Cannot find package 'omp-legacy-pi-modules'": the engine's compiled-binary
   compat layer needs an `omp-legacy-pi-modules` registry synthesized AT BUILD
   TIME by a Bun build plugin, and our compile marked it `--external` (a phase-6
   workaround). `scripts/compile.ts` now mirrors omp's own build: Bun.build +
   an in-memory virtual-module plugin. Upstream's plugin assumes the OMP
   monorepo layout, so ours rebuilds the entry list from the installed
-  node_modules (six @oh-my-pi packages, root shims, explicit subpath exports,
+  node*modules (six @oh-my-pi packages, root shims, explicit subpath exports,
   typebox shim; wildcard exports not expanded). Verified by driving the fresh
   binary over NDJSON: session/start loads 4 file extensions incl. ade-proof
-  with tool ade_proof_shot, and mounts mcp__ade_proof_*. Related same-day
+  with tool ade_proof_shot, and mounts mcp\_\_ade_proof*_. Related same-day
   fixes: session-host resets the engine's capability FS cache per session
   create (installs visible without app restart), /api/local-image serves
-  <git-root>/.ade/proof/** cross-workspace.
+  <git-root>/.ade/proof/\*\* cross-workspace.
