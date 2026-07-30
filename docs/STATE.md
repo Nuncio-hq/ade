@@ -96,8 +96,14 @@ All Synara-inherited providers are kept working.
   record with timecode watermark), stdio MCP (`proof_*`, handshake-verified),
   OMP extension `ade_proof_shot` (E2E-verified under `omp` 17.1.6: agent call
   → auto session → PNG), skill, Proof right-dock panel + `/api/proof/*` routes.
-  Remaining before merge: dogfood web panel in a dev instance, register the
-  MCP in NuncioADE external-MCP config, symlink extension install. Plan:
+  DOGFOODED IN THE INSTALLED APP 2026-07-30: `bun run install:omp` ships the
+  compiled CLI binary + extension copy + `~/.omp/agent/mcp.json` entry; a real
+  NuncioADE thread passed 8/8 literal-tool checks (MCP cycle, extension
+  one-call with `cwd`, on-disk path match, auto-sealed bundle). Fixed on the
+  way: sidecar compile now bundles the legacy-pi registry (file extensions
+  EVER loading in the sidecar — orca-* revived), per-session discovery-cache
+  reset, `/api/local-image` serves `<git-root>/.ade/proof/**`. Remaining:
+  eyeball the Proof right-dock panel + video record path in daily use. Plan:
   `docs/plans/ade-proof.md`.
 
 ## In force
